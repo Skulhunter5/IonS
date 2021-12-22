@@ -52,11 +52,76 @@ b = Pop()
 a = Pop()
 Push(a / b)
 ```
+* ```%```
+Calculates the modulo of the topmost 2 items and pushes the result back onto the stack\
+[x, a, b] -> [x, a%b]
+``` Python
+b = Pop()
+a = Pop()
+Push(a % b)
+```
 * ```.```
 Pops the topmost item off the stack and prints it to stdout\
 [x, a] -> [x]\
 stdout: ```a```
 ``` Python
 a = Pop()
-Print(a, "stdout")
+Print(a)
+```
+* ```drop```
+Pops the topmost item off the stack\
+[x, a] -> [x]
+``` Python
+Pop()
+```
+* ```2drop```
+Pops the topmost 2 items off the stack\
+[x, a, b] -> [x]
+``` Python
+Pop()
+Pop()
+```
+* ```dup```
+Duplicates the topmost item\
+[x, a] -> [x, a, a]
+``` Python
+a = Pop()
+Push(a)
+Push(a)
+```
+* ```dup```
+Duplicates the topmost 2 items\
+[x, a, b] -> [x, a, b, a, b]
+``` Python
+b = Pop()
+a = Pop()
+Push(a)
+Push(b)
+Push(a)
+Push(b)
+```
+* ```over```
+Copies the second item to the top of the stack\
+[x, a, b] -> [x, a, b, a]
+``` Python
+b = Pop()
+a = Pop()
+Push(a)
+Push(b)
+Push(a)
+```
+* ```2over```
+Copies the third and fourth item to the top of the stack\
+[x, a, b, c, d] -> [x, a, b, c, d, a, b]
+``` Python
+d = Pop()
+c = Pop()
+b = Pop()
+a = Pop()
+Push(a)
+Push(b)
+Push(c)
+Push(d)
+Push(a)
+Push(b)
 ```
