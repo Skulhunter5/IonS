@@ -550,6 +550,15 @@ namespace IonS
                         stack.Push(b);
                         break;
                     }
+                    case OperationType.Swap: {
+                        if(stack.Count <= 1) return new SimulationResult(0, new StackUnderflowError("swap"));
+
+                        int a = stack.Pop();
+                        int b = stack.Pop();
+                        stack.Push(a);
+                        stack.Push(b);
+                        break;
+                    }
                     case OperationType.Over: {
                         if(stack.Count <= 1) return new SimulationResult(0, new StackUnderflowError("over"));
                         if(stack.Count >= maxStackSize) return new SimulationResult(0,  new StackOverflowError("over"));
@@ -573,15 +582,6 @@ namespace IonS
                         stack.Push(b);
                         stack.Push(c);
                         stack.Push(d);
-                        stack.Push(a);
-                        stack.Push(b);
-                        break;
-                    }
-                    case OperationType.Swap: {
-                        if(stack.Count <= 1) return new SimulationResult(0, new StackUnderflowError("swap"));
-
-                        int a = stack.Pop();
-                        int b = stack.Pop();
                         stack.Push(a);
                         stack.Push(b);
                         break;
@@ -714,6 +714,13 @@ namespace IonS
                         asm += "    push rbx\n";
                         break;
                     }
+                    case OperationType.Swap: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    push rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
                     case OperationType.Over: {
                         asm += "    pop rbx\n";
                         asm += "    pop rax\n";
@@ -733,13 +740,6 @@ namespace IonS
                         asm += "    push rdx\n";
                         asm += "    push rax\n";
                         asm += "    push rbx\n";
-                        break;
-                    }
-                    case OperationType.Swap: {
-                        asm += "    pop rbx\n";
-                        asm += "    pop rax\n";
-                        asm += "    push rbx\n";
-                        asm += "    push rax\n";
                         break;
                     }
                     case OperationType.Add: {
