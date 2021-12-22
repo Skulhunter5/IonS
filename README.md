@@ -35,20 +35,22 @@ a = Pop()
 Push(a - b)
 ```
 * ```*```
-Multiplies the topmost 2 items and pushes the result back onto the stack
+Multiplies the topmost 2 items and pushes the result back onto the stack\
+[x, x, a, b]
+-> [x, x, a*b]
 ``` Python
 b = Pop()
 a = Pop()
 Push(a * b)
 ```
 * ```/```
-Divides the topmost 2 items (integer division) and pushes the result back onto the stack
+Divides the topmost 2 items (integer division) and pushes the result back onto the stack\
+[x, x, a, b]\
+-> [x, x, a/b]
 ``` Python
 b = Pop()
 a = Pop()
 Push(a / b)
 ```
-[x, x, a, b]
--> [x, x, a/b]
 * ```.```
 
