@@ -16,7 +16,7 @@ Stack: [3]
 - ```.```: prints the top of the stack to stdout\
 Stack: []
 ### Operations
-* just a simple integer such as ```0```, ```1``` or ```12345``` so generally ```n``` pushes that integer n onto the stack.
+* A simple integer such as ```0```, ```1``` or ```12345``` so generally ```n``` pushes that integer n onto the stack.
 ``` Python
 Push(n)
 ```
@@ -126,6 +126,9 @@ Push(a)
 Push(b)
 ```
 ### Control statements
-* ```if```\
+* **if**\
+Syntax: ```... if 'if-block' end ...```\
+Only executes the 'if-block' if the topmost item is not 0
+* **while**\
 Syntax: ```... if 'if-block' end ...```\
 Only executes the 'if-block' if the topmost item is not 0
