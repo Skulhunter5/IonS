@@ -138,4 +138,4 @@ The while-statement executes the condition and does a check just like the if-sta
 
 ## Additional information
 * The program always exits with the topmost item as the exitcode.\
-It is recommended to always end the program with ```0 exit``` to not get a stack underflow situation.
+It is recommended to always end the program with ```0``` (or ```0 exit``` as it is easier to understand) to not get a stack underflow situation.
