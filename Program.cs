@@ -775,6 +775,7 @@ namespace IonS
                     case OperationType.Divide: {
                         asm += "    pop rbx\n";
                         asm += "    pop rax\n";
+                        asm += "    xor rdx, rdx\n"; // TODO: check why this is necessary
                         asm += "    div rbx\n";
                         asm += "    push rax\n";
                         break;
