@@ -680,10 +680,11 @@ namespace IonS
             var result = parser.Parse();
             if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
             var operations = result.Operations;
-            foreach(Operation operation in operations) {
+            for(int i = 0; i < operations.Count; i++) {
+                Operation operation = operations[i];
                 switch(operation.Type) {
                     case OperationType.Exit: {
-                        asm += "    jmp exit\n";
+                        if(i != operations.Count - 1) asm += "    jmp exit\n"; // TODO: move into a dedicated optimizer
                         break;
                     }
                     case OperationType.PushInteger: {
