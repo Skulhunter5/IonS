@@ -22,7 +22,7 @@ Push(n)
 ```
 * ```+```
 Adds the topmost 2 items and pushes the result back onto the stack\
-[x, a, b] -> [x, a+b]
+[x, x, a, b] -> [x, a+b]
 ``` Python
 b = Pop()
 a = Pop()
@@ -53,4 +53,10 @@ a = Pop()
 Push(a / b)
 ```
 * ```.```
-
+Pops the topmost item off the stack and prints it to stdout\
+[x, a] -> [x]
+stdout: ```a```
+``` Python
+a = Pop()
+Print(a, "stdout")
+```
