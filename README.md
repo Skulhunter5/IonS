@@ -132,4 +132,4 @@ Only executes the 'if-block' if the topmost item is not 0, otherwise it jumps af
 * **while-loop**:\
 Syntax: ```... while 'condition' do 'while-block' end ...```\
 Executes the 'while-block' as long as the condition is true\
-The while-statement executes the condition and does a check just like the if-statement but when the 'while-block' is done, it jumps back to the beginning of the 'condition'
+The while-statement executes the condition and does a check just like the if-statement but when the 'while-block' is done, it jumps back to the beginning of the 'condition' (An example can be found in the tests directory)
