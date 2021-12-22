@@ -126,9 +126,9 @@ Push(a)
 Push(b)
 ```
 ### Control statements
-* **if**\
+* *if*\
 Syntax: ```... if 'if-block' end ...```\
 Only executes the 'if-block' if the topmost item is not 0
-* **while**\
+* *while*\
 Syntax: ```... if 'if-block' end ...```\
 Only executes the 'if-block' if the topmost item is not 0
