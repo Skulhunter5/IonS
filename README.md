@@ -15,7 +15,7 @@ Stack: [1, 2]
 Stack: [3]
 - ```.```: prints the top of the stack to stdout\
 Stack: []
-## Operations
+### Operations
 * just a simple integer such as ```0```, ```1``` or ```12345``` so generally ```n``` pushes that integer n onto the stack.
 ``` Python
 Push(n)
@@ -46,7 +46,7 @@ Push(a * b)
 ```
 * ```/```
 Divides the topmost 2 items (integer division) and pushes the result back onto the stack\
-[x, a, b] -> [x, a/b]
+[x, a, b] -> [x, a//b]
 ``` Python
 b = Pop()
 a = Pop()
@@ -125,3 +125,7 @@ Push(d)
 Push(a)
 Push(b)
 ```
+### Control statements
+* ```if```\
+Syntax: ```... if 'if-block' end ...```\
+Only executes the 'if-block' if the topmost item is not 0
