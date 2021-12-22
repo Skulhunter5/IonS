@@ -8,8 +8,16 @@ namespace IonS
     {
         static void Main(string[] args) {
             if(args.Length == 0 || args[0] == "-i" || args[0] == "--interpret") Interpret();
-            else if(args[0] == "--compile") Compile();
-            else if(args[0] == "-s" || args[0] == "--simulate") Simulate();
+            else if(args[0] == "--compile") {
+                if(args.Length == 1) Compile("res/test.ions");
+                else if(args.Length >= 2) {
+                    if(args[1].StartsWith("\"")) {
+                        Console.WriteLine("Unimplemented feature");
+                        return;
+                    }
+                    Compile(args[1]);
+                }
+            } else if(args[0] == "-s" || args[0] == "--simulate") Simulate();
             else Console.WriteLine("Invalid argument: '" + args[0] + "'");
         }
 
@@ -18,8 +26,8 @@ namespace IonS
             for(int i = 0; i < text.Length; i++) if(text[i] == '\n') count++;
             return count;
         }
-        private static void Compile() {
-            var asmTscr = new AssemblyTranscriber(File.ReadAllText("res/test.ions"), "res/test.ions");
+        private static void Compile(string file) {
+            var asmTscr = new AssemblyTranscriber(File.ReadAllText(file), file);
             AssemblyTranscriptionResult result = asmTscr.run();
             if(result.Error != null) {
                 Console.WriteLine(result.Error);
