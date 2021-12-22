@@ -16,36 +16,39 @@ Stack: [3]
 - ```.```: prints the top of the stack to stdout\
 Stack: []
 ## Operations
-* just a simple integer such as ```0```, ```1``` or ```12345``` so generally ```n```\
-Pushes that integer n onto the stack.
+* just a simple integer such as ```0```, ```1``` or ```12345``` so generally ```n``` pushes that integer n onto the stack.
 ``` Python
 Push(n)
 ```
-* ```+```\
+* ```+```
 Adds the topmost 2 items and pushes the result back onto the stack
 ``` Python
 b = Pop()
 a = Pop()
 Push(a + b)
 ```
-* ```-```\
+* ```-```
 Subtracts the topmost 2 items and pushes the result back onto the stack
 ``` Python
 b = Pop()
 a = Pop()
 Push(a - b)
 ```
-* ```*```\
+* ```*```
 Multiplies the topmost 2 items and pushes the result back onto the stack
 ``` Python
 b = Pop()
 a = Pop()
 Push(a * b)
 ```
-* ```/```\
-Divides the topmost 2 items and pushes the result back onto the stack
+* ```/```
+Divides the topmost 2 items (integer division) and pushes the result back onto the stack
 ``` Python
 b = Pop()
 a = Pop()
 Push(a / b)
 ```
+[x, x, a, b]
+-> [x, x, a/b]
+* ```.```
+
