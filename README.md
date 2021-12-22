@@ -21,28 +21,28 @@ Pushes that integer onto the stack.
 ```
 Push(n)
 ```
-### ```+```
+* ```+```
 Adds the topmost 2 items and pushes the result\
 ```
 b = Pop()
 a = Pop()
 Push(a + b)
 ```
-### ```-```
+* ```-```
 Subtracts the topmost 2 items and pushes the result
 ```
 b = Pop()
 a = Pop()
 Push(a - b)
 ```
-### ```*```
+* ```*```
 Multiplies the topmost 2 items and pushes the result back onto the stack\
 ```
 b = Pop()
 a = Pop()
 Push(a * b)
 ```
-### ```/```
+* ```/```
 Divides the topmost 2 items and pushes the result back onto the stack
 ```
 b = Pop()
