@@ -54,7 +54,7 @@ Push(a / b)
 ```
 * ```.```
 Pops the topmost item off the stack and prints it to stdout\
-[x, a] -> [x]
+[x, a] -> [x]\
 stdout: ```a```
 ``` Python
 a = Pop()
