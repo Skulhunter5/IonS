@@ -125,6 +125,8 @@ Push(d)
 Push(a)
 Push(b)
 ```
+* ```exit```
+Exits with the topmost item as the exitcode
 ### Control statements
 * **if-statement**:\
 Syntax: ```... if 'if-block' end ...```\
@@ -133,3 +135,7 @@ Only executes the 'if-block' if the topmost item is not 0, otherwise it jumps af
 Syntax: ```... while 'condition' do 'while-block' end ...```\
 Executes the 'while-block' as long as the condition is true\
 The while-statement executes the condition and does a check just like the if-statement but when the 'while-block' is done, it jumps back to the beginning of the 'condition' (An example can be found in the tests directory)
+
+## Additional information
+* The program always exits with the topmost item as the exitcode.\
+It is recommended to always end the program with ```0 exit``` to not get a stack underflow situation.
