@@ -79,7 +79,7 @@ namespace IonS
         }
         public override string ToString()
         {
-            return File + ":" + Line + ":" + Column + ":";
+            return File + ":" + Line + ":" + Column;
         }
         public string File { get; }
         public int Line { get; }
@@ -87,6 +87,46 @@ namespace IonS
     }
 
     abstract class Error {}
+    abstract class MacroPreprocessorError : Error {
+        public override string ToString()
+        {
+            return "[MacroPreprocessor]: ";
+        }
+    }
+    sealed class IncompleteMacroError : MacroPreprocessorError {
+        public IncompleteMacroError(Word macroWord, Word key) {
+            MacroWord = macroWord;
+            Key = key;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Incomplete macro: " + (Key != null ? Key : "at " + MacroWord.Position);
+        }
+        public Word MacroWord { get; }
+        public Word Key { get; }
+    }
+    sealed class InvalidMacroKeyError : MacroPreprocessorError {
+        public InvalidMacroKeyError(Word key) {
+            Key = key;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid key for macro: " + Key;
+        }
+        public Word Key { get; }
+    }
+    sealed class MacroRedefinitionError : MacroPreprocessorError {
+        public MacroRedefinitionError(Word o, Word n) {
+            Old = o;
+            New = n;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Trying to redifine macro: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
+        }
+        public Word Old { get; }
+        public Word New { get; }
+    }
     abstract class ParserError : Error {
         public override string ToString()
         {
@@ -99,53 +139,38 @@ namespace IonS
             return base.ToString() + "Internal Error";
         }
     }
-    sealed class UnexpectedSymbolError : ParserError {
-        public UnexpectedSymbolError(char symbol, Position position) {
-            Symbol = symbol;
-            Position = position;
-        }
-        public override string ToString()
-        {
-            return base.ToString() + "Unexpected symbol: '" + Symbol + "' at " + Position;
-        }
-        public char Symbol { get; }
-        public Position Position { get; }
-    }
     sealed class UnexpectedWordError : ParserError {
-        public UnexpectedWordError(string text, Position position) {
-            Text = text;
-            Position = position;
+        public UnexpectedWordError(Word word) {
+            Word = word;
         }
         public override string ToString()
         {
-            return base.ToString() + "Unexpected word: '" + Text + "' at " + Position;
+            return base.ToString() + "Unexpected word: " + Word;
         }
-        public string Text { get; }
-        public Position Position { get; }
+        public Word Word { get; }
     }
     sealed class UnexpectedMarkerError : ParserError {
-        public UnexpectedMarkerError(string text, Position position) {
-            Text = text;
-            Position = position;
+        public UnexpectedMarkerError(Word word) {
+            Word = word;
         }
         public override string ToString()
         {
-            return base.ToString() + "Unexpected marker: '" + Text + "' at " + Position;
+            return base.ToString() + "Unexpected marker: " + Word;
         }
-        public string Text { get; }
-        public Position Position { get; }
+        public Word Word { get; }
     }
     sealed class IncompleteBlockError : ParserError {
-        public IncompleteBlockError(string text, Position position) {
-            Text = text;
-            Position = position;
+        public IncompleteBlockError(Block block) {
+            Block = block;
         }
         public override string ToString()
         {
-            return base.ToString() + "Incomplete block: '" + Text + "' at " + Position;
+            if(Block.GetType() == typeof(IfBlock)) return base.ToString() + "Incomplete block: 'if' at " + Block.Position + " is missing: 'end'";
+            else if(Block.GetType() == typeof(WhileBlock)) return base.ToString() + "Incomplete block: 'while' at " + Block.Position + " is missing: '" + (((WhileBlock) Block).HasDo ? "end" : "do") + "'";
+            else if(Block.GetType() == typeof(DoWhileBlock)) return base.ToString() + "Incomplete block: 'do-while' at " + Block.Position + " is missing: '" + (((DoWhileBlock) Block).HasWhile ? "end" : "while") + "'";
+            else return base.ToString() + "Incomplete block: '" + Block.GetType() + "' at " + Block.Position;
         }
-        public string Text { get; }
-        public Position Position { get; }
+        public Block Block { get; }
     }
     abstract class SimulatorError : Error {
         public override string ToString()
@@ -214,17 +239,26 @@ namespace IonS
         public Word(Position position, string text) {
             Position = position;
             Text = text;
+            ExpandedFrom = null;
+        }
+
+        public override string ToString()
+        {
+            // IMPORTANT
+            if(ExpandedFrom != null) return "'" + Text + "' (expanded from " + ExpandedFrom + ")" ;
+            return "'" + Text + "' at " + Position;
         }
 
         public Position Position { get; }
         public string Text { get; }
+        public Word ExpandedFrom { get; set; }
     }
 
     class Lexer {
         private readonly string _source;
         private readonly string _text;
         private int _position;
-        private int _line, _column;
+        private int _line = 1, _column = 1;
 
         public Lexer(string text, string source) {
             _text = text;
@@ -263,6 +297,13 @@ namespace IonS
                 return new Word(position, _text.Substring(start, _position - start));
             }
             return null;
+        }
+
+        public Word[] GetWords() {
+            var words = new List<Word>();
+            Word word;
+            while((word = NextWord()) != null) words.Add(word);
+            return words.ToArray();
         }
     }
 
@@ -384,28 +425,108 @@ namespace IonS
         public Boolean HasWhile { get; set; }
     }
 
-    class ParseResult {
-        public ParseResult(List<Operation> operations, ParserError error) {
-            Operations = operations;
+    class Macro {
+        public Macro(Word key, List<Word> words) {
+            Key = key;
+            Words = words;
+        }
+
+        public Word Key { get; }
+        public List<Word> Words { get; }
+    }
+
+    abstract class Result {
+        public Result(Error error) {
             Error = error;
         }
+        public Error Error { get; }
+    }
+
+    class MacroExpansionResult : Result {
+        public MacroExpansionResult(Word[] words, Error error) : base(error) {
+            Words = words;
+        }
+        public Word[] Words { get; }
+    }
+
+    class MacroPreprocessor {
+        private readonly Word[] _words;
+        private static readonly string[] keywords = new string[] {"exit", "drop", "2drop", "dup", "2dup", "over", "2over", "swap", "+", "-", "*", "/", "%", ".", "if", "while", "do", "end", "continue", "break"}; // Remember: Whenever new keyword is added: put it here
+        public MacroPreprocessor(Word[] words) {
+            _words = words;
+        }
+
+        private static Macro getMacroByKey(List<Macro> macros, string key) {
+            foreach(Macro macro in macros) if(macro.Key.Text == key) return macro;
+            return null;
+        }
+        private static bool isKeyword(string word) {
+            foreach(string keyword in keywords) if(keyword == word) return true;
+            return false;
+        }
+
+        public MacroExpansionResult run() {
+            List<Word> words = new List<Word>();
+            List<Macro> macros = new List<Macro>();
+            for(int i = 0; i < _words.Length; i++) {
+                Word word = _words[i];
+                if(word.Text == "macro") {
+                    if(i++ == _words.Length-1) return new MacroExpansionResult(null, new IncompleteMacroError(word, null));
+                    Word key = _words[i];
+
+                    if(isKeyword(key.Text) || int.TryParse(key.Text, out int ___)) return new MacroExpansionResult(null, new InvalidMacroKeyError(key));
+
+                    if(i++ == _words.Length-2) return new MacroExpansionResult(null, new IncompleteMacroError(word, key));
+
+                    Macro macro = getMacroByKey(macros, key.Text);
+                    if(macro != null) return new MacroExpansionResult(null, new MacroRedefinitionError(macro.Key, key));
+
+                    List<Word> words1 = new List<Word>();
+                    if(_words[i].Text != "{") words1.Add(_words[i]);
+                    else {
+                        while(true) {
+                            i++;
+                            if(i >= _words.Length) return new MacroExpansionResult(null, new IncompleteMacroError(word, key));
+                            if(_words[i].Text == "}") break;
+                            words1.Add(_words[i]);
+                        }
+                    }
+                    macros.Add(new Macro(key, words1));
+                    continue;
+                } else {
+                    Macro macro = getMacroByKey(macros, word.Text);
+                    if(macro != null) {
+                        foreach(Word word1 in macro.Words) {
+                            word1.ExpandedFrom = word;
+                            words.Add(word1);
+                        }
+                        continue;
+                    }
+                }
+                words.Add(word);
+            }
+            return new MacroExpansionResult(words.ToArray(), null);
+        }
+    }
+
+    class ParseResult : Result {
+        public ParseResult(List<Operation> operations, Error error) : base(error) {
+            Operations = operations;
+        }
         public List<Operation> Operations { get; }
-        public ParserError Error { get; }
     }
 
     class Parser {
-        private readonly Word[] _words;
+        private readonly string _text, _source;
+        private Word[] _words;
         private int _position;
 
         private int nextControlStatementId = 0;
 
         public Parser(string text, string source)
         {
-            var lexer = new Lexer(text, source);
-            var words = new List<Word>();
-            Word word;
-            while((word = lexer.NextWord()) != null) words.Add(word);
-            _words = words.ToArray();
+            _text = text;
+            _source = source;
         }
 
         private Word Peek(int offset) {
@@ -427,6 +548,12 @@ namespace IonS
         }
 
         public ParseResult Parse() {
+            _words = new Lexer(_text, _source).GetWords();
+
+            var result = new MacroPreprocessor(_words).run();
+            if(result.Error != null) return new ParseResult(null, result.Error);
+            _words = result.Words;
+
             var operations = new List<Operation>();
             
             Stack<Block> openBlocks = new Stack<Block>();
@@ -485,7 +612,7 @@ namespace IonS
                         operations.Add(new LabelOperation("dowhile_do_" + doWhileBlock.Id));
                     }
                 } else if(Current.Text == "end") {
-                    if(openBlocks.Count == 0) return new ParseResult(null, new UnexpectedMarkerError(Current.Text, Current.Position));
+                    if(openBlocks.Count == 0) return new ParseResult(null, new UnexpectedMarkerError(Current));
 
                     Block block = openBlocks.Pop();
                     if(block.GetType() == typeof(IfBlock)) operations.Add(new LabelOperation("if_end_" + block.Id));
@@ -495,7 +622,7 @@ namespace IonS
                     } else if(block.GetType() == typeof(DoWhileBlock) && ((DoWhileBlock) block).HasWhile) {
                         operations.Add(new JumpIfNotZeroOperation("dowhile_do_" + block.Id, -1));
                         operations.Add(new LabelOperation("dowhile_end_" + block.Id));
-                    } else return new ParseResult(null, new UnexpectedMarkerError(Current.Text, Current.Position));
+                    } else return new ParseResult(null, new UnexpectedMarkerError(Current));
                 } else if(Current.Text == "continue") {
                     Block[] blocks = openBlocks.ToArray();
                     for(int i = blocks.Length-1; i >= 0; i--) {
@@ -520,17 +647,10 @@ namespace IonS
                     }
                 } else {
                     if(int.TryParse(Current.Text, out int value)) operations.Add(new PushIntegerOperation(value));
-                    else return new ParseResult(null, new UnexpectedWordError(Current.Text, Current.Position));
+                    else return new ParseResult(null, new UnexpectedWordError(Current));
                 }
             }
-            if(openBlocks.Count > 0) {
-                Block block = openBlocks.Pop();
-                string text = "";
-                if(block.GetType() == typeof(IfBlock)) text = "if";
-                else if(block.GetType() == typeof(WhileBlock)) text = "while";
-                else return new ParseResult(null, new InternalParserError());
-                return new ParseResult(null, new IncompleteBlockError(text, block.Position));
-            }
+            if(openBlocks.Count > 0) return new ParseResult(null, new IncompleteBlockError(openBlocks.Pop()));
 
             return new ParseResult(operations, null);
         }
