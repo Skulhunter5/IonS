@@ -141,9 +141,9 @@ Executes 'block' as long as the condition is true; checks 'condition' after exec
 The do-while-statement executes 'block' and then 'condition', it jumps back to the beginning of 'block' as long as 'condition' is not 0 (An example can be found in the tests directory)
 ### Others
 * **macros**:\
-Syntax: ```macro 'key' 'instruction'``` or ```macro 'key' { 'instructions' }```
-'key' is the key under which the macro can later be used while 'instruction' is a single instruction and 'instructions' just mean just some normal code\
-Macros are a preprocessor that goes through every word in the code and collects macros. Whenever it then encounters a macro's key, it expands that key into 'instruction' or 'instructions' of that macro
+Syntax: ```macro 'key' 'instruction'``` or ```macro 'key' { 'instructions' }```\
+'key' is the key that is later expanded while 'instruction' is a single instruction and 'instructions' is just a normal block of code\
+Macros are a preprocessor that goes through every word in the code and collects the macros. Whenever it encounters a macro's key, it expands that key into 'instruction' or 'instructions' of that macro
 
 ## Additional information
 * The program always exits with the topmost item as the exitcode.\
