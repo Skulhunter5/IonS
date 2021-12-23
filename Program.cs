@@ -244,7 +244,6 @@ namespace IonS
 
         public override string ToString()
         {
-            // IMPORTANT
             if(ExpandedFrom != null) return "'" + Text + "' (expanded from " + ExpandedFrom + ")" ;
             return "'" + Text + "' at " + Position;
         }
@@ -474,7 +473,7 @@ namespace IonS
                     if(i++ == _words.Length-1) return new MacroExpansionResult(null, new IncompleteMacroError(word, null));
                     Word key = _words[i];
 
-                    if(isKeyword(key.Text) || int.TryParse(key.Text, out int ___)) return new MacroExpansionResult(null, new InvalidMacroKeyError(key));
+                    if(isKeyword(key.Text) || int.TryParse(key.Text, out int _)) return new MacroExpansionResult(null, new InvalidMacroKeyError(key));
 
                     if(i++ == _words.Length-2) return new MacroExpansionResult(null, new IncompleteMacroError(word, key));
 
