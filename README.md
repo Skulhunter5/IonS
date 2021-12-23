@@ -129,12 +129,16 @@ Push(b)
 Exits with the topmost item as the exitcode
 ### Control statements
 * **if-statement**:\
-Syntax: ```... if 'if-block' end ...```\
-Only executes the 'if-block' if the topmost item is not 0, otherwise it jumps after the end-marker
+Syntax: ```... if 'block' end ...```\
+Only executes 'block' if the topmost item is not 0, otherwise it continues execution behind the end-marker
 * **while-loop**:\
-Syntax: ```... while 'condition' do 'while-block' end ...```\
-Executes the 'while-block' as long as the condition is true\
-The while-statement executes the condition and does a check just like the if-statement but when the 'while-block' is done, it jumps back to the beginning of the 'condition' (An example can be found in the tests directory)
+Syntax: ```... while 'condition' do 'block' end ...```\
+Executes 'block' as long as 'condition' is true; checks 'condition' before execution of 'block'\
+The while-statement executes 'condition' and does a check just like the if-statement but when 'block' is done, it jumps back to the beginning of 'condition' (An example can be found in the tests directory)
+* **do-while-loop**:\
+Syntax: ```... do 'block' while 'condition' end ...```\
+Executes 'block' as long as the condition is true; checks 'condition' after execution of 'block'\
+The do-while-statement executes 'block' and then 'condition', it jumps back to the beginning of 'block' as long as 'condition' is not 0 (An example can be found in the tests directory)
 
 ## Additional information
 * The program always exits with the topmost item as the exitcode.\
