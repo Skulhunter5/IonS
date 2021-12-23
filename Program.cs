@@ -468,7 +468,7 @@ namespace IonS
                     if(openBlocks.Count > 0 && openBlocks.Peek().GetType() == typeof(DoWhileBlock) && !((DoWhileBlock) openBlocks.Peek()).HasWhile) {
                         DoWhileBlock doWhileBlock = (DoWhileBlock) openBlocks.Peek();
                         doWhileBlock.HasWhile = true;
-                        // TODO: add label for continue operation
+                        operations.Add(new LabelOperation("dowhile_while_" + doWhileBlock.Id));
                     } else {
                         WhileBlock whileBlock = new WhileBlock(Current.Position, ControlStatementId());
                         openBlocks.Push(whileBlock);
@@ -494,8 +494,30 @@ namespace IonS
                         operations.Add(new LabelOperation("while_end_" + block.Id));
                     } else if(block.GetType() == typeof(DoWhileBlock) && ((DoWhileBlock) block).HasWhile) {
                         operations.Add(new JumpIfNotZeroOperation("dowhile_do_" + block.Id, -1));
-                        // TODO: add label for break operation
+                        operations.Add(new LabelOperation("dowhile_end_" + block.Id));
                     } else return new ParseResult(null, new UnexpectedMarkerError(Current.Text, Current.Position));
+                } else if(Current.Text == "continue") {
+                    Block[] blocks = openBlocks.ToArray();
+                    for(int i = blocks.Length-1; i >= 0; i--) {
+                        if(blocks[i].GetType() == typeof(WhileBlock) && ((WhileBlock) blocks[i]).HasDo) {
+                            operations.Add(new JumpOperation("while_while_" + blocks[i].Id, -1));
+                            break;
+                        } else if(blocks[i].GetType() == typeof(DoWhileBlock) && !((DoWhileBlock) blocks[i]).HasWhile) {
+                            operations.Add(new JumpOperation("dowhile_while_" + blocks[i].Id, -1));
+                            break;
+                        }
+                    }
+                } else if(Current.Text == "break") {
+                    Block[] blocks = openBlocks.ToArray();
+                    for(int i = blocks.Length-1; i >= 0; i--) {
+                        if(blocks[i].GetType() == typeof(WhileBlock) && ((WhileBlock) blocks[i]).HasDo) {
+                            operations.Add(new JumpOperation("while_end_" + blocks[i].Id, 1));
+                            break;
+                        } else if(blocks[i].GetType() == typeof(DoWhileBlock) && !((DoWhileBlock) blocks[i]).HasWhile) {
+                            operations.Add(new JumpOperation("dowhile_end_" + blocks[i].Id, 1));
+                            break;
+                        }
+                    }
                 } else {
                     if(int.TryParse(Current.Text, out int value)) operations.Add(new PushIntegerOperation(value));
                     else return new ParseResult(null, new UnexpectedWordError(Current.Text, Current.Position));

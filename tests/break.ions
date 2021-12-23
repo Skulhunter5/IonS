@@ -1,0 +1,21 @@
+10 do
+    1 -
+    dup .
+    dup 9 - if
+        break
+    end
+    12345 .
+while
+    dup
+end
+
+10 while dup do
+    1 -
+    dup .
+    dup 9 - if
+        break
+    end
+    12345 .
+end
+
+0 exit

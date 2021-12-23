@@ -1,0 +1,19 @@
+10 do
+    1 -
+    dup 5 - if
+        continue
+    end
+    dup .
+while
+    dup
+end
+
+10 while dup do
+    1 -
+    dup 5 - if
+        continue
+    end
+    dup .
+end
+
+0 exit
