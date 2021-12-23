@@ -1,0 +1,21 @@
+10 do
+    dup .
+    1 -
+while
+    dup
+end
+
+10 do
+    1 -
+    dup .
+while
+    dup
+end
+
+0 do
+    dup .
+while
+    dup
+end
+
+0 exit

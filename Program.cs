@@ -255,8 +255,8 @@ namespace IonS
 
         public Word NextWord() {
             if(_position < _text.Length) {
-                Position position = new Position(_source, _line, _column);
                 skipWhiteSpace();
+                Position position = new Position(_source, _line, _column);
                 if(c == '\0') return null;
                 int start = _position;
                 while(!char.IsWhiteSpace(c) && c != '\0') Next();
@@ -273,8 +273,10 @@ namespace IonS
         Drop, Drop2,
         Dup, Dup2,
         Over, Over2, Swap,
-        Label, Jump, JumpIfZero,
-        Exit
+        Label, Jump, JumpIfZero, JumpIfNotZero,
+        Exit,
+
+        CodeBlock
     }
 
     abstract class Operation {
@@ -353,6 +355,14 @@ namespace IonS
         public string Label { get; }
         public int Direction { get; }
     }
+    sealed class JumpIfNotZeroOperation : Operation {
+        public JumpIfNotZeroOperation(string label, int direction) : base(OperationType.JumpIfNotZero) {
+            Label = label;
+            Direction = direction;
+        }
+        public string Label { get; }
+        public int Direction { get; }
+    }
 
     abstract class Block {
         public Block(Position position, int id) {
@@ -367,6 +377,11 @@ namespace IonS
     }
     sealed class WhileBlock : Block {
         public WhileBlock(Position position, int id) : base(position, id) {}
+        public Boolean HasDo { get; set; }
+    }
+    sealed class DoWhileBlock : Block {
+        public DoWhileBlock(Position position, int id) : base(position, id) {}
+        public Boolean HasWhile { get; set; }
     }
 
     class ParseResult {
@@ -448,25 +463,38 @@ namespace IonS
                 } else if(Current.Text == "if") { // TODO: add else and elif or anything similar
                     IfBlock ifBlock = new IfBlock(Current.Position, ControlStatementId());
                     openBlocks.Push(ifBlock);
-                    operations.Add(new JumpIfZeroOperation("endif_" + ifBlock.Id, 1));
+                    operations.Add(new JumpIfZeroOperation("if_end_" + ifBlock.Id, 1));
                 } else if(Current.Text == "while") {
-                    WhileBlock whileBlock = new WhileBlock(Current.Position, ControlStatementId());
-                    openBlocks.Push(whileBlock);
-                    operations.Add(new LabelOperation("while_" + whileBlock.Id));
+                    if(openBlocks.Count > 0 && openBlocks.Peek().GetType() == typeof(DoWhileBlock) && !((DoWhileBlock) openBlocks.Peek()).HasWhile) {
+                        DoWhileBlock doWhileBlock = (DoWhileBlock) openBlocks.Peek();
+                        doWhileBlock.HasWhile = true;
+                        // TODO: add label for continue operation
+                    } else {
+                        WhileBlock whileBlock = new WhileBlock(Current.Position, ControlStatementId());
+                        openBlocks.Push(whileBlock);
+                        operations.Add(new LabelOperation("while_while_" + whileBlock.Id));
+                    }
                 } else if(Current.Text == "do") {
-                    if(openBlocks.Count == 0) return new ParseResult(null, new UnexpectedMarkerError(Current.Text, Current.Position));
-
-                    Block block = openBlocks.Peek();
-                    if(block.GetType() == typeof(WhileBlock)) operations.Add(new JumpIfZeroOperation("endwhile_" + block.Id, 1));
-                    else return new ParseResult(null, new UnexpectedMarkerError(Current.Text, Current.Position));
+                    Block block;
+                    if(openBlocks.Count > 0 && (block = openBlocks.Peek()).GetType() == typeof(WhileBlock) && !((WhileBlock) block).HasDo) {
+                        operations.Add(new JumpIfZeroOperation("while_end_" + block.Id, 1));
+                        ((WhileBlock) block).HasDo = true;
+                    } else {
+                        DoWhileBlock doWhileBlock = new DoWhileBlock(Current.Position, ControlStatementId());
+                        openBlocks.Push(doWhileBlock);
+                        operations.Add(new LabelOperation("dowhile_do_" + doWhileBlock.Id));
+                    }
                 } else if(Current.Text == "end") {
                     if(openBlocks.Count == 0) return new ParseResult(null, new UnexpectedMarkerError(Current.Text, Current.Position));
 
                     Block block = openBlocks.Pop();
-                    if(block.GetType() == typeof(IfBlock)) operations.Add(new LabelOperation("endif_" + block.Id));
-                    else if(block.GetType() == typeof(WhileBlock)) {
-                        operations.Add(new JumpOperation("while_" + block.Id, -1));
-                        operations.Add(new LabelOperation("endwhile_" + block.Id));
+                    if(block.GetType() == typeof(IfBlock)) operations.Add(new LabelOperation("if_end_" + block.Id));
+                    else if(block.GetType() == typeof(WhileBlock) && ((WhileBlock) block).HasDo) {
+                        operations.Add(new JumpOperation("while_while_" + block.Id, -1));
+                        operations.Add(new LabelOperation("while_end_" + block.Id));
+                    } else if(block.GetType() == typeof(DoWhileBlock) && ((DoWhileBlock) block).HasWhile) {
+                        operations.Add(new JumpIfNotZeroOperation("dowhile_do_" + block.Id, -1));
+                        // TODO: add label for break operation
                     } else return new ParseResult(null, new UnexpectedMarkerError(Current.Text, Current.Position));
                 } else {
                     if(int.TryParse(Current.Text, out int value)) operations.Add(new PushIntegerOperation(value));
@@ -654,6 +682,14 @@ namespace IonS
                         }
                         break;
                     }
+                    case OperationType.JumpIfNotZero: {
+                        if(stack.Pop() != 0) {
+                            JumpIfNotZeroOperation jumpIfNotZeroOperation = ((JumpIfNotZeroOperation) operation);
+                            while(i >= 0 && i < operations.Count && (operations[i].Type != OperationType.Label || ((LabelOperation) operations[i]).Label != jumpIfNotZeroOperation.Label))
+                                i += jumpIfNotZeroOperation.Direction;
+                        }
+                        break;
+                    }
                     case OperationType.Label: {
                         break;
                     }
@@ -805,6 +841,12 @@ namespace IonS
                         asm += "    pop rax\n";
                         asm += "    cmp rax, 0\n";
                         asm += "    je " + ((JumpIfZeroOperation) operation).Label + "\n";
+                        break;
+                    }
+                    case OperationType.JumpIfNotZero: {
+                        asm += "    pop rax\n";
+                        asm += "    cmp rax, 0\n";
+                        asm += "    jne " + ((JumpIfNotZeroOperation) operation).Label + "\n";
                         break;
                     }
                     default: {
