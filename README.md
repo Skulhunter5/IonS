@@ -139,6 +139,11 @@ The while-statement executes 'condition' and does a check just like the if-state
 Syntax: ```... do 'block' while 'condition' end ...```\
 Executes 'block' as long as the condition is true; checks 'condition' after execution of 'block'\
 The do-while-statement executes 'block' and then 'condition', it jumps back to the beginning of 'block' as long as 'condition' is not 0 (An example can be found in the tests directory)
+### Others
+* **macros**:\
+Syntax: ```macro 'key' 'instruction'``` or ```macro 'key' { 'instructions' }```
+'key' is the key under which the macro can later be used while 'instruction' is a single instruction and 'instructions' just mean just some normal code\
+Macros are a preprocessor that goes through every word in the code and collects macros. Whenever it then encounters a macro's key, it expands that key into 'instruction' or 'instructions' of that macro
 
 ## Additional information
 * The program always exits with the topmost item as the exitcode.\
