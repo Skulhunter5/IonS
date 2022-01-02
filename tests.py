@@ -4,6 +4,12 @@ from os import listdir
 from os.path import isfile, join
 
 def diff(a, b):
+    print("Expectation:")
+    print(a)
+    print(">>>")
+    print("Actual output:")
+    print(b)
+    print(">>>")
     m = len(a) if len(a) >= len(b) else len(b)
     column = 0
     line = 0
@@ -56,12 +62,6 @@ def run(runFor=None):
                     if(expectation == transcriptionOutput):
                         print("  Passed")
                         return
-                    print("Expectation:")
-                    print(expectation)
-                    print(">>>")
-                    print("Actual output:")
-                    print(transcriptionOutput)
-                    print(">>>")
                     diff(expectation, transcriptionOutput)
                     return
                 compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest"], stdout=subprocess.PIPE)
@@ -93,12 +93,15 @@ def run(runFor=None):
                     expectation += line
                 if(executionOutput == expectation):
                     print("  Passed")
+                    return
                 else:
                     print("  Failed:\n")
                     diff(expectation, executionOutput)
+                    return
     skippedCounter = 0
     passedCounter = 0
     failedCounter = 0
+    failedTests = []
     files = [f for f in listdir("tests") if isfile(join("tests", f)) and f.endswith(".ions")]
     for file in files:
         if(file.endswith(".ions")):
@@ -116,11 +119,13 @@ def run(runFor=None):
                         print("  Failed: Error during transcription (exitcode=" + str(transcriptionProcess.returncode) + "):\n")
                         print(transcriptionOutput)
                         failedCounter += 1
+                        failedTests.append(file)
                         continue
                     if(transcriptionProcess.returncode != int(lines[0][27:-1])):
                         print("  Failed: Transcription exited with code " + str(transcriptionProcess.returncode) + " instead of " + str(lines[0][27:-1]))
                         print(transcriptionOutput)
                         failedCounter += 1
+                        failedTests.append(file)
                         continue
                     expectation = ""
                     for line in lines[1:]:
@@ -129,14 +134,9 @@ def run(runFor=None):
                         print("  Passed\n")
                         passedCounter += 1
                         continue
-                    print("Expectation:")
-                    print(expectation)
-                    print(">>>")
-                    print("Actual output:")
-                    print(transcriptionOutput)
-                    print(">>>")
                     diff(expectation, transcriptionOutput)
                     failedCounter += 1
+                    failedTests.append(file)
                     continue
                 compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest"], stdout=subprocess.PIPE)
                 if(compilationProcess.returncode != 0):
@@ -145,11 +145,13 @@ def run(runFor=None):
                         print("  Failed: Error during compilation (exitcode=" + str(compilationProcess.returncode) + "):\n")
                         print(compilationOutput)
                         failedCounter += 1
+                        failedTests.append(file)
                         continue
                     if(compilationProcess.returncode != int(lines[0][25:-1])):
                         print("  Failed: Compilation exited with code " + str(compilationProcess.returncode) + " instead of " + str(lines[0][27:-1]))
                         print(compilationOutput)
                         failedCounter += 1
+                        failedTests.append(file)
                         continue
                     expectation = ""
                     for line in lines[1:]:
@@ -160,6 +162,7 @@ def run(runFor=None):
                         continue
                     diff(expectation, compilationOutput)
                     failedCounter += 1
+                    failedTests.append(file)
                     continue
                 executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE)
                 if(not lines[0][4:].startswith("Execution")):
@@ -169,10 +172,12 @@ def run(runFor=None):
                     print("  Compilation:\n")
                     print(compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
                     failedCounter += 1
+                    failedTests.append(file)
                     continue
                 if(executionProcess.returncode != int(lines[0][23:-1])):
                     print("  Failed: Execution finished with incorrect exitcode")
                     failedCounter += 1
+                    failedTests.append(file)
                     continue
                 executionOutput = executionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
                 expectation = ""
@@ -181,11 +186,16 @@ def run(runFor=None):
                 if(executionOutput == expectation):
                     print("  Passed\n")
                     passedCounter += 1
+                    continue
                 else:
                     print("  Failed:\n")
                     diff(expectation, executionOutput)
                     failedCounter += 1
-    print("Result:\n  Passed: " + str(passedCounter) + "\n  Failed: " + str(failedCounter) + "\n  Skipped: " + str(skippedCounter))
+                    failedTests.append(file)
+                    continue
+    print("Result:\n  Passed: " + str(passedCounter) + "\n  Skipped: " + str(skippedCounter) + "\n  Failed: " + str(failedCounter))
+    for test in failedTests:
+        print("  - " + test)
 
 def generate(forceGenerate = False, generateFor = None):
     if(generateFor != None):
