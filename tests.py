@@ -3,6 +3,8 @@ import subprocess
 from os import listdir
 from os.path import isfile, join
 
+executablePath = "bin\\Debug\\net5.0\\IonS.dll"
+
 def diff(a, b):
     print("Expectation:")
     print(a)
@@ -10,6 +12,8 @@ def diff(a, b):
     print("Actual output:")
     print(b)
     print(">>>")
+    print(list(a))
+    print(list(b))
     m = len(a) if len(a) >= len(b) else len(b)
     column = 0
     line = 0
@@ -33,7 +37,9 @@ def diff(a, b):
         i += 1
     print("Internal error: No difference")
 
-def run(runFor=None):
+def run(runFor=None, build=True):
+    if(build):
+        subprocess.run(["dotnet", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if(runFor != None):
         files = [f for f in listdir("tests") if isfile(join("tests", f)) and f.endswith(".ions")]
         for file in files:
@@ -45,7 +51,7 @@ def run(runFor=None):
                 return
             with open("tests/" + file[:-5] + ".txt", 'r') as f:
                 lines = f.readlines()
-                transcriptionProcess = subprocess.run(["dotnet", "run", "--compile", "tests/" + file], stdout=subprocess.PIPE)
+                transcriptionProcess = subprocess.run(["dotnet", executablePath, "--compile", "tests/" + file], stdout=subprocess.PIPE)
                 if(transcriptionProcess.returncode != 0):
                     transcriptionOutput = transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
                     if(not lines[0][4:].startswith("Transcription")):
@@ -112,7 +118,7 @@ def run(runFor=None):
                 continue
             with open("tests/" + file[:-5] + ".txt", 'r') as f:
                 lines = f.readlines()
-                transcriptionProcess = subprocess.run(["dotnet", "run", "--compile", "tests/" + file], stdout=subprocess.PIPE)
+                transcriptionProcess = subprocess.run(["dotnet", executablePath, "--compile", "tests/" + file], stdout=subprocess.PIPE)
                 if(transcriptionProcess.returncode != 0):
                     transcriptionOutput = transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
                     if(not lines[0][4:].startswith("Transcription")):
@@ -197,7 +203,9 @@ def run(runFor=None):
     for test in failedTests:
         print("  - " + test)
 
-def generate(forceGenerate = False, generateFor = None):
+def generate(forceGenerate = False, generateFor = None, build=True):
+    if(build):
+        subprocess.run(["dotnet", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if(generateFor != None):
         files = [f for f in listdir("tests") if isfile(join("tests", f)) and f.endswith(".ions")]
         for file in files:
@@ -205,7 +213,7 @@ def generate(forceGenerate = False, generateFor = None):
                 continue
             print("'" + file + "':")
             with open("tests/" + file[:-5] + ".txt", 'w') as out:
-                transcriptionProcess = subprocess.run(["dotnet", "run", "--compile", "tests/" + file], stdout=subprocess.PIPE)
+                transcriptionProcess = subprocess.run(["dotnet", executablePath, "--compile", "tests/" + file], stdout=subprocess.PIPE)
                 if(transcriptionProcess.returncode != 0):
                     out.write("--->Transcription:exitcode=" + str(transcriptionProcess.returncode) + "\n")
                     out.write(transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
@@ -233,38 +241,76 @@ def generate(forceGenerate = False, generateFor = None):
                 keptCounter += 1
                 continue
             with open("tests/" + file[:-5] + ".txt", 'w') as out:
-                transcriptionProcess = subprocess.run(["dotnet", "run", "--compile", "tests/" + file], stdout=subprocess.PIPE)
+                transcriptionProcess = subprocess.run(["dotnet", executablePath, "--compile", "tests/" + file], stdout=subprocess.PIPE)
                 if(transcriptionProcess.returncode != 0):
                     out.write("--->Transcription:exitcode=" + str(transcriptionProcess.returncode) + "\n")
-                    out.write(transcriptionProcess.stdout.decode('utf-8'))
+                    out.write(transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
                     print("  Generated expectation\n")
                     generatedCounter += 1
                     continue
                 compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest"], stdout=subprocess.PIPE)
                 if(compilationProcess.returncode != 0):
                     out.write("--->Compilation:exitcode=" + str(compilationProcess.returncode) + "\n")
-                    out.write(compilationProcess.stdout.decode('utf-8'))
+                    out.write(compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
                     print("  Generated expectation\n")
                     generatedCounter += 1
                     continue
                 executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE)
                 out.write("--->Execution:exitcode=" + str(executionProcess.returncode) + "\n")
-                out.write(executionProcess.stdout.decode('utf-8'))
+                out.write(executionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
                 print("  Generated expectation\n")
                 generatedCounter += 1
     print("Result:\n  Generated: " + str(generatedCounter) + "\n  Kept: " + str(keptCounter))
 
 if(__name__ == "__main__"):
     files = [f for f in listdir("tests") if isfile(join("tests", f)) and f.endswith(".ions")]
-    if(len(sys.argv) == 1 or sys.argv[1] in ["-r", "--run"]):
-        if(len(sys.argv) >= 4 and sys.argv[2] in ["-t", "--test"]):
-            run(runFor=sys.argv[3])
-        else:
-            run()
-    elif(sys.argv[1] in ["-g", "--generate"]):
-        if(len(sys.argv) >= 3 and sys.argv[2] in ["-f", "--force"]):
-            generate(forceGenerate=True)
-        elif(len(sys.argv) >= 4 and sys.argv[2] in ["-t", "--test"]):
-            generate(generateFor=sys.argv[3])
-        else:
-            generate()
+    args = sys.argv.copy()
+    i = 1
+    # parameters
+    action = None
+    force = False
+    file = None
+    build = True
+    # parsing the arguments
+    while(i < len(args)):
+        # action
+        if(i == 1):
+            if(args[i] in ["r", "run"]):
+                action = "run"
+            elif(args[i] in ["g", "generate"]):
+                action = "generate"
+            else:
+                print("Invalid action: '" + args[i] + "'")
+                exit()
+            i += 1
+            continue
+        # general arguments
+        if(args[i] == "-t"):
+            i += 1
+            if(i >= len(args)):
+                print("Missing argument for -t | --test")
+                exit()
+            file = args[i]
+            i += 1
+            continue
+        if(args[i] in ["-nb", "--no-build"]):
+            build = False
+            i += 1
+            continue
+        # action-specific arguments
+        if(action == "generate"):
+            if(args[i] in ["-f", "--force"]):
+                force = True
+                i += 1
+                continue
+            else:
+                print("Invalid argument: '" + args[i] + "'")
+                exit()
+        print("Invalid argument: '" + args[i] + "'")
+        exit()
+    if(action == "run"):
+        run(runFor=file, build=build)
+    elif(action == "generate"):
+        generate(forceGenerate=force, generateFor=file, build=build)
+    else:
+        run()
