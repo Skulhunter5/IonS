@@ -4,6 +4,4 @@ obj/**
 res/*
 !res/asm snippets
 
-# local testing system
-tests.py
-/tests/*.txt
+tests/*.txt

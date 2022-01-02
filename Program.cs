@@ -31,10 +31,12 @@ namespace IonS
             AssemblyTranscriptionResult result = asmTscr.run();
             if(result.Error != null) {
                 Console.WriteLine(result.Error);
+                Environment.ExitCode = 1;
                 return;
             }
             if(result.Asm == null) {
                 Console.WriteLine("No assembly has been generated.");
+                Environment.ExitCode = 1;
                 return;
             }
             File.WriteAllText("\\\\wsl$\\Ubuntu-20.04\\shared\\test.ions.asm", result.Asm);
