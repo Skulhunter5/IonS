@@ -19,23 +19,23 @@ def diff(a, b):
     line = 0
     i = 0
     while(i < m):
+        if(line == 0):
+            pass
+        if(i >= len(a)):
+            print("  Difference: the expectation is shorter than the actual output\n")
+            return
+        elif(i >= len(b)):
+            print("  Difference: the expectation is longer than the actual output\n")
+            return
         if(a[i] == "\n"):
             column = 0
             line += 1
-        if(line == 0):
-            pass
-        elif(i >= len(a)):
-            print("  Difference: the expectation is shorter than the actual output")
-            return
-        elif(i >= len(b)):
-            print("  Difference: the expectation is longer than the actual output")
-            return
-        elif(a[i] != b[i]):
-            print("    " + str(line) + ":" + str(column) + ":\n      Expected: '" + a[i] + "'\n      Got: '" + b[i] + "'")
+        if(a[i] != b[i]):
+            print("    " + str(line) + ":" + str(column) + ":\n      Expected: '" + a[i] + "'\n      Got: '" + b[i] + "'\n")
             return
         column += 1
         i += 1
-    print("Internal error: No difference")
+    print("Internal error: No difference\n")
 
 RESULT_PASSED = 0
 RESULT_FAILED = 1
