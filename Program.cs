@@ -775,7 +775,7 @@ namespace IonS
 
                     if(byte.TryParse(Current.Text, out byte bytesize)) _vars.Add(new Variable(identifier, bytesize));
                     else return new ParseResult(null, null, new InvalidVariableBytesizeError(Current));
-                } else if(Current.Text.StartsWith("!")) { // CWD
+                } else if(Current.Text.StartsWith("!")) {
                     string amountStr = Current.Text.Substring(1);
                     bool isByte = byte.TryParse(amountStr, out byte amount);
                     if(!isByte) return new ParseResult(null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
