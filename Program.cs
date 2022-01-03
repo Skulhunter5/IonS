@@ -95,8 +95,8 @@ namespace IonS
             return "[MacroPreprocessor]: ";
         }
     }
-    sealed class IncompleteMacroError : MacroPreprocessorError {
-        public IncompleteMacroError(Word macroWord, Word key) {
+    sealed class IncompleteMacroDefinitionError : MacroPreprocessorError {
+        public IncompleteMacroDefinitionError(Word macroWord, Word key) {
             MacroWord = macroWord;
             Key = key;
         }
@@ -174,6 +174,24 @@ namespace IonS
         }
         public Block Block { get; }
     }
+    sealed class IncompleteVariableDeclarationError : ParserError {
+        public IncompleteVariableDeclarationError(Word varWord, Word identifier) {
+            VarWord = varWord;
+            Identifier = identifier;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Incomplete variable: " + (Identifier != null ? Identifier : "at " + VarWord.Position);
+        }
+        public Word VarWord { get; }
+        public Word Identifier { get; }
+    }
+    sealed class InvalidVariableIdentifierError : ParserError {
+        public InvalidVariableIdentifierError(Word identifier) {
+            Identifier = identifier;
+        }
+        public Word identifier { get; }
+    }
     abstract class SimulatorError : Error {
         public override string ToString()
         {
@@ -226,7 +244,7 @@ namespace IonS
             return "[AssemblyTranscriber]: ";
         }
     }
-    sealed class UnimplementedOperationAssemblyTranscriberError : SimulatorError {
+    sealed class UnimplementedOperationAssemblyTranscriberError : AssemblyTranscriberError {
         public UnimplementedOperationAssemblyTranscriberError(OperationType type) {
             Type = type;
         }
@@ -452,7 +470,7 @@ namespace IonS
 
     class MacroPreprocessor {
         private readonly Word[] _words;
-        private static readonly string[] keywords = new string[] {"exit", "drop", "2drop", "dup", "2dup", "over", "2over", "swap", "+", "-", "*", "/", "%", ".", "if", "while", "do", "end", "continue", "break"}; // Remember: Whenever new keyword is added: put it here
+        private static readonly string[] keywords = new string[] {"exit", "drop", "2drop", "dup", "2dup", "over", "2over", "swap", "+", "-", "*", "/", "%", ".", "if", "while", "do", "end", "continue", "break", "var"}; // Remember: Whenever new keyword is added: put it here
         public MacroPreprocessor(Word[] words) {
             _words = words;
         }
@@ -472,12 +490,12 @@ namespace IonS
             for(int i = 0; i < _words.Length; i++) {
                 Word word = _words[i];
                 if(word.Text == "macro") {
-                    if(i++ == _words.Length-1) return new MacroExpansionResult(null, new IncompleteMacroError(word, null));
+                    if(i++ == _words.Length-1) return new MacroExpansionResult(null, new IncompleteMacroDefinitionError(word, null));
                     Word key = _words[i];
 
                     if(isKeyword(key.Text) || int.TryParse(key.Text, out int _)) return new MacroExpansionResult(null, new InvalidMacroKeyError(key));
 
-                    if(i++ == _words.Length-2) return new MacroExpansionResult(null, new IncompleteMacroError(word, key));
+                    if(i++ == _words.Length-2) return new MacroExpansionResult(null, new IncompleteMacroDefinitionError(word, key));
 
                     Macro macro = getMacroByKey(macros, key.Text);
                     if(macro != null) return new MacroExpansionResult(null, new MacroRedefinitionError(macro.Key, key));
@@ -487,7 +505,7 @@ namespace IonS
                     else {
                         while(true) {
                             i++;
-                            if(i >= _words.Length) return new MacroExpansionResult(null, new IncompleteMacroError(word, key));
+                            if(i >= _words.Length) return new MacroExpansionResult(null, new IncompleteMacroDefinitionError(word, key));
                             if(_words[i].Text == "}") break;
                             words1.Add(_words[i]);
                         }
@@ -517,10 +535,21 @@ namespace IonS
         public List<Operation> Operations { get; }
     }
 
+    class Variable {
+        public Variable(string identifier, int bytesize) {
+            Identifier = identifier;
+            Bytesize = bytesize;
+        }
+        public string Identifier { get; }
+        public int bytesize { get; }
+    }
+
     class Parser {
         private readonly string _text, _source;
         private Word[] _words;
         private int _position;
+
+        private List<Variable> _vars;
 
         private int nextControlStatementId = 0;
 
@@ -554,6 +583,8 @@ namespace IonS
             var result = new MacroPreprocessor(_words).run();
             if(result.Error != null) return new ParseResult(null, result.Error);
             _words = result.Words;
+
+            _vars = new List<Variable>();
 
             var operations = new List<Operation>();
             
@@ -646,6 +677,13 @@ namespace IonS
                             break;
                         }
                     }
+                } else if(Current.Text == "var") {
+                    Word varWord = Current;
+                    NextWord();
+                    if(Current == null) return new ParseResult(null, new IncompleteVariableDeclarationError(varWord, null));
+
+                    Word identifier = Current;
+                    if(isKeyword(identifier.Text) || int.TryParse(identifier.Text, out int _)) return new ParseResult(null, new InvalidVariableIdentifierError(identifier));
                 } else {
                     if(int.TryParse(Current.Text, out int value)) operations.Add(new PushIntegerOperation(value));
                     else return new ParseResult(null, new UnexpectedWordError(Current));
