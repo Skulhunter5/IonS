@@ -210,6 +210,6 @@ if(__name__ == "__main__"):
     if(action == "run"):
         run(files)
     elif(action == "generate"):
-        generate(files, forceGenerate=force)
+        generate(files, forceGenerate=force if filenames == None else True)
     else:
         run()
