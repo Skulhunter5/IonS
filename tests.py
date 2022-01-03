@@ -37,6 +37,11 @@ def diff(a, b):
         i += 1
     print("Internal error: No difference")
 
+RESULT_PASSED = 0
+RESULT_FAILED = 1
+RESULT_SKIPPED = 2
+RESULT_GENERATED = 3
+
 def runFile(file):
     print("'" + file + "':")
     with open("tests/" + file[:-5] + ".txt", 'r') as f:
@@ -47,53 +52,55 @@ def runFile(file):
             if(not lines[0][4:].startswith("Transcription")):
                 print("  Failed: Error during transcription (exitcode=" + str(transcriptionProcess.returncode) + "):\n")
                 print(transcriptionOutput)
-                return
+                return RESULT_FAILED
             if(transcriptionProcess.returncode != int(lines[0][27:-1])):
                 print("  Failed: Transcription exited with code " + str(transcriptionProcess.returncode) + " instead of " + str(lines[0][27:-1]))
                 print(transcriptionOutput)
-                return
+                return RESULT_FAILED
             expectation = ""
             for line in lines[1:]:
                 expectation += line
             if(expectation == transcriptionOutput):
-                print("  Passed")
-                return
+                print("  Passed\n")
+                return RESULT_PASSED
+            print("  Failed:\n")
             diff(expectation, transcriptionOutput)
-            return
+            return RESULT_FAILED
         compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest"], stdout=subprocess.PIPE)
         if(compilationProcess.returncode != 0):
             compilationOutput = compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n')
             if(not lines[0][4:].startswith("Compilation")):
                 print("  Failed: Error during compilation (exitcode=" + str(compilationProcess.returncode) + "):\n")
                 print(compilationOutput)
-                return
+                return RESULT_FAILED
             if(compilationProcess.returncode != int(lines[0][25:-1])):
                 print("  Failed: Compilation exited with code " + str(compilationProcess.returncode) + " instead of " + str(lines[0][27:-1]))
                 print(compilationOutput)
-                return
+                return RESULT_FAILED
             expectation = ""
             for line in lines[1:]:
                 expectation += line
             if(expectation == compilationOutput):
-                print("  Passed")
-                return
+                print("  Passed\n")
+                return RESULT_PASSED
+            print("  Failed:\n")
             diff(expectation, compilationOutput)
-            return
+            return RESULT_FAILED
         executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE)
         if(executionProcess.returncode != int(lines[0][23:-1])):
             print("  Failed: Execution finished with incorrect exitcode")
-            return
+            return RESULT_FAILED
         executionOutput = executionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
         expectation = ""
         for line in lines[1:]:
             expectation += line
         if(executionOutput == expectation):
-            print("  Passed")
-            return
+            print("  Passed\n")
+            return RESULT_PASSED
         else:
             print("  Failed:\n")
             diff(expectation, executionOutput)
-            return
+            return RESULT_FAILED
 
 def run(files):
     skippedCounter = 0
@@ -102,97 +109,38 @@ def run(files):
     failedTests = []
     for file in files:
         if(file.endswith(".ions")):
-            print("'" + file + "':")
             if(not isfile("tests/" + file[:-5] + ".txt")):
                 print("  No expectation found\n")
                 skippedCounter += 1
                 continue
-            with open("tests/" + file[:-5] + ".txt", 'r') as f:
-                lines = f.readlines()
-                transcriptionProcess = subprocess.run(["dotnet", executablePath, "--compile", "tests/" + file], stdout=subprocess.PIPE)
-                if(transcriptionProcess.returncode != 0):
-                    transcriptionOutput = transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
-                    if(not lines[0][4:].startswith("Transcription")):
-                        print("  Failed: Error during transcription (exitcode=" + str(transcriptionProcess.returncode) + "):\n")
-                        print(transcriptionOutput)
-                        failedCounter += 1
-                        failedTests.append(file)
-                        continue
-                    if(transcriptionProcess.returncode != int(lines[0][27:-1])):
-                        print("  Failed: Transcription exited with code " + str(transcriptionProcess.returncode) + " instead of " + str(lines[0][27:-1]))
-                        print(transcriptionOutput)
-                        failedCounter += 1
-                        failedTests.append(file)
-                        continue
-                    expectation = ""
-                    for line in lines[1:]:
-                        expectation += line
-                    if(expectation == transcriptionOutput):
-                        print("  Passed\n")
-                        passedCounter += 1
-                        continue
-                    diff(expectation, transcriptionOutput)
-                    failedCounter += 1
-                    failedTests.append(file)
-                    continue
-                compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest"], stdout=subprocess.PIPE)
-                if(compilationProcess.returncode != 0):
-                    compilationOutput = compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n')
-                    if(not lines[0][4:].startswith("Compilation")):
-                        print("  Failed: Error during compilation (exitcode=" + str(compilationProcess.returncode) + "):\n")
-                        print(compilationOutput)
-                        failedCounter += 1
-                        failedTests.append(file)
-                        continue
-                    if(compilationProcess.returncode != int(lines[0][25:-1])):
-                        print("  Failed: Compilation exited with code " + str(compilationProcess.returncode) + " instead of " + str(lines[0][27:-1]))
-                        print(compilationOutput)
-                        failedCounter += 1
-                        failedTests.append(file)
-                        continue
-                    expectation = ""
-                    for line in lines[1:]:
-                        expectation += line
-                    if(expectation == compilationOutput):
-                        print("  Passed\n")
-                        passedCounter += 1
-                        continue
-                    diff(expectation, compilationOutput)
-                    failedCounter += 1
-                    failedTests.append(file)
-                    continue
-                executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE)
-                if(not lines[0][4:].startswith("Execution")):
-                    print("  Failed: Should have failed before execution")
-                    print("  Transcription:\n")
-                    print(transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
-                    print("  Compilation:\n")
-                    print(compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
-                    failedCounter += 1
-                    failedTests.append(file)
-                    continue
-                if(executionProcess.returncode != int(lines[0][23:-1])):
-                    print("  Failed: Execution finished with incorrect exitcode")
-                    failedCounter += 1
-                    failedTests.append(file)
-                    continue
-                executionOutput = executionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
-                expectation = ""
-                for line in lines[1:]:
-                    expectation += line
-                if(executionOutput == expectation):
-                    print("  Passed\n")
-                    passedCounter += 1
-                    continue
-                else:
-                    print("  Failed:\n")
-                    diff(expectation, executionOutput)
-                    failedCounter += 1
-                    failedTests.append(file)
-                    continue
+            result = runFile(file)
+            if(result == RESULT_PASSED):
+                passedCounter += 1
+            elif(result == RESULT_FAILED):
+                failedCounter += 1
     print("Result:\n  Passed: " + str(passedCounter) + "\n  Skipped: " + str(skippedCounter) + "\n  Failed: " + str(failedCounter))
     for test in failedTests:
         print("  - " + test)
+
+def generateFile(file):
+    with open("tests/" + file[:-5] + ".txt", 'w') as out:
+        transcriptionProcess = subprocess.run(["dotnet", executablePath, "--compile", "tests/" + file], stdout=subprocess.PIPE)
+        if(transcriptionProcess.returncode != 0):
+            out.write("--->Transcription:exitcode=" + str(transcriptionProcess.returncode) + "\n")
+            out.write(transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
+            print("  Generated expectation\n")
+            return RESULT_GENERATED
+        compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest"], stdout=subprocess.PIPE)
+        if(compilationProcess.returncode != 0):
+            out.write("--->Compilation:exitcode=" + str(compilationProcess.returncode) + "\n")
+            out.write(compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
+            print("  Generated expectation\n")
+            return RESULT_GENERATED
+        executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE)
+        out.write("--->Execution:exitcode=" + str(executionProcess.returncode) + "\n")
+        out.write(executionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
+        print("  Generated expectation\n")
+        return RESULT_GENERATED
 
 def generate(files, forceGenerate=False):
     generatedCounter = 0
@@ -204,25 +152,8 @@ def generate(files, forceGenerate=False):
                 print("  Expectation found\n")
                 keptCounter += 1
                 continue
-            with open("tests/" + file[:-5] + ".txt", 'w') as out:
-                transcriptionProcess = subprocess.run(["dotnet", executablePath, "--compile", "tests/" + file], stdout=subprocess.PIPE)
-                if(transcriptionProcess.returncode != 0):
-                    out.write("--->Transcription:exitcode=" + str(transcriptionProcess.returncode) + "\n")
-                    out.write(transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
-                    print("  Generated expectation\n")
-                    generatedCounter += 1
-                    continue
-                compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest"], stdout=subprocess.PIPE)
-                if(compilationProcess.returncode != 0):
-                    out.write("--->Compilation:exitcode=" + str(compilationProcess.returncode) + "\n")
-                    out.write(compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
-                    print("  Generated expectation\n")
-                    generatedCounter += 1
-                    continue
-                executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE)
-                out.write("--->Execution:exitcode=" + str(executionProcess.returncode) + "\n")
-                out.write(executionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
-                print("  Generated expectation\n")
+            result = generateFile(file)
+            if(result == RESULT_GENERATED):
                 generatedCounter += 1
     print("Result:\n  Generated: " + str(generatedCounter) + "\n  Kept: " + str(keptCounter))
 
