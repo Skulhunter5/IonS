@@ -186,6 +186,18 @@ namespace IonS
         public Word VarWord { get; }
         public Word Identifier { get; }
     }
+    sealed class VariableRedeclarationError : ParserError {
+        public VariableRedeclarationError(Word o, Word n) {
+            Old = o;
+            New = n;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Trying to redeclare variable: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
+        }
+        public Word Old { get; }
+        public Word New { get; }
+    }
     sealed class InvalidVariableIdentifierError : ParserError {
         public InvalidVariableIdentifierError(Word identifier) {
             Identifier = identifier;
@@ -349,6 +361,7 @@ namespace IonS
         Over, Over2, Swap,
         Label, Jump, JumpIfZero, JumpIfNotZero,
         Exit,
+        VariableAccess,
 
         CodeBlock
     }
@@ -438,7 +451,7 @@ namespace IonS
         public int Direction { get; } // Only used for optimization of the simulator
     }
     sealed class VariableAccessOperation : Operation {
-        public VariableAccessOperation(string identifier) : base(OperationType.JumpIfNotZero) {
+        public VariableAccessOperation(string identifier) : base(OperationType.VariableAccess) {
             Identifier = identifier;
         }
         public string Identifier { get; }
@@ -574,11 +587,11 @@ namespace IonS
     }
 
     class Variable {
-        public Variable(string identifier, int bytesize) {
+        public Variable(Word identifier, int bytesize) {
             Identifier = identifier;
             Bytesize = bytesize;
         }
-        public string Identifier { get; }
+        public Word Identifier { get; }
         public int Bytesize { get; }
     }
 
@@ -616,7 +629,7 @@ namespace IonS
         }
 
         private Variable GetVariable(string identifier) {
-            foreach(Variable var in _vars) if(var.Identifier == identifier) return var;
+            foreach(Variable var in _vars) if(var.Identifier.Text == identifier) return var;
             return null;
         }
 
@@ -726,18 +739,21 @@ namespace IonS
                     if(Current == null) return new ParseResult(null, null, new IncompleteVariableDeclarationError(varWord, null));
 
                     Word identifier = Current;
+                    // TODO: Check that the identifier is valid for nasm aswell
                     if(Keyword.isKeyword(identifier.Text) || int.TryParse(identifier.Text, out int _)) return new ParseResult(null, null, new InvalidVariableIdentifierError(identifier));
+                    Variable var = GetVariable(identifier.Text);
+                    if(var != null) return new ParseResult(null, null, new VariableRedeclarationError(var.Identifier, identifier));
 
                     NextWord();
                     if(Current.Text == null) return new ParseResult(null, null, new IncompleteVariableDeclarationError(varWord, identifier));
 
-                    if(int.TryParse(Current.Text, out int bytesize)) _vars.Add(new Variable(identifier.Text, bytesize));
+                    if(int.TryParse(Current.Text, out int bytesize)) _vars.Add(new Variable(identifier, bytesize));
                     else return new ParseResult(null, null, new InvalidVariableBytesizeError(Current));
                 } else {
                     if(int.TryParse(Current.Text, out int value)) operations.Add(new PushIntegerOperation(value));
                     else {
                         Variable var = GetVariable(Current.Text);
-                        if(var != null) operations.Add(new VariableAccessOperation(var.Identifier));
+                        if(var != null) operations.Add(new VariableAccessOperation(var.Identifier.Text));
                         else return new ParseResult(null, null, new UnexpectedWordError(Current));
                     }
                 }
@@ -757,7 +773,7 @@ namespace IonS
         public Error Error { get; }
     }
 
-    class Simulator {
+    class Simulator { // TODO: Implement variables
         public readonly Stack<int> stack;
         public readonly int maxStackSize;
 
@@ -936,7 +952,7 @@ namespace IonS
         }
     }
 
-    class AssemblyTranscriptionResult {
+    class AssemblyTranscriptionResult { // TODO: Add support for other assemblers
         public AssemblyTranscriptionResult(string asm, Error error) {
             Asm = asm;
             Error = error;
@@ -952,7 +968,7 @@ namespace IonS
             _source = source;
         }
 
-        public AssemblyTranscriptionResult run() { // CWD
+        public AssemblyTranscriptionResult run() {
             string asm = "BITS 64\n";
             var parser = new Parser(_text, _source);
             var result = parser.Parse();
@@ -960,7 +976,7 @@ namespace IonS
             var operations = result.Operations;
 
             if(result.Variables.Count > 0) asm += "segment .bss\n";
-            foreach(Variable var in result.Variables) asm += "    var_" + var.Identifier + ": resb " + var.Bytesize + "\n";
+            foreach(Variable var in result.Variables) asm += "    var_" + var.Identifier.Text + ": resb " + var.Bytesize + "\n";
 
             asm += "segment .text\n";
 
@@ -1094,6 +1110,10 @@ namespace IonS
                         asm += "    pop rax\n";
                         asm += "    cmp rax, 0\n";
                         asm += "    jne " + ((JumpIfNotZeroOperation) operation).Label + "\n";
+                        break;
+                    }
+                    case OperationType.VariableAccess: {
+                        asm += "    push var_" + ((VariableAccessOperation) operation).Identifier + "\n";
                         break;
                     }
                     default: {
