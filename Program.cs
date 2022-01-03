@@ -190,7 +190,21 @@ namespace IonS
         public InvalidVariableIdentifierError(Word identifier) {
             Identifier = identifier;
         }
-        public Word identifier { get; }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid identifier for variable: " + Identifier;
+        }
+        public Word Identifier { get; }
+    }
+    sealed class InvalidVariableBytesizeError : ParserError {
+        public InvalidVariableBytesizeError(Word bytesize) {
+            Bytesize = bytesize;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid bytesize for variable: " + Bytesize;
+        }
+        public Word Bytesize { get; }
     }
     abstract class SimulatorError : Error {
         public override string ToString()
@@ -405,7 +419,7 @@ namespace IonS
             Direction = direction;
         }
         public string Label { get; }
-        public int Direction { get; }
+        public int Direction { get; } // Only used for optimization of the simulator
     }
     sealed class JumpIfZeroOperation : Operation {
         public JumpIfZeroOperation(string label, int direction) : base(OperationType.JumpIfZero) {
@@ -413,7 +427,7 @@ namespace IonS
             Direction = direction;
         }
         public string Label { get; }
-        public int Direction { get; }
+        public int Direction { get; } // Only used for optimization of the simulator
     }
     sealed class JumpIfNotZeroOperation : Operation {
         public JumpIfNotZeroOperation(string label, int direction) : base(OperationType.JumpIfNotZero) {
@@ -421,7 +435,13 @@ namespace IonS
             Direction = direction;
         }
         public string Label { get; }
-        public int Direction { get; }
+        public int Direction { get; } // Only used for optimization of the simulator
+    }
+    sealed class VariableAccessOperation : Operation {
+        public VariableAccessOperation(string identifier) : base(OperationType.JumpIfNotZero) {
+            Identifier = identifier;
+        }
+        public string Identifier { get; }
     }
 
     abstract class Block {
@@ -442,6 +462,26 @@ namespace IonS
     sealed class DoWhileBlock : Block {
         public DoWhileBlock(Position position, int id) : base(position, id) {}
         public Boolean HasWhile { get; set; }
+    }
+
+    class Keyword {
+        // Remember: Whenever new keyword is added: put it here
+        private static readonly string[] keywords = new string[] {
+            "exit",
+            "drop", "2drop",
+            "dup", "2dup",
+            "over", "2over",
+            "swap",
+            "+", "-", "*", "/", "%",
+            ".",
+            "if", "while", "do", "end",
+            "continue", "break",
+            "macro",
+            "var"};
+        public static bool isKeyword(string word) {
+            foreach(string keyword in keywords) if(keyword == word) return true;
+            return false;
+        }
     }
 
     class Macro {
@@ -470,18 +510,14 @@ namespace IonS
 
     class MacroPreprocessor {
         private readonly Word[] _words;
-        private static readonly string[] keywords = new string[] {"exit", "drop", "2drop", "dup", "2dup", "over", "2over", "swap", "+", "-", "*", "/", "%", ".", "if", "while", "do", "end", "continue", "break", "var"}; // Remember: Whenever new keyword is added: put it here
+
         public MacroPreprocessor(Word[] words) {
             _words = words;
         }
 
-        private static Macro getMacroByKey(List<Macro> macros, string key) {
+        private static Macro GetMacro(List<Macro> macros, string key) {
             foreach(Macro macro in macros) if(macro.Key.Text == key) return macro;
             return null;
-        }
-        private static bool isKeyword(string word) {
-            foreach(string keyword in keywords) if(keyword == word) return true;
-            return false;
         }
 
         public MacroExpansionResult run() {
@@ -493,11 +529,11 @@ namespace IonS
                     if(i++ == _words.Length-1) return new MacroExpansionResult(null, new IncompleteMacroDefinitionError(word, null));
                     Word key = _words[i];
 
-                    if(isKeyword(key.Text) || int.TryParse(key.Text, out int _)) return new MacroExpansionResult(null, new InvalidMacroKeyError(key));
+                    if(Keyword.isKeyword(key.Text) || int.TryParse(key.Text, out int _)) return new MacroExpansionResult(null, new InvalidMacroKeyError(key));
 
                     if(i++ == _words.Length-2) return new MacroExpansionResult(null, new IncompleteMacroDefinitionError(word, key));
 
-                    Macro macro = getMacroByKey(macros, key.Text);
+                    Macro macro = GetMacro(macros, key.Text);
                     if(macro != null) return new MacroExpansionResult(null, new MacroRedefinitionError(macro.Key, key));
 
                     List<Word> words1 = new List<Word>();
@@ -513,7 +549,7 @@ namespace IonS
                     macros.Add(new Macro(key, words1));
                     continue;
                 } else {
-                    Macro macro = getMacroByKey(macros, word.Text);
+                    Macro macro = GetMacro(macros, word.Text);
                     if(macro != null) {
                         foreach(Word word1 in macro.Words) {
                             word1.ExpandedFrom = word;
@@ -529,9 +565,11 @@ namespace IonS
     }
 
     class ParseResult : Result {
-        public ParseResult(List<Operation> operations, Error error) : base(error) {
+        public ParseResult(List<Variable> variables, List<Operation> operations, Error error) : base(error) {
+            Variables = variables;
             Operations = operations;
         }
+        public List<Variable> Variables { get; }
         public List<Operation> Operations { get; }
     }
 
@@ -541,7 +579,7 @@ namespace IonS
             Bytesize = bytesize;
         }
         public string Identifier { get; }
-        public int bytesize { get; }
+        public int Bytesize { get; }
     }
 
     class Parser {
@@ -577,11 +615,16 @@ namespace IonS
             return nextControlStatementId++;
         }
 
+        private Variable GetVariable(string identifier) {
+            foreach(Variable var in _vars) if(var.Identifier == identifier) return var;
+            return null;
+        }
+
         public ParseResult Parse() {
             _words = new Lexer(_text, _source).GetWords();
 
             var result = new MacroPreprocessor(_words).run();
-            if(result.Error != null) return new ParseResult(null, result.Error);
+            if(result.Error != null) return new ParseResult(null, null, result.Error);
             _words = result.Words;
 
             _vars = new List<Variable>();
@@ -617,7 +660,7 @@ namespace IonS
                     operations.Add(new DivideOperation());
                 } else if(Current.Text == "%") {
                     operations.Add(new ModuloOperation());
-                } else if(Current.Text == ".") {
+                } else if(Current.Text == "dump") {
                     operations.Add(new DumpOperation());
                 } else if(Current.Text == "if") { // TODO: add else and elif or anything similar
                     IfBlock ifBlock = new IfBlock(Current.Position, ControlStatementId());
@@ -644,7 +687,7 @@ namespace IonS
                         operations.Add(new LabelOperation("dowhile_do_" + doWhileBlock.Id));
                     }
                 } else if(Current.Text == "end") {
-                    if(openBlocks.Count == 0) return new ParseResult(null, new UnexpectedMarkerError(Current));
+                    if(openBlocks.Count == 0) return new ParseResult(null, null, new UnexpectedMarkerError(Current));
 
                     Block block = openBlocks.Pop();
                     if(block.GetType() == typeof(IfBlock)) operations.Add(new LabelOperation("if_end_" + block.Id));
@@ -654,7 +697,7 @@ namespace IonS
                     } else if(block.GetType() == typeof(DoWhileBlock) && ((DoWhileBlock) block).HasWhile) {
                         operations.Add(new JumpIfNotZeroOperation("dowhile_do_" + block.Id, -1));
                         operations.Add(new LabelOperation("dowhile_end_" + block.Id));
-                    } else return new ParseResult(null, new UnexpectedMarkerError(Current));
+                    } else return new ParseResult(null, null, new UnexpectedMarkerError(Current));
                 } else if(Current.Text == "continue") {
                     Block[] blocks = openBlocks.ToArray();
                     for(int i = blocks.Length-1; i >= 0; i--) {
@@ -677,21 +720,31 @@ namespace IonS
                             break;
                         }
                     }
-                } else if(Current.Text == "var") {
+                } else if(Current.Text == "var") { // CWD
                     Word varWord = Current;
                     NextWord();
-                    if(Current == null) return new ParseResult(null, new IncompleteVariableDeclarationError(varWord, null));
+                    if(Current == null) return new ParseResult(null, null, new IncompleteVariableDeclarationError(varWord, null));
 
                     Word identifier = Current;
-                    if(isKeyword(identifier.Text) || int.TryParse(identifier.Text, out int _)) return new ParseResult(null, new InvalidVariableIdentifierError(identifier));
+                    if(Keyword.isKeyword(identifier.Text) || int.TryParse(identifier.Text, out int _)) return new ParseResult(null, null, new InvalidVariableIdentifierError(identifier));
+
+                    NextWord();
+                    if(Current.Text == null) return new ParseResult(null, null, new IncompleteVariableDeclarationError(varWord, identifier));
+
+                    if(int.TryParse(Current.Text, out int bytesize)) _vars.Add(new Variable(identifier.Text, bytesize));
+                    else return new ParseResult(null, null, new InvalidVariableBytesizeError(Current));
                 } else {
                     if(int.TryParse(Current.Text, out int value)) operations.Add(new PushIntegerOperation(value));
-                    else return new ParseResult(null, new UnexpectedWordError(Current));
+                    else {
+                        Variable var = GetVariable(Current.Text);
+                        if(var != null) operations.Add(new VariableAccessOperation(var.Identifier));
+                        else return new ParseResult(null, null, new UnexpectedWordError(Current));
+                    }
                 }
             }
-            if(openBlocks.Count > 0) return new ParseResult(null, new IncompleteBlockError(openBlocks.Pop()));
+            if(openBlocks.Count > 0) return new ParseResult(null, null, new IncompleteBlockError(openBlocks.Pop()));
 
-            return new ParseResult(operations, null);
+            return new ParseResult(_vars, operations, null);
         }
     }
 
@@ -844,7 +897,7 @@ namespace IonS
                         break;
                     }
                     case OperationType.Dump: {
-                        if(stack.Count == 0) return new SimulationResult(0, new StackUnderflowError("."));
+                        if(stack.Count == 0) return new SimulationResult(0, new StackUnderflowError("dump"));
 
                         Console.WriteLine(stack.Pop());
                         break;
@@ -899,12 +952,25 @@ namespace IonS
             _source = source;
         }
 
-        public AssemblyTranscriptionResult run() {
-            string asm = File.ReadAllText("res/asm snippets/start.asm");
+        public AssemblyTranscriptionResult run() { // CWD
+            string asm = "BITS 64\n";
             var parser = new Parser(_text, _source);
             var result = parser.Parse();
             if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
             var operations = result.Operations;
+
+            if(result.Variables.Count > 0) asm += "segment .bss\n";
+            foreach(Variable var in result.Variables) asm += "    var_" + var.Identifier + ": resb " + var.Bytesize + "\n";
+
+            asm += "segment .text\n";
+
+            // SMALL assembly size optimization
+            foreach(Operation operation in operations) if(operation.Type == OperationType.Dump) {
+                asm += File.ReadAllText("res/asm snippets/dump.asm");
+                break;
+            }
+
+            asm += "global _start\n_start:\n";
             for(int i = 0; i < operations.Count; i++) {
                 Operation operation = operations[i];
                 switch(operation.Type) {
@@ -1007,7 +1073,7 @@ namespace IonS
                     }
                     case OperationType.Dump: {
                         asm += "    pop rdi\n";
-                        asm += "    call print\n";
+                        asm += "    call dump\n";
                         break;
                     }
                     case OperationType.Label: {
