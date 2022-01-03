@@ -27,7 +27,7 @@ namespace IonS
             return count;
         }
         private static void Compile(string file) {
-            var asmTscr = new AssemblyTranscriber(File.ReadAllText(file), file);
+            var asmTscr = new AssemblyTranscriber(File.ReadAllText(file).Replace("\r\n", "\n"), file);
             AssemblyTranscriptionResult result = asmTscr.run();
             if(result.Error != null) {
                 Console.WriteLine(result.Error);

@@ -2,6 +2,7 @@ namespace IonS {
     
     enum OperationType {
         Push_uint64,
+        Put_char,
         Add, Subtract, Multiply, Divide, Modulo,
         Dump,
         Drop, Drop2,
@@ -11,6 +12,7 @@ namespace IonS {
         Exit,
         VariableAccess,
         MemRead, MemWrite,
+        StringLiteral,
 
         CodeBlock
     }
@@ -29,6 +31,12 @@ namespace IonS {
             Value = value;
         }
         public ulong Value { get; }
+    }
+
+    // Put operations
+
+    sealed class Put_char_Operation : Operation {
+        public Put_char_Operation() : base(OperationType.Put_char) {}
     }
 
     // Calculation operations
@@ -154,6 +162,15 @@ namespace IonS {
             Amount = amount;
         }
         public byte Amount { get; }
+    }
+
+    // String literal operation
+
+    sealed class StringLiteralOperation : Operation {
+        public StringLiteralOperation(int id) : base(OperationType.StringLiteral) {
+            Id = id;
+        }
+        public int Id { get; }
     }
 
 }

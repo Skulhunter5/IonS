@@ -3,11 +3,13 @@ using System.Collections.Generic;
 namespace IonS {
 
     class ParseResult : Result {
-        public ParseResult(List<Variable> variables, List<Operation> operations, Error error) : base(error) {
+        public ParseResult(List<Variable> variables, List<string> strings, List<Operation> operations, Error error) : base(error) {
             Variables = variables;
+            Strings = strings;
             Operations = operations;
         }
         public List<Variable> Variables { get; }
+        public List<string> Strings { get; }
         public List<Operation> Operations { get; }
     }
 
@@ -17,6 +19,7 @@ namespace IonS {
         private int _position;
 
         private List<Variable> _vars;
+        private List<string> _strings;
 
         private int nextControlStatementId = 0;
 
@@ -50,13 +53,16 @@ namespace IonS {
         }
 
         public ParseResult Parse() {
-            _words = new Lexer(_text, _source).GetWords();
+            var lexingResult = new Lexer(_text, _source).GetWords();
+            if(lexingResult.Error != null) return new ParseResult(null, null, null, lexingResult.Error);
+            _words = lexingResult.Words;
 
             var result = new MacroPreprocessor(_words).run();
-            if(result.Error != null) return new ParseResult(null, null, result.Error);
+            if(result.Error != null) return new ParseResult(null, null, null, result.Error);
             _words = result.Words;
 
             _vars = new List<Variable>();
+            _strings = new List<string>();
 
             var operations = new List<Operation>();
             
@@ -65,6 +71,8 @@ namespace IonS {
             while(NextWord() != null) {
                 if(Current.Text == "exit") {
                     operations.Add(new ExitOperation());
+                } else if(Current.Text == "putc") {
+                    operations.Add(new Put_char_Operation());
                 } else if(Current.Text == "drop") {
                     operations.Add(new DropOperation());
                 } else if(Current.Text == "2drop") {
@@ -116,7 +124,7 @@ namespace IonS {
                         operations.Add(new LabelOperation("dowhile_do_" + doWhileBlock.Id));
                     }
                 } else if(Current.Text == "end") {
-                    if(openBlocks.Count == 0) return new ParseResult(null, null, new UnexpectedMarkerError(Current));
+                    if(openBlocks.Count == 0) return new ParseResult(null, null, null, new UnexpectedMarkerError(Current));
 
                     Block block = openBlocks.Pop();
                     if(block.GetType() == typeof(IfBlock)) operations.Add(new LabelOperation("if_end_" + block.Id));
@@ -126,7 +134,7 @@ namespace IonS {
                     } else if(block.GetType() == typeof(DoWhileBlock) && ((DoWhileBlock) block).HasWhile) {
                         operations.Add(new JumpIfNotZeroOperation("dowhile_do_" + block.Id, -1));
                         operations.Add(new LabelOperation("dowhile_end_" + block.Id));
-                    } else return new ParseResult(null, null, new UnexpectedMarkerError(Current));
+                    } else return new ParseResult(null, null, null, new UnexpectedMarkerError(Current));
                 } else if(Current.Text == "continue") {
                     Block[] blocks = openBlocks.ToArray();
                     for(int i = blocks.Length-1; i >= 0; i--) {
@@ -152,47 +160,50 @@ namespace IonS {
                 } else if(Current.Text == "var") {
                     Word varWord = Current;
                     NextWord();
-                    if(Current == null) return new ParseResult(null, null, new IncompleteVariableDeclarationError(varWord, null));
+                    if(Current == null) return new ParseResult(null, null, null, new IncompleteVariableDeclarationError(varWord, null));
 
                     Word identifier = Current;
                     // TODO: Check that the identifier is valid for nasm aswell
-                    if(Keyword.isReserved(identifier.Text) || long.TryParse(identifier.Text, out long _)) return new ParseResult(null, null, new InvalidVariableIdentifierError(identifier));
+                    if(Keyword.isReserved(identifier.Text) || long.TryParse(identifier.Text, out long _)) return new ParseResult(null, null, null, new InvalidVariableIdentifierError(identifier));
                     Variable var = GetVariable(identifier.Text);
-                    if(var != null) return new ParseResult(null, null, new VariableRedeclarationError(var.Identifier, identifier));
+                    if(var != null) return new ParseResult(null, null, null, new VariableRedeclarationError(var.Identifier, identifier));
 
                     NextWord();
-                    if(Current.Text == null) return new ParseResult(null, null, new IncompleteVariableDeclarationError(varWord, identifier));
+                    if(Current.Text == null) return new ParseResult(null, null, null, new IncompleteVariableDeclarationError(varWord, identifier));
 
                     if(byte.TryParse(Current.Text, out byte bytesize)) _vars.Add(new Variable(identifier, bytesize));
-                    else return new ParseResult(null, null, new InvalidVariableBytesizeError(Current));
+                    else return new ParseResult(null, null, null, new InvalidVariableBytesizeError(Current));
                 } else if(Current.Text.StartsWith("!")) {
                     string amountStr = Current.Text.Substring(1);
                     bool isByte = byte.TryParse(amountStr, out byte amount);
-                    if(!isByte) return new ParseResult(null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                    if(!isByte) return new ParseResult(null, null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
 
-                    if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new ParseResult(null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                    if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new ParseResult(null, null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
 
                     operations.Add(new MemWriteOperation(amount));
                 } else if(Current.Text.StartsWith("@")) {
                     string amountStr = Current.Text.Substring(1);
                     bool isByte = byte.TryParse(amountStr, out byte amount);
-                    if(!isByte) return new ParseResult(null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                    if(!isByte) return new ParseResult(null, null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
 
-                    if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new ParseResult(null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                    if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new ParseResult(null, null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
 
                     operations.Add(new MemReadOperation(amount));
+                } else if(Current.Text.StartsWith('"')) { // CWD
+                    operations.Add(new StringLiteralOperation(_strings.Count));
+                    _strings.Add(Current.Text.Substring(1, Current.Text.Length - 2));
                 } else {
                     if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value));
                     else {
                         Variable var = GetVariable(Current.Text);
                         if(var != null) operations.Add(new VariableAccessOperation(var.Identifier.Text));
-                        else return new ParseResult(null, null, new UnexpectedWordError(Current));
+                        else return new ParseResult(null, null, null, new UnexpectedWordError(Current));
                     }
                 }
             }
-            if(openBlocks.Count > 0) return new ParseResult(null, null, new IncompleteBlockError(openBlocks.Pop()));
+            if(openBlocks.Count > 0) return new ParseResult(null, null, null, new IncompleteBlockError(openBlocks.Pop()));
 
-            return new ParseResult(_vars, operations, null);
+            return new ParseResult(_vars, _strings, operations, null);
         }
     }
 

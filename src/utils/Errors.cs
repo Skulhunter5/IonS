@@ -2,6 +2,13 @@ namespace IonS {
 
     abstract class Error {}
 
+    abstract class LexerError : Error {
+        public override string ToString()
+        {
+            return "[Lexer]: ";
+        }
+    }
+
     abstract class MacroPreprocessorError : Error {
         public override string ToString()
         {
@@ -28,6 +35,48 @@ namespace IonS {
         {
             return "[AssemblyTranscriber]: ";
         }
+    }
+
+    // Lexer errors
+    // - Invalid string literal errors
+
+    sealed class InvalidStringTypeError : LexerError {
+        public InvalidStringTypeError(string type, Position position) {
+            Type = type;
+            Position = position;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid string type: '" + Type + "' at " + Position;
+        }
+        public string Type { get; }
+        public Position Position { get; }
+    }
+
+    sealed class EOFInStringLiteralError : LexerError {
+        public EOFInStringLiteralError(Position start) {
+            Start = start;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "EOF inside string literal: starts at " + Start;
+        }
+        public Position Start { get; }
+    }
+
+    // - Invalid escape character error
+
+    sealed class InvalidEscapeCharacterError : LexerError {
+        public InvalidEscapeCharacterError(string text, Position position) {
+            Text = text;
+            Position = position;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid escape character: '" + Text + "' at " + Position;
+        }
+        public string Text { get; }
+        public Position Position { get; }
     }
 
     // MacroPreprocessor errors

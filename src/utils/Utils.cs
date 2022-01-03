@@ -1,4 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+
 namespace IonS {
+
+    class Utils {
+        
+        public static string StringLiteralToByteString(string literal) {
+            return String.Join(',', Encoding.ASCII.GetBytes(literal));
+        }
+
+    }
 
     class Position {
         public Position(string file, int line, int column) {
@@ -44,6 +56,7 @@ namespace IonS {
         // Remember: Whenever new keyword is added: put it here
         private static readonly string[] keywords = new string[] {
             "exit",
+            "putc",
             "drop", "2drop",
             "dup", "2dup",
             "over", "2over",

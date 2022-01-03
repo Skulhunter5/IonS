@@ -3,16 +3,14 @@ using System.Collections.Generic;
 
 namespace IonS {
 
-    class SimulationResult {
-        public SimulationResult(byte exitcode, Error error) {
+    class SimulationResult : Result {
+        public SimulationResult(byte exitcode, Error error) : base(error) {
             Exitcode = exitcode;
-            Error = error;
         }
         public byte Exitcode { get; }
-        public Error Error { get; }
     }
 
-    class Simulator { // TODO: Implement variables
+    class Simulator { // TODO: Implement variables and string literals
         public readonly Stack<ulong> stack;
         public readonly int maxStackSize;
 

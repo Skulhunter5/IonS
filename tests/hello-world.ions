@@ -1,0 +1,10 @@
+macro print {
+    while dup @8 do
+        dup putc
+        1 +
+    end
+}
+
+"Hello, world!\n"c print
+
+0 exit

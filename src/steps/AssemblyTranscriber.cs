@@ -2,16 +2,14 @@ using System.IO;
 
 namespace IonS {
 
-    class AssemblyTranscriptionResult { // TODO: Add support for other assemblers (such as fasm)
-        public AssemblyTranscriptionResult(string asm, Error error) {
+    class AssemblyTranscriptionResult : Result {
+        public AssemblyTranscriptionResult(string asm, Error error) : base(error) {
             Asm = asm;
-            Error = error;
         }
         public string Asm { get; }
-        public Error Error { get; }
     }
 
-    class AssemblyTranscriber {
+    class AssemblyTranscriber { // TODO: Add support for other assemblers (such as fasm)
         private readonly string _text, _source;
         public AssemblyTranscriber(string text, string source) {
             _text = text;
@@ -27,6 +25,9 @@ namespace IonS {
 
             if(result.Variables.Count > 0) asm += "segment .bss\n";
             foreach(Variable var in result.Variables) asm += "    var_" + var.Identifier.Text + ": resb " + var.Bytesize + "\n";
+
+            if(result.Strings.Count > 0) asm += "segment .data\n";
+            for(int i = 0; i < result.Strings.Count; i++) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i] + '\0') + "\n"; // TODO: remove temporary trailing zero and add c-strings for that ("string literal"c)
 
             asm += "segment .text\n";
 
@@ -46,6 +47,14 @@ namespace IonS {
                     }
                     case OperationType.Push_uint64: {
                         asm += $"    push {((Push_uint64_Operation) operation).Value}\n";
+                        break;
+                    }
+                    case OperationType.Put_char: {
+                        asm += "    mov rax, 1\n";
+                        asm += "    mov rdi, 1\n";
+                        asm += "    pop rsi\n";
+                        asm += "    mov rdx, 1\n";
+                        asm += "    syscall\n";
                         break;
                     }
                     case OperationType.Drop: {
@@ -185,6 +194,10 @@ namespace IonS {
                         else if(memReadOperation.Amount == 32) asm += "    mov ebx, [rax]\n";
                         else if(memReadOperation.Amount == 64) asm += "    mov rbx, [rax]\n";
                         asm += "    push rbx\n";
+                        break;
+                    }
+                    case OperationType.StringLiteral: {
+                        asm += "    push str_" + ((StringLiteralOperation) operation).Id + "\n";
                         break;
                     }
                     default: {
