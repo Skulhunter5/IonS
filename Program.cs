@@ -673,7 +673,7 @@ namespace IonS
                     operations.Add(new DivideOperation());
                 } else if(Current.Text == "%") {
                     operations.Add(new ModuloOperation());
-                } else if(Current.Text == "dump") {
+                } else if(Current.Text == ".") {
                     operations.Add(new DumpOperation());
                 } else if(Current.Text == "if") { // TODO: add else and elif or anything similar
                     IfBlock ifBlock = new IfBlock(Current.Position, ControlStatementId());
@@ -913,7 +913,7 @@ namespace IonS
                         break;
                     }
                     case OperationType.Dump: {
-                        if(stack.Count == 0) return new SimulationResult(0, new StackUnderflowError("dump"));
+                        if(stack.Count == 0) return new SimulationResult(0, new StackUnderflowError("."));
 
                         Console.WriteLine(stack.Pop());
                         break;

@@ -1,5 +1,5 @@
 10 while dup do
-    dup dump
+    dup .
     1 -
 end
 

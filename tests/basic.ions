@@ -1,13 +1,13 @@
-1 2 + dump
-3 1 - dump
-3 2 * dump
-8 4 / dump
-8 5 % dump
-4 2 1 dup dump dump drop dump
-1 2 3 2drop dump
-1 2 over dump dump dump
-1 2 3 4 2over dump dump dump dump dump dump
-1 2 swap dump dump
-1 2 2dup dump dump dump dump
+1 2 + .
+3 1 - .
+3 2 * .
+8 4 / .
+8 5 % .
+4 2 1 dup . . drop .
+1 2 3 2drop .
+1 2 over . . .
+1 2 3 4 2over . . . . . .
+1 2 swap . .
+1 2 2dup . . . .
 
 0 exit
