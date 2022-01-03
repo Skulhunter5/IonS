@@ -1,9 +1,9 @@
 macro test1 2
 macro test2 {
-    1 2 + dup .
+    1 2 + dup dump
 }
-1 .
-test1 .
-test2 .
+1 dump
+test1 dump
+test2 dump
 
 0 exit

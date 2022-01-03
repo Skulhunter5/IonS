@@ -3,7 +3,7 @@
     dup 5 - if
         continue
     end
-    dup .
+    dup dump
 while
     dup
 end
@@ -13,7 +13,7 @@ end
     dup 5 - if
         continue
     end
-    dup .
+    dup dump
 end
 
 0 exit

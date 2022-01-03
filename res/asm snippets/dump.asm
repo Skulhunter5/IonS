@@ -1,6 +1,4 @@
-BITS 64
-segment .text
-print:
+dump:
     mov     r9, -3689348814741910323
     sub     rsp, 40
     mov     BYTE [rsp+31], 10
@@ -33,5 +31,3 @@ print:
     syscall
     add     rsp, 40
     ret
-global _start
-_start:
