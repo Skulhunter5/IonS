@@ -733,7 +733,7 @@ namespace IonS
                             break;
                         }
                     }
-                } else if(Current.Text == "var") { // CWD
+                } else if(Current.Text == "var") {
                     Word varWord = Current;
                     NextWord();
                     if(Current == null) return new ParseResult(null, null, new IncompleteVariableDeclarationError(varWord, null));
@@ -952,7 +952,7 @@ namespace IonS
         }
     }
 
-    class AssemblyTranscriptionResult { // TODO: Add support for other assemblers
+    class AssemblyTranscriptionResult { // TODO: Add support for other assemblers (such as fasm)
         public AssemblyTranscriptionResult(string asm, Error error) {
             Asm = asm;
             Error = error;
