@@ -189,7 +189,7 @@ namespace IonS {
                     if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new ParseResult(null, null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
 
                     operations.Add(new MemReadOperation(amount));
-                } else if(Current.Text.StartsWith('"')) { // CWD
+                } else if(Current.Text.StartsWith('"')) {
                     operations.Add(new StringLiteralOperation(_strings.Count));
                     _strings.Add(Current.Text.Substring(1, Current.Text.Length - 2));
                 } else {
