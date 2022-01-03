@@ -218,6 +218,18 @@ namespace IonS
         }
         public Word Bytesize { get; }
     }
+    sealed class InvalidMemReadWriteAmountError : ParserError {
+        public InvalidMemReadWriteAmountError(string amount, Position position) {
+            Amount = amount;
+            Position = position;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid amount for memory read/write: '" + Amount + "' at " + Position;
+        }
+        public string Amount { get; }
+        public Position Position { get; }
+    }
     abstract class SimulatorError : Error {
         public override string ToString()
         {
@@ -353,7 +365,7 @@ namespace IonS
     }
 
     enum OperationType {
-        PushInteger,
+        Push_uint64,
         Add, Subtract, Multiply, Divide, Modulo,
         Dump,
         Drop, Drop2,
@@ -362,6 +374,7 @@ namespace IonS
         Label, Jump, JumpIfZero, JumpIfNotZero,
         Exit,
         VariableAccess,
+        MemRead, MemWrite,
 
         CodeBlock
     }
@@ -372,11 +385,11 @@ namespace IonS
         }
         public OperationType Type { get; }
     }
-    sealed class PushIntegerOperation : Operation {
-        public PushIntegerOperation(int value) : base(OperationType.PushInteger) {
+    sealed class Push_uint64_Operation : Operation {
+        public Push_uint64_Operation(ulong value) : base(OperationType.Push_uint64) {
             Value = value;
         }
-        public int Value { get; }
+        public ulong Value { get; }
     }
     sealed class AddOperation : Operation {
         public AddOperation() : base(OperationType.Add) {}
@@ -456,6 +469,18 @@ namespace IonS
         }
         public string Identifier { get; }
     }
+    sealed class MemReadOperation : Operation {
+        public MemReadOperation(byte amount) : base(OperationType.MemRead) {
+            Amount = amount;
+        }
+        public byte Amount { get; }
+    }
+    sealed class MemWriteOperation : Operation {
+        public MemWriteOperation(byte amount) : base(OperationType.MemWrite) {
+            Amount = amount;
+        }
+        public byte Amount { get; }
+    }
 
     abstract class Block {
         public Block(Position position, int id) {
@@ -491,7 +516,8 @@ namespace IonS
             "continue", "break",
             "macro",
             "var"};
-        public static bool isKeyword(string word) {
+        public static bool isReserved(string word) {
+            if(word.StartsWith("@") || word.StartsWith("!")) return true;
             foreach(string keyword in keywords) if(keyword == word) return true;
             return false;
         }
@@ -542,7 +568,7 @@ namespace IonS
                     if(i++ == _words.Length-1) return new MacroExpansionResult(null, new IncompleteMacroDefinitionError(word, null));
                     Word key = _words[i];
 
-                    if(Keyword.isKeyword(key.Text) || int.TryParse(key.Text, out int _)) return new MacroExpansionResult(null, new InvalidMacroKeyError(key));
+                    if(Keyword.isReserved(key.Text) || long.TryParse(key.Text, out long _)) return new MacroExpansionResult(null, new InvalidMacroKeyError(key));
 
                     if(i++ == _words.Length-2) return new MacroExpansionResult(null, new IncompleteMacroDefinitionError(word, key));
 
@@ -740,17 +766,33 @@ namespace IonS
 
                     Word identifier = Current;
                     // TODO: Check that the identifier is valid for nasm aswell
-                    if(Keyword.isKeyword(identifier.Text) || int.TryParse(identifier.Text, out int _)) return new ParseResult(null, null, new InvalidVariableIdentifierError(identifier));
+                    if(Keyword.isReserved(identifier.Text) || long.TryParse(identifier.Text, out long _)) return new ParseResult(null, null, new InvalidVariableIdentifierError(identifier));
                     Variable var = GetVariable(identifier.Text);
                     if(var != null) return new ParseResult(null, null, new VariableRedeclarationError(var.Identifier, identifier));
 
                     NextWord();
                     if(Current.Text == null) return new ParseResult(null, null, new IncompleteVariableDeclarationError(varWord, identifier));
 
-                    if(int.TryParse(Current.Text, out int bytesize)) _vars.Add(new Variable(identifier, bytesize));
+                    if(byte.TryParse(Current.Text, out byte bytesize)) _vars.Add(new Variable(identifier, bytesize));
                     else return new ParseResult(null, null, new InvalidVariableBytesizeError(Current));
+                } else if(Current.Text.StartsWith("!")) { // CWD
+                    string amountStr = Current.Text.Substring(1);
+                    bool isByte = byte.TryParse(amountStr, out byte amount);
+                    if(!isByte) return new ParseResult(null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+
+                    if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new ParseResult(null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+
+                    operations.Add(new MemWriteOperation(amount));
+                } else if(Current.Text.StartsWith("@")) {
+                    string amountStr = Current.Text.Substring(1);
+                    bool isByte = byte.TryParse(amountStr, out byte amount);
+                    if(!isByte) return new ParseResult(null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+
+                    if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new ParseResult(null, null, new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+
+                    operations.Add(new MemReadOperation(amount));
                 } else {
-                    if(int.TryParse(Current.Text, out int value)) operations.Add(new PushIntegerOperation(value));
+                    if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value));
                     else {
                         Variable var = GetVariable(Current.Text);
                         if(var != null) operations.Add(new VariableAccessOperation(var.Identifier.Text));
@@ -765,20 +807,20 @@ namespace IonS
     }
 
     class SimulationResult {
-        public SimulationResult(int exitcode, Error error) {
+        public SimulationResult(byte exitcode, Error error) {
             Exitcode = exitcode;
             Error = error;
         }
-        public int Exitcode { get; }
+        public byte Exitcode { get; }
         public Error Error { get; }
     }
 
     class Simulator { // TODO: Implement variables
-        public readonly Stack<int> stack;
+        public readonly Stack<ulong> stack;
         public readonly int maxStackSize;
 
         public Simulator(int maxStackSize) {
-            stack = new Stack<int>();
+            stack = new Stack<ulong>();
             this.maxStackSize = maxStackSize;
         }
 
@@ -793,10 +835,10 @@ namespace IonS
                     case OperationType.Exit: {
                         if(stack.Count == 0) return new SimulationResult(0, new StackUnderflowError("exit"));
 
-                        return new SimulationResult(stack.Pop(), null);
+                        return new SimulationResult((byte) stack.Pop(), null);
                     }
-                    case OperationType.PushInteger: {
-                        PushIntegerOperation pushOperation = (PushIntegerOperation) operation;
+                    case OperationType.Push_uint64: {
+                        Push_uint64_Operation pushOperation = (Push_uint64_Operation) operation;
                         if(stack.Count >= maxStackSize) return new SimulationResult(0, new StackUnderflowError(""+pushOperation.Value));
 
                         stack.Push(pushOperation.Value);
@@ -819,7 +861,7 @@ namespace IonS
                         if(stack.Count == 0) return new SimulationResult(0, new StackUnderflowError("dup"));
                         if(stack.Count >= maxStackSize) return new SimulationResult(0, new StackOverflowError("dup"));
 
-                        int a = stack.Pop();
+                        ulong a = stack.Pop();
                         stack.Push(a);
                         stack.Push(a);
                         break;
@@ -828,8 +870,8 @@ namespace IonS
                         if(stack.Count <= 1) return new SimulationResult(0, new StackUnderflowError("2dup"));
                         if(stack.Count >= maxStackSize - 1) return new SimulationResult(0, new StackOverflowError("2dup"));
 
-                        int b = stack.Pop();
-                        int a = stack.Pop();
+                        ulong b = stack.Pop();
+                        ulong a = stack.Pop();
                         stack.Push(a);
                         stack.Push(b);
                         stack.Push(a);
@@ -839,8 +881,8 @@ namespace IonS
                     case OperationType.Swap: {
                         if(stack.Count <= 1) return new SimulationResult(0, new StackUnderflowError("swap"));
 
-                        int a = stack.Pop();
-                        int b = stack.Pop();
+                        ulong a = stack.Pop();
+                        ulong b = stack.Pop();
                         stack.Push(a);
                         stack.Push(b);
                         break;
@@ -849,8 +891,8 @@ namespace IonS
                         if(stack.Count <= 1) return new SimulationResult(0, new StackUnderflowError("over"));
                         if(stack.Count >= maxStackSize) return new SimulationResult(0,  new StackOverflowError("over"));
 
-                        int b = stack.Pop();
-                        int a = stack.Pop();
+                        ulong b = stack.Pop();
+                        ulong a = stack.Pop();
                         stack.Push(a);
                         stack.Push(b);
                         stack.Push(a);
@@ -860,10 +902,10 @@ namespace IonS
                         if(stack.Count <= 2) return new SimulationResult(0, new StackUnderflowError("2over"));
                         if(stack.Count >= maxStackSize - 1) return new SimulationResult(0, new StackOverflowError("2over"));
 
-                        int d = stack.Pop();
-                        int c = stack.Pop();
-                        int b = stack.Pop();
-                        int a = stack.Pop();
+                        ulong d = stack.Pop();
+                        ulong c = stack.Pop();
+                        ulong b = stack.Pop();
+                        ulong a = stack.Pop();
                         stack.Push(a);
                         stack.Push(b);
                         stack.Push(c);
@@ -881,8 +923,8 @@ namespace IonS
                     case OperationType.Subtract: {
                         if(stack.Count <= 1) return new SimulationResult(0, new StackUnderflowError("-"));
 
-                        int b = stack.Pop();
-                        int a = stack.Pop();
+                        ulong b = stack.Pop();
+                        ulong a = stack.Pop();
                         stack.Push(a - b);
                         break;
                     }
@@ -895,20 +937,20 @@ namespace IonS
                     case OperationType.Divide: {
                         if(stack.Count <= 1) return new SimulationResult(0, new StackUnderflowError("/"));
 
-                        int b = stack.Pop();
+                        ulong b = stack.Pop();
                         if(b == 0) return new SimulationResult(0, new DivideByZeroError("/"));
 
-                        int a = stack.Pop();
+                        ulong a = stack.Pop();
                         stack.Push(a / b);
                         break;
                     }
                     case OperationType.Modulo: {
                         if(stack.Count <= 1) return new SimulationResult(0, new StackUnderflowError("%"));
 
-                        int b = stack.Pop();
+                        ulong b = stack.Pop();
                         if(b == 0) return new SimulationResult(0, new DivideByZeroError("%"));
 
-                        int a = stack.Pop();
+                        ulong a = stack.Pop();
                         stack.Push(a % b);
                         break;
                     }
@@ -994,8 +1036,8 @@ namespace IonS
                         if(i != operations.Count - 1) asm += "    jmp exit\n"; // TODO: move into a dedicated optimizer
                         break;
                     }
-                    case OperationType.PushInteger: {
-                        asm += $"    push {((PushIntegerOperation) operation).Value}\n";
+                    case OperationType.Push_uint64: {
+                        asm += $"    push {((Push_uint64_Operation) operation).Value}\n";
                         break;
                     }
                     case OperationType.Drop: {
@@ -1114,6 +1156,27 @@ namespace IonS
                     }
                     case OperationType.VariableAccess: {
                         asm += "    push var_" + ((VariableAccessOperation) operation).Identifier + "\n";
+                        break;
+                    }
+                    case OperationType.MemWrite: {
+                        MemWriteOperation memWriteOperation = (MemWriteOperation) operation;
+                        asm += "    pop rax\n";
+                        asm += "    pop rbx\n";
+                        if(memWriteOperation.Amount == 8) asm += "    mov [rax], bl\n";
+                        else if(memWriteOperation.Amount == 16) asm += "    mov [rax], bx\n";
+                        else if(memWriteOperation.Amount == 32) asm += "    mov [rax], ebx\n";
+                        else if(memWriteOperation.Amount == 64) asm += "    mov [rax], rbx\n";
+                        break;
+                    }
+                    case OperationType.MemRead: {
+                        MemReadOperation memReadOperation = (MemReadOperation) operation;
+                        asm += "    pop rax\n";
+                        if(memReadOperation.Amount < 64) asm += "    xor rbx, rbx\n";
+                        if(memReadOperation.Amount == 8) asm += "    mov bl, [rax]\n";
+                        else if(memReadOperation.Amount == 16) asm += "    mov bx, [rax]\n";
+                        else if(memReadOperation.Amount == 32) asm += "    mov ebx, [rax]\n";
+                        else if(memReadOperation.Amount == 64) asm += "    mov rbx, [rax]\n";
+                        asm += "    push rbx\n";
                         break;
                     }
                     default: {
