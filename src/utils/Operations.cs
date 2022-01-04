@@ -13,7 +13,7 @@ namespace IonS {
         Exit,
         VariableAccess,
         MemRead, MemWrite,
-        StringLiteral,
+        String, CStyleString,
 
         CodeBlock
     }
@@ -184,8 +184,15 @@ namespace IonS {
 
     // String literal operation
 
-    sealed class StringLiteralOperation : Operation {
-        public StringLiteralOperation(int id) : base(OperationType.StringLiteral) {
+    sealed class StringOperation : Operation {
+        public StringOperation(int id) : base(OperationType.String) {
+            Id = id;
+        }
+        public int Id { get; }
+    }
+
+    sealed class CStyleStringOperation : Operation {
+        public CStyleStringOperation(int id) : base(OperationType.CStyleString) {
             Id = id;
         }
         public int Id { get; }

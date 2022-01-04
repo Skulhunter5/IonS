@@ -1,4 +1,4 @@
-macro print {
+macro cputs {
     while dup @8 do
         dup putc
         1 +

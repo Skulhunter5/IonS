@@ -1,5 +1,5 @@
 include "./../ions-libs/std.ions"
 
-"Hello, world!\n"c print
+"Hello, world!\n"c cputs
 
 0 exit

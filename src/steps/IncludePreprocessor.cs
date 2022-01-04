@@ -1,8 +1,6 @@
 using System.IO;
 using System.Collections.Generic;
 
-using System;
-
 namespace IonS {
 
     class IncludePreprocessorResult : Result {
