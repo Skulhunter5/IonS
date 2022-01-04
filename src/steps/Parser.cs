@@ -213,6 +213,12 @@ namespace IonS {
                         operations.Add(new CStyleStringOperation(_strings.Count));
                         _strings.Add(Current.Text.Substring(1, Current.Text.Length - 3) + "\0");
                     }
+                } else if(Current.Text == "here") {
+                    operations.Add(new StringOperation(_strings.Count));
+                    _strings.Add(""+Current.Position);
+                } else if(Current.Text == "chere") {
+                    operations.Add(new CStyleStringOperation(_strings.Count));
+                    _strings.Add(Current.Position + "\0");
                 } else {
                     if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value));
                     else {
