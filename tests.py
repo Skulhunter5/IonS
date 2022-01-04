@@ -41,9 +41,13 @@ RESULT_PASSED = 0
 RESULT_FAILED = 1
 RESULT_SKIPPED = 2
 RESULT_GENERATED = 3
+RESULT_KEPT = 4
 
 def runFile(file):
     print("'" + file + "':")
+    if(not isfile("tests/" + file[:-5] + ".txt")):
+        print("  No expectation found\n")
+        return RESULT_SKIPPED
     with open("tests/" + file[:-5] + ".txt", 'r') as f:
         lines = f.readlines()
         transcriptionProcess = subprocess.run(["dotnet", executablePath, "--compile", "tests/" + file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -103,27 +107,22 @@ def runFile(file):
             return RESULT_FAILED
 
 def run(files):
-    skippedCounter = 0
-    passedCounter = 0
-    failedCounter = 0
+    res = {RESULT_SKIPPED: 0, RESULT_PASSED: 0, RESULT_FAILED: 0}
     failedTests = []
     for file in files:
-        if(file.endswith(".ions")):
-            if(not isfile("tests/" + file[:-5] + ".txt")):
-                print("  No expectation found\n")
-                skippedCounter += 1
-                continue
-            result = runFile(file)
-            if(result == RESULT_PASSED):
-                passedCounter += 1
-            elif(result == RESULT_FAILED):
-                failedCounter += 1
-                failedTests.append(file)
-    print("Result:\n  Passed: " + str(passedCounter) + "\n  Skipped: " + str(skippedCounter) + "\n  Failed: " + str(failedCounter))
+        result = runFile(file)
+        res[result] += 1
+        if(result == RESULT_FAILED):
+            failedTests.append(file)
+    print("Result:\n  Passed: " + str(res[RESULT_PASSED]) + "\n  Skipped: " + str(res[RESULT_SKIPPED]) + "\n  Failed: " + str(res[RESULT_FAILED]))
     for test in failedTests:
         print("  - " + test)
 
-def generateFile(file):
+def generateFile(file, force=False):
+    print("'" + file + "':")
+    if(isfile("tests/" + file[:-5] + ".txt") and not force):
+        print("  Expectation found\n")
+        return RESULT_KEPT
     with open("tests/" + file[:-5] + ".txt", 'w') as out:
         transcriptionProcess = subprocess.run(["dotnet", executablePath, "--compile", "tests/" + file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if(transcriptionProcess.returncode != 0):
@@ -143,20 +142,12 @@ def generateFile(file):
         print("  Generated expectation\n")
         return RESULT_GENERATED
 
-def generate(files, forceGenerate=False):
-    generatedCounter = 0
-    keptCounter = 0
+def generate(files, force=False):
+    res = {RESULT_GENERATED: 0, RESULT_KEPT: 0}
     for file in files:
-        if(file.endswith(".ions")):
-            print("'" + file + "':")
-            if(isfile("tests/" + file[:-5] + ".txt") and not forceGenerate):
-                print("  Expectation found\n")
-                keptCounter += 1
-                continue
-            result = generateFile(file)
-            if(result == RESULT_GENERATED):
-                generatedCounter += 1
-    print("Result:\n  Generated: " + str(generatedCounter) + "\n  Kept: " + str(keptCounter))
+        result = generateFile(file, force)
+        res[result] += 1
+    print("Result:\n  Generated: " + str(res[RESULT_GENERATED]) + "\n  Kept: " + str(res[RESULT_KEPT]))
 
 if(__name__ == "__main__"):
     args = sys.argv.copy()
@@ -186,6 +177,10 @@ if(__name__ == "__main__"):
                 print("Missing argument for -t | --test")
                 exit()
             filenames = args[i].split(',')
+            for filename in filenames:
+                if(not filename.endswith(".ions")):
+                    print("File with invalid file extension: '" + filename + "'")
+                    exit()
             i += 1
             continue
         if(args[i] in ["-nb", "--no-build"]):
@@ -211,6 +206,6 @@ if(__name__ == "__main__"):
     if(action == "run"):
         run(files)
     elif(action == "generate"):
-        generate(files, forceGenerate=force if filenames == None else True)
+        generate(files, force=force if filenames == None else True)
     else:
         run()
