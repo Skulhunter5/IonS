@@ -41,8 +41,8 @@ namespace IonS {
             List<Word> words = new List<Word>();
             List<int> includes = new List<int>();
             for(int j = 0; j < _words.Length; j++) if(_words[j].Text == "include") includes.Add(j);
-            if(includes[includes.Count-1] >= _words.Length - 1) return new IncludePreprocessorResult(null, new IncompleteIncludeError(_words[_words.Length-1].Position));
             if(includes.Count == 0) return new IncludePreprocessorResult(_words, null);
+            if(includes[includes.Count-1] >= _words.Length - 1) return new IncludePreprocessorResult(null, new IncompleteIncludeError(_words[_words.Length-1].Position));
 
             int i = 0;
             while(i < includes.Count) {
