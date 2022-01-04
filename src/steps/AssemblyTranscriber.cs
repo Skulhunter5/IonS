@@ -27,7 +27,7 @@ namespace IonS {
             foreach(Variable var in result.Variables) asm += "    var_" + var.Identifier.Text + ": resb " + var.Bytesize + "\n";
 
             if(result.Strings.Count > 0) asm += "segment .data\n";
-            for(int i = 0; i < result.Strings.Count; i++) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i] + '\0') + "\n"; // TODO: remove temporary trailing zero and add c-strings for that ("string literal"c)
+            for(int i = 0; i < result.Strings.Count; i++) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i]) + "\n";
 
             asm += "segment .text\n";
 
