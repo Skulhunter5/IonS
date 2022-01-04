@@ -16,7 +16,7 @@ namespace IonS {
             _source = source;
         }
 
-        public AssemblyTranscriptionResult run() {
+        public AssemblyTranscriptionResult generate_nasm_linux_x86_64() {
             string asm = "BITS 64\n";
             var parser = new Parser(_text, _source);
             var result = parser.Parse();
