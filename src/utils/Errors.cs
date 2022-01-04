@@ -104,6 +104,17 @@ namespace IonS {
         public Position Position { get; }
     }
 
+    sealed class IncompleteIncludeError : IncludePreprocessorError {
+        public IncompleteIncludeError(Position position) {
+            Position = position;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Incomplete include: at " + Position;
+        }
+        public Position Position { get; }
+    }
+
     sealed class FilePathNotAStringLiteralError : IncludePreprocessorError {
         public FilePathNotAStringLiteralError(Word word) {
             Word = word;
