@@ -103,6 +103,18 @@ namespace IonS {
                     operations.Add(new DivideOperation());
                 } else if(Current.Text == "%") {
                     operations.Add(new ModuloOperation());
+                } else if(Current.Text == "==") {
+                    operations.Add(new ComparisonOperation(ComparisonType.EQ));
+                } else if(Current.Text == "!=") {
+                    operations.Add(new ComparisonOperation(ComparisonType.NEQ));
+                } else if(Current.Text == "<") {
+                    operations.Add(new ComparisonOperation(ComparisonType.B));
+                } else if(Current.Text == ">") {
+                    operations.Add(new ComparisonOperation(ComparisonType.A));
+                } else if(Current.Text == "<=") {
+                    operations.Add(new ComparisonOperation(ComparisonType.BEQ));
+                } else if(Current.Text == ">=") {
+                    operations.Add(new ComparisonOperation(ComparisonType.AEQ));
                 } else if(Current.Text == ".") {
                     operations.Add(new DumpOperation());
                 } else if(Current.Text == "if") { // TODO: add else and elif or anything similar

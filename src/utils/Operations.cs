@@ -4,6 +4,7 @@ namespace IonS {
         Push_uint64,
         Put_char,
         Add, Subtract, Multiply, Divide, Modulo,
+        Comparison,
         Dump,
         Drop, Drop2,
         Dup, Dup2,
@@ -15,6 +16,14 @@ namespace IonS {
         StringLiteral,
 
         CodeBlock
+    }
+
+    enum ComparisonType {
+        EQ, NEQ,
+        B, A,
+        BEQ, AEQ,
+        LT, GT,
+        LTEQ, GTEQ
     }
 
     abstract class Operation {
@@ -59,6 +68,15 @@ namespace IonS {
 
     sealed class ModuloOperation : Operation {
         public ModuloOperation() : base(OperationType.Modulo) {}
+    }
+
+    // Comparison operations
+
+    sealed class ComparisonOperation : Operation {
+        public ComparisonOperation(ComparisonType comparisonType) : base(OperationType.Comparison) {
+            ComparisonType = comparisonType;
+        }
+        public ComparisonType ComparisonType { get; }
     }
 
     // Dump operation

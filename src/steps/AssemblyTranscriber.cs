@@ -146,6 +146,25 @@ namespace IonS {
                         asm += "    push rdx\n";
                         break;
                     }
+                    case OperationType.Comparison: {
+                        ComparisonOperation comparison = (ComparisonOperation) operation;
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    cmp rax, rbx\n";
+                        asm += "    mov rax, 0\n";
+                        if(comparison.ComparisonType == ComparisonType.EQ) asm += "    sete al\n";
+                        else if(comparison.ComparisonType == ComparisonType.NEQ) asm += "    setne al\n";
+                        else if(comparison.ComparisonType == ComparisonType.B) asm += "    setb al\n";
+                        else if(comparison.ComparisonType == ComparisonType.A) asm += "    seta al\n";
+                        else if(comparison.ComparisonType == ComparisonType.BEQ) asm += "    setbe al\n";
+                        else if(comparison.ComparisonType == ComparisonType.AEQ) asm += "    setae al\n";
+                        else if(comparison.ComparisonType == ComparisonType.LT) asm += "    setl al\n";
+                        else if(comparison.ComparisonType == ComparisonType.GT) asm += "    setg al\n";
+                        else if(comparison.ComparisonType == ComparisonType.LTEQ) asm += "    setle al\n";
+                        else if(comparison.ComparisonType == ComparisonType.GTEQ) asm += "    setge al\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
                     case OperationType.Dump: {
                         asm += "    pop rdi\n";
                         asm += "    call dump\n";
