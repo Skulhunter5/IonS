@@ -100,7 +100,7 @@ namespace IonS {
             return null;
         }
 
-        public LexingResult GetWords() {
+        public LexingResult run() {
             var words = new List<Word>();
             SingleWordResult result = NextWord();
             while(result != null) {

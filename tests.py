@@ -118,6 +118,7 @@ def run(files):
                 passedCounter += 1
             elif(result == RESULT_FAILED):
                 failedCounter += 1
+                failedTests.append(file)
     print("Result:\n  Passed: " + str(passedCounter) + "\n  Skipped: " + str(skippedCounter) + "\n  Failed: " + str(failedCounter))
     for test in failedTests:
         print("  - " + test)

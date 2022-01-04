@@ -26,8 +26,14 @@ namespace IonS
             for(int i = 0; i < text.Length; i++) if(text[i] == '\n') count++;
             return count;
         }
-        private static void Compile(string file) {
-            var asmTscr = new AssemblyTranscriber(File.ReadAllText(file).Replace("\r\n", "\n"), file);
+        private static void Compile(string filename) {
+            if(!File.Exists(filename)) {
+                Console.WriteLine("Error: File not found: '" + filename + "'");
+                Environment.ExitCode = 1;
+                return;
+            }
+            string path = Path.GetFullPath(filename);
+            var asmTscr = new AssemblyTranscriber(File.ReadAllText(path).Replace("\r\n", "\n"), path);
             AssemblyTranscriptionResult result = asmTscr.run();
             if(result.Error != null) {
                 Console.WriteLine(result.Error);

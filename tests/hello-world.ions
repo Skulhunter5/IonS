@@ -1,9 +1,4 @@
-macro print {
-    while dup @8 do
-        dup putc
-        1 +
-    end
-}
+include "./../ions-libs/std.ions"
 
 "Hello, world!\n"c print
 

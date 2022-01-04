@@ -1,0 +1,6 @@
+macro print {
+    while dup @8 do
+        dup putc
+        1 +
+    end
+}

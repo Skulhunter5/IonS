@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using System;
+
 namespace IonS {
 
     class ParseResult : Result {
@@ -53,9 +55,13 @@ namespace IonS {
         }
 
         public ParseResult Parse() {
-            var lexingResult = new Lexer(_text, _source).GetWords();
+            var lexingResult = new Lexer(_text, _source).run();
             if(lexingResult.Error != null) return new ParseResult(null, null, null, lexingResult.Error);
             _words = lexingResult.Words;
+
+            var incPreprocResult = new IncludePreprocessor(_source, _words).run();
+            if(incPreprocResult.Error != null) return new ParseResult(null, null, null, incPreprocResult.Error);
+            _words = incPreprocResult.Words;
 
             var result = new MacroPreprocessor(_words).run();
             if(result.Error != null) return new ParseResult(null, null, null, result.Error);

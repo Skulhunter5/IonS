@@ -9,6 +9,13 @@ namespace IonS {
         }
     }
 
+    abstract class IncludePreprocessorError : Error {
+        public override string ToString()
+        {
+            return "[IncludePreprocessor]: ";
+        }
+    }
+
     abstract class MacroPreprocessorError : Error {
         public override string ToString()
         {
@@ -77,6 +84,35 @@ namespace IonS {
         }
         public string Text { get; }
         public Position Position { get; }
+    }
+
+    // IncludePreprocessor errors
+    // - File not found error
+
+    sealed class FileNotFoundError : IncludePreprocessorError {
+        public FileNotFoundError(string path, string directory, Position position) {
+            Path = path;
+            Directory = directory;
+            Position = position;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "File not found: '" + Path + "' " + (Directory != null ? "(cwd: " + Directory + ") " : "") + "at " + Position;
+        }
+        public string Path { get; }
+        public string Directory { get; }
+        public Position Position { get; }
+    }
+
+    sealed class FilePathNotAStringLiteralError : IncludePreprocessorError {
+        public FilePathNotAStringLiteralError(Word word) {
+            Word = word;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "File path not a string: " + Word;
+        }
+        public Word Word { get; }
     }
 
     // MacroPreprocessor errors
