@@ -81,13 +81,6 @@ namespace IonS {
                         asm += "    push rbx\n";
                         break;
                     }
-                    case OperationType.Swap: {
-                        asm += "    pop rbx\n";
-                        asm += "    pop rax\n";
-                        asm += "    push rbx\n";
-                        asm += "    push rax\n";
-                        break;
-                    }
                     case OperationType.Over: {
                         asm += "    pop rbx\n";
                         asm += "    pop rax\n";
@@ -107,6 +100,22 @@ namespace IonS {
                         asm += "    push rdx\n";
                         asm += "    push rax\n";
                         asm += "    push rbx\n";
+                        break;
+                    }
+                    case OperationType.Swap: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    push rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.Rotate: {
+                        asm += "    pop rcx\n";
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    push rbx\n";
+                        asm += "    push rcx\n";
+                        asm += "    push rax\n";
                         break;
                     }
                     case OperationType.Add: {

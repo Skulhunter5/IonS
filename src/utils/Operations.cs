@@ -8,7 +8,8 @@ namespace IonS {
         Dump,
         Drop, Drop2,
         Dup, Dup2,
-        Over, Over2, Swap,
+        Over, Over2,
+        Swap, Rotate,
         Label, Jump, JumpIfZero, JumpIfNotZero,
         Exit,
         VariableAccess,
@@ -119,6 +120,10 @@ namespace IonS {
 
     sealed class SwapOperation : Operation {
         public SwapOperation() : base(OperationType.Swap) {}
+    }
+
+    sealed class RotateOperation : Operation {
+        public RotateOperation() : base(OperationType.Rotate) {}
     }
 
     // Label and jump operations
