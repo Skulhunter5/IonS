@@ -27,3 +27,28 @@ macro cputs {
 macro clamp {
    rot min max
 }
+
+macro inc8 {
+	dup @8 1 + swap !8
+}
+macro dec8 {
+	dup @8 1 - swap !8
+}
+macro inc16 {
+	dup @16 1 + swap !16
+}
+macro dec16 {
+	dup @16 1 - swap !16
+}
+macro inc32 {
+	dup @32 1 + swap !32
+}
+macro dec32 {
+	dup @32 1 - swap !32
+}
+macro inc64 {
+	dup @64 1 + swap !64
+}
+macro dec64 {
+	dup @64 1 - swap !64
+}
