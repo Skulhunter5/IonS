@@ -109,12 +109,18 @@ def runFile(file):
 def run(files):
     res = {RESULT_SKIPPED: 0, RESULT_PASSED: 0, RESULT_FAILED: 0}
     failedTests = []
+    skippedTests = []
     for file in files:
         result = runFile(file)
         res[result] += 1
         if(result == RESULT_FAILED):
             failedTests.append(file)
-    print("Result:\n  Passed: " + str(res[RESULT_PASSED]) + "\n  Skipped: " + str(res[RESULT_SKIPPED]) + "\n  Failed: " + str(res[RESULT_FAILED]))
+        elif(result == RESULT_SKIPPED):
+            skippedTests.append(file)
+    print("Result:\n  Passed: " + str(res[RESULT_PASSED]) + "\n  Skipped: " + str(res[RESULT_SKIPPED]))
+    for test in skippedTests:
+        print("  - " + test)
+    print("  Failed: " + str(res[RESULT_FAILED]))
     for test in failedTests:
         print("  - " + test)
 
