@@ -52,3 +52,25 @@ macro inc64 {
 macro dec64 {
 	dup @64 1 - swap !64
 }
+
+macro streq {
+	swap 2swap 2rot dup rot 1 2rot
+	!= if
+		2drop 2drop
+		0 0
+	end
+	if
+		0 while 2dup > do
+			2swap 2rot 2dup + @8
+			2swap 2dup + @8
+			2swap 2rot != if
+				2drop 2drop
+				0
+				break
+			end
+			rot 2swap
+			1 +
+		end
+
+	end
+}
