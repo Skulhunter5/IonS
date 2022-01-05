@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace IonS {
@@ -88,9 +87,8 @@ namespace IonS {
                     if(end == _position) return new SingleWordResult(new Word(position, '"' + text + '"'), null);
 
                     string type = _text.Substring(end, _position - end);
-                    if(type == "c") text += '\0';
+                    if(type == "c") return new SingleWordResult(new Word(position, '"' + text + "\"c"), null);
                     else return new SingleWordResult(null, new InvalidStringTypeError(type, endPos));
-                    return new SingleWordResult(new Word(position, '"' + text + '"'), null);
                 } else {
                     while(!char.IsWhiteSpace(c) && c != '\0') Next();
                     int len = _position - start;

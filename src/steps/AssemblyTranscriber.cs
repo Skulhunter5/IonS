@@ -277,8 +277,14 @@ namespace IonS {
                         asm += "    push rbx\n";
                         break;
                     }
-                    case OperationType.StringLiteral: {
-                        asm += "    push str_" + ((StringLiteralOperation) operation).Id + "\n";
+                    case OperationType.String: {
+                        StringOperation op = (StringOperation) operation;
+                        asm += "    push " + result.Strings[op.Id].Length + "\n";
+                        asm += "    push str_" + op.Id + "\n";
+                        break;
+                    }
+                    case OperationType.CStyleString: {
+                        asm += "    push str_" + ((CStyleStringOperation) operation).Id + "\n";
                         break;
                     }
                     default: {
