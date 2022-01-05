@@ -66,16 +66,19 @@ namespace IonS {
             "dup", "2dup",
             "over", "2over",
             "swap",
-            "+", "-", "*", "/", "%",
+            "+", "-", "*", "/", "%", "/%",
+            "min", "max",
             ".",
             "if", "while", "do", "end",
             "continue", "break",
             "macro",
             "var",
-            "include"
+            "include",
+            "here", "chere"
         };
         public static bool isReserved(string word) {
             if(word.StartsWith("@") || word.StartsWith("!")) return true;
+            if(word.StartsWith("syscall")) return true;
             foreach(string keyword in keywords) if(keyword == word) return true;
             return false;
         }
