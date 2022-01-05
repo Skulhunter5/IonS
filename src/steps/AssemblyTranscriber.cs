@@ -287,6 +287,15 @@ namespace IonS {
                         asm += "    push str_" + ((CStyleStringOperation) operation).Id + "\n";
                         break;
                     }
+                    case OperationType.Syscall: {
+                        SyscallOperation op = (SyscallOperation) operation;
+                        asm += "    pop rax\n";
+                        for(int j = 0; j < op.Argc; j++) {
+                            asm += "    pop " + Utils.SyscallRegisters[j] + "\n";
+                        }
+                        asm += "    syscall\n";
+                        break;
+                    }
                     default: {
                         return new AssemblyTranscriptionResult(null, new UnimplementedOperationAssemblyTranscriberError(operation.Type));
                     }

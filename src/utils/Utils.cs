@@ -6,6 +6,8 @@ namespace IonS {
 
     class Utils {
         
+        public static readonly string[] SyscallRegisters = new string[] {"rdi", "rsi", "rdx", "r10", "r8", "r9"};
+
         public static string StringLiteralToByteString(string literal) {
             return String.Join(',', Encoding.ASCII.GetBytes(literal));
         }

@@ -281,6 +281,21 @@ namespace IonS {
         public Position Position { get; }
     }
 
+    // - Invalid syscall argc error
+
+    sealed class InvalidSyscallArgcError : ParserError {
+        public InvalidSyscallArgcError(string argc, Position position) {
+            Argc = argc;
+            Position = position;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid argument count for syscall: '" + Argc + "' at " + Position;
+        }
+        public string Argc { get; }
+        public Position Position { get; }
+    }
+
     // Simulator errors
     // - Stack errors
 

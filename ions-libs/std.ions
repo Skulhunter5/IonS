@@ -1,3 +1,17 @@
+macro SYSCALL_READ 0
+macro SYSCALL_WRITE 1
+
+macro STDIN 0
+macro STDOUT 1
+
+macro fputs {
+    SYSCALL_WRITE syscall3
+}
+
+macro puts {
+    STDOUT fputs
+}
+
 macro cputs {
     while dup @8 do
         dup putc

@@ -235,6 +235,11 @@ namespace IonS {
                 } else if(Current.Text == "chere") {
                     operations.Add(new CStyleStringOperation(_strings.Count));
                     _strings.Add(Current.Position + "\0");
+                } else if(Current.Text.StartsWith("syscall")) {
+                    string argcStr = Current.Text.Substring(7, Current.Text.Length - 7);
+                    if(!int.TryParse(argcStr, out int argc)) return new ParseResult(null, null, null, new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7)));
+                    if(argc >= 0 && argc <= 6) operations.Add(new SyscallOperation(argc));
+                    else return new ParseResult(null, null, null, new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7)));
                 } else {
                     if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value));
                     else {

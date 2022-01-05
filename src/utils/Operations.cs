@@ -17,6 +17,7 @@ namespace IonS {
         VariableAccess,
         MemRead, MemWrite,
         String, CStyleString,
+        Syscall,
 
         CodeBlock
     }
@@ -235,6 +236,15 @@ namespace IonS {
             Id = id;
         }
         public int Id { get; }
+    }
+
+    // Syscall operation
+
+    sealed class SyscallOperation : Operation {
+        public SyscallOperation(int argc) : base(OperationType.Syscall) {
+            Argc = argc;
+        }
+        public int Argc { get; }
     }
 
 }
