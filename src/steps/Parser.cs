@@ -91,8 +91,12 @@ namespace IonS {
                     operations.Add(new Over2Operation());
                 } else if(Current.Text == "swap") {
                     operations.Add(new SwapOperation());
+                } else if(Current.Text == "2swap") {
+                    operations.Add(new Swap2Operation());
                 } else if(Current.Text == "rot") {
                     operations.Add(new RotateOperation());
+                } else if(Current.Text == "2rot") {
+                    operations.Add(new Rotate2Operation());
                 } else if(Current.Text == "+") {
                     operations.Add(new AddOperation());
                 } else if(Current.Text == "-") {

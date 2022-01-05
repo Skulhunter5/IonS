@@ -109,6 +109,17 @@ namespace IonS {
                         asm += "    push rax\n";
                         break;
                     }
+                    case OperationType.Swap2: {
+                        asm += "    pop rdx\n";
+                        asm += "    pop rcx\n";
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    push rcx\n";
+                        asm += "    push rdx\n";
+                        asm += "    push rax\n";
+                        asm += "    push rbx\n";
+                        break;
+                    }
                     case OperationType.Rotate: {
                         asm += "    pop rcx\n";
                         asm += "    pop rbx\n";
@@ -116,6 +127,15 @@ namespace IonS {
                         asm += "    push rbx\n";
                         asm += "    push rcx\n";
                         asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.Rotate2: {
+                        asm += "    pop rcx\n";
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    push rcx\n";
+                        asm += "    push rax\n";
+                        asm += "    push rbx\n";
                         break;
                     }
                     case OperationType.Add: {
