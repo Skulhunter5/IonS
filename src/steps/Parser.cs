@@ -107,6 +107,14 @@ namespace IonS {
                     operations.Add(new ModuloOperation());
                 } else if(Current.Text == "/%") {
                     operations.Add(new DivModOperation());
+                } else if(Current.Text == "<<") {
+                    operations.Add(new ShLOperation());
+                } else if(Current.Text == ">>") {
+                    operations.Add(new ShROperation());
+                } else if(Current.Text == "&") {
+                    operations.Add(new BitAndOperation());
+                } else if(Current.Text == "|") {
+                    operations.Add(new BitOrOperation());
                 } else if(Current.Text == "min") {
                     operations.Add(new MinOperation());
                 } else if(Current.Text == "max") {

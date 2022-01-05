@@ -164,6 +164,34 @@ namespace IonS {
                         asm += "    push rdx\n";
                         break;
                     }
+                    case OperationType.ShL: {
+                        asm += "    pop rcx\n";
+                        asm += "    pop rax\n";
+                        asm += "    shl rax, cl\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.ShR: {
+                        asm += "    pop rcx\n";
+                        asm += "    pop rax\n";
+                        asm += "    shr rax, cl\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.BitAnd: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    and rax, rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.BitOr: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    or rax, rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
                     case OperationType.Min: {
                         asm += "    pop rbx\n";
                         asm += "    pop rax\n";

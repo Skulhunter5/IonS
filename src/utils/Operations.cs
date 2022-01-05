@@ -5,6 +5,7 @@ namespace IonS {
         Put_char,
         Add, Subtract, Multiply, Divide, Modulo, DivMod,
         Min, Max,
+        ShL, ShR, BitAnd, BitOr,
         Comparison,
         Dump,
         Drop, Drop2,
@@ -74,6 +75,24 @@ namespace IonS {
 
     sealed class DivModOperation : Operation {
         public DivModOperation() : base(OperationType.DivMod) {}
+    }
+
+    // Bitwise operations
+
+    sealed class ShLOperation : Operation {
+        public ShLOperation() : base(OperationType.ShL) {}
+    }
+
+    sealed class ShROperation : Operation {
+        public ShROperation() : base(OperationType.ShR) {}
+    }
+
+    sealed class BitAndOperation : Operation {
+        public BitAndOperation() : base(OperationType.BitAnd) {}
+    }
+
+    sealed class BitOrOperation : Operation {
+        public BitOrOperation() : base(OperationType.BitOr) {}
     }
 
     // Min/Max operations
