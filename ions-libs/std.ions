@@ -5,20 +5,25 @@ macro STDIN 0
 macro STDOUT 1
 
 macro fputs {
-    SYSCALL_WRITE syscall3
+  SYSCALL_WRITE syscall3
 }
 
 macro puts {
-    STDOUT fputs
+  STDOUT fputs
+}
+
+macro cstrlen {
+	dup
+	while dup @8 do
+		1 +
+	end
+	swap -
 }
 
 macro cputs {
-    while dup @8 do
-        dup putc
-        1 +
-    end
+	dup cstrlen swap puts
 }
 
 macro clamp {
-    rot min max
+   rot min max
 }
