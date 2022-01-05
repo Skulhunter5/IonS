@@ -4,3 +4,7 @@ macro print {
         1 +
     end
 }
+
+macro clamp {
+    rot min max
+}
