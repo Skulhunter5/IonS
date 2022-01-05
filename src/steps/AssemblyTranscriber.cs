@@ -155,6 +155,22 @@ namespace IonS {
                         asm += "    push rdx\n";
                         break;
                     }
+                    case OperationType.Min: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    cmp rbx, rax\n";
+                        asm += "    cmovb rax, rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.Max: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    cmp rbx, rax\n";
+                        asm += "    cmova rax, rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
                     case OperationType.Comparison: {
                         ComparisonOperation comparison = (ComparisonOperation) operation;
                         asm += "    pop rbx\n";

@@ -105,6 +105,10 @@ namespace IonS {
                     operations.Add(new DivideOperation());
                 } else if(Current.Text == "%") {
                     operations.Add(new ModuloOperation());
+                } else if(Current.Text == "min") {
+                    operations.Add(new MinOperation());
+                } else if(Current.Text == "max") {
+                    operations.Add(new MaxOperation());
                 } else if(Current.Text == "==") {
                     operations.Add(new ComparisonOperation(ComparisonType.EQ));
                 } else if(Current.Text == "!=") {

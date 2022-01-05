@@ -4,6 +4,7 @@ namespace IonS {
         Push_uint64,
         Put_char,
         Add, Subtract, Multiply, Divide, Modulo,
+        Min, Max,
         Comparison,
         Dump,
         Drop, Drop2,
@@ -69,6 +70,16 @@ namespace IonS {
 
     sealed class ModuloOperation : Operation {
         public ModuloOperation() : base(OperationType.Modulo) {}
+    }
+
+    // Min/Max operations
+
+    sealed class MinOperation : Operation {
+        public MinOperation() : base(OperationType.Min) {}
+    }
+
+    sealed class MaxOperation : Operation {
+        public MaxOperation() : base(OperationType.Max) {}
     }
 
     // Comparison operations
