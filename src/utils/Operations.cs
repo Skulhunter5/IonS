@@ -3,7 +3,7 @@ namespace IonS {
     enum OperationType {
         Push_uint64,
         Put_char,
-        Add, Subtract, Multiply, Divide, Modulo,
+        Add, Subtract, Multiply, Divide, Modulo, DivMod,
         Min, Max,
         Comparison,
         Dump,
@@ -70,6 +70,10 @@ namespace IonS {
 
     sealed class ModuloOperation : Operation {
         public ModuloOperation() : base(OperationType.Modulo) {}
+    }
+
+    sealed class DivModOperation : Operation {
+        public DivModOperation() : base(OperationType.DivMod) {}
     }
 
     // Min/Max operations

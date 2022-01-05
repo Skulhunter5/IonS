@@ -155,6 +155,15 @@ namespace IonS {
                         asm += "    push rdx\n";
                         break;
                     }
+                    case OperationType.DivMod: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    xor rdx, rdx\n";
+                        asm += "    div rbx\n";
+                        asm += "    push rax\n";
+                        asm += "    push rdx\n";
+                        break;
+                    }
                     case OperationType.Min: {
                         asm += "    pop rbx\n";
                         asm += "    pop rax\n";
