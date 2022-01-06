@@ -98,12 +98,7 @@ namespace IonS {
                         if(len == 4 && (_text[start+1] != '\\' || _text[start+3] != '\'')) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, len))));
                         if(len != 3 && len != 4) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, len))));
                     }
-                    string text = _text.Substring(start, len);
-                    if(text.StartsWith("//")) {
-                        while(c != '\n' && c != '\0') Next();
-                        return NextWord();
-                    }
-                    return new SingleWordResult(new Word(position, text), null);
+                    return new SingleWordResult(new Word(position, _text.Substring(start, len)), null);
                 }
             }
             return null;
