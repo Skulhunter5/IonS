@@ -9,6 +9,13 @@ namespace IonS {
         }
     }
 
+    abstract class CommentPreprocessorError : Error {
+        public override string ToString()
+        {
+            return "[CommentPreprocessorError]: ";
+        }
+    }
+
     abstract class IncludePreprocessorError : Error {
         public override string ToString()
         {
@@ -90,6 +97,20 @@ namespace IonS {
             return base.ToString() + "Invalid char: " + Word;
         }
         public Word Word { get; }
+    }
+
+    // CommentPreprocessor errors
+    // - EOF in block comment error
+
+    sealed class EOFInBlockCommentError : CommentPreprocessorError {
+        public EOFInBlockCommentError(Position start) {
+            Start = start;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "EOF in block comment: starts at " + Start;
+        }
+        public Position Start { get; }
     }
 
     // IncludePreprocessor errors

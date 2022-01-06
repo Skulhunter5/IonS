@@ -4,18 +4,7 @@ using System.Text;
 namespace IonS {
 
     class ParseResult : Result {
-        public ParseResult(List<Variable> variables, List<string> strings, List<Operation> operations, Error error) : base(error) {
-            Variables = variables;
-            Strings = strings;
-            Operations = operations;
-        }
-        public List<Variable> Variables { get; }
-        public List<string> Strings { get; }
-        public List<Operation> Operations { get; }
-    }
-
-    class ParseResult2 : Result {
-        public ParseResult2(CodeBlock root, List<string> strings, List<Variable> variables, Error error) : base(error) {
+        public ParseResult(CodeBlock root, List<string> strings, List<Variable> variables, Error error) : base(error) {
             Root = root;
             Strings = strings;
             Variables = variables;
@@ -296,26 +285,30 @@ namespace IonS {
             return null;
         }
 
-        public ParseResult2 Parse() {
+        public ParseResult Parse() {
             var lexingResult = new Lexer(_text, _source).run();
-            if(lexingResult.Error != null) return new ParseResult2(null, null, null, lexingResult.Error);
+            if(lexingResult.Error != null) return new ParseResult(null, null, null, lexingResult.Error);
             _words = lexingResult.Words;
 
-            var incPreprocResult = new IncludePreprocessor(_source, _words).run();
-            if(incPreprocResult.Error != null) return new ParseResult2(null, null, null, incPreprocResult.Error);
-            _words = incPreprocResult.Words;
+            var commentResult = new CommentPreprocessor(_words).run();
+            if(commentResult.Error != null) return new ParseResult(null, null, null, commentResult.Error);
+            _words = commentResult.Words;
 
-            var result = new MacroPreprocessor(_words).run();
-            if(result.Error != null) return new ParseResult2(null, null, null, result.Error);
-            _words = result.Words;
+            var includeResult = new IncludePreprocessor(_source, _words).run();
+            if(includeResult.Error != null) return new ParseResult(null, null, null, includeResult.Error);
+            _words = includeResult.Words;
+
+            var macroResult = new MacroPreprocessor(_words).run();
+            if(macroResult.Error != null) return new ParseResult(null, null, null, macroResult.Error);
+            _words = macroResult.Words;
 
             _vars = new List<Variable>();
             _strings = new List<string>();
 
             ParseBlockResult parseResult = ParseBlock(null, null);
-            if(parseResult.Error != null) return new ParseResult2(null, null, null, parseResult.Error);
+            if(parseResult.Error != null) return new ParseResult(null, null, null, parseResult.Error);
 
-            return new ParseResult2(parseResult.Block, _strings, _vars, null);
+            return new ParseResult(parseResult.Block, _strings, _vars, null);
         }
 
     }
