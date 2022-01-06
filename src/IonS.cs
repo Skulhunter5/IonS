@@ -4,21 +4,62 @@ using System.IO;
 namespace IonS
 {
 
+    enum Action {
+        Compile,
+        Interpret,
+        Simulate,
+    }
+
     class IonS
     {
         static void Main(string[] args) {
-            if(args.Length == 0 || args[0] == "i" || args[0] == "interpret") Console.WriteLine("-> Disabled"); //Interpret();
-            else if(args[0] == "c" || args[0] == "compile") {
-                if(args.Length == 1) Compile("res/test.ions");
-                else if(args.Length >= 2) {
-                    if(args[1].StartsWith("\"")) {
-                        Console.WriteLine("Unimplemented feature");
+            // parameters
+            Action action = Action.Compile;
+            string filename = null;
+            // parsing the parameters
+            int i = 0;
+            while(i < args.Length) {
+                if(i == 0) {
+                    if(args[i] == "c" || args[i] == "compile") action = Action.Compile;
+                    else if(args[i] == "s" || args[i] == "simulate") action = Action.Simulate;
+                    else if(args[i] == "i" || args[i] == "interpret") action = Action.Interpret;
+                    else {
+                        Console.WriteLine("Invalid action: '" + args[i] + "'");
+                        Environment.ExitCode = 2;
                         return;
                     }
-                    Compile(args[1]);
+                    i++;
+                    continue;
                 }
-            } else if(args[0] == "s" || args[0] == "simulate") Console.WriteLine("-> Disabled"); //Simulate();
-            else Console.WriteLine("Invalid argument: '" + args[0] + "'");
+                if(action == Action.Compile || action == Action.Simulate) {
+                    if(args[i] == "--file") {
+                        i++;
+                        if(i >= args.Length) {
+                            Console.WriteLine("Missing argument for '--file'");
+                            Environment.ExitCode = 2;
+                            return;
+                        }
+                        filename = args[i++];
+                        continue;
+                    }
+                }
+                Console.WriteLine("Invalid argument: '" + args[i] + "'");
+            }
+            if(action == Action.Compile) {
+                if(filename == null) filename = "res/test.ions";
+                Compile(filename);
+            } else if(action == Action.Simulate) {
+                Console.WriteLine("Feature is currently disable.");
+                Environment.ExitCode = 2;
+                return;
+                //if(filename != null) filename = "res/test.ions";
+                //Simulate(filename);
+            } else if(action == Action.Interpret) {
+                Console.WriteLine("Feature is currently disable.");
+                Environment.ExitCode = 2;
+                return;
+                //Interpret();
+            }
         }
 
         private static int CountLines(string text) {

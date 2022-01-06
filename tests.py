@@ -50,7 +50,7 @@ def runFile(file):
         return RESULT_SKIPPED
     with open("tests/" + file[:-5] + ".txt", 'r') as f:
         lines = f.readlines()
-        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "tests/" + file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if(transcriptionProcess.returncode != 0):
             transcriptionOutput = transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
             if(not lines[0][4:].startswith("Transcription")):
@@ -130,7 +130,7 @@ def generateFile(file, force=False):
         print("  Expectation found\n")
         return RESULT_KEPT
     with open("tests/" + file[:-5] + ".txt", 'w') as out:
-        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "tests/" + file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if(transcriptionProcess.returncode != 0):
             out.write("--->Transcription:exitcode=" + str(transcriptionProcess.returncode) + "\n")
             out.write(transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
