@@ -1,5 +1,9 @@
 include "./../ions-libs/std.ions"
 
+12345
+
 "Hello, world!\n"c cputs
+
+.
 
 0 exit

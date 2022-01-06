@@ -30,13 +30,6 @@ namespace IonS {
         }
     }
 
-    abstract class SimulatorError : Error {
-        public override string ToString()
-        {
-            return "[Simulator]: ";
-        }
-    }
-
     abstract class AssemblyTranscriberError : Error {
         public override string ToString()
         {
@@ -180,15 +173,6 @@ namespace IonS {
     }
 
     // Parser errors
-    // - Internal error
-    
-    sealed class InternalParserError : ParserError {
-        public override string ToString()
-        {
-            return base.ToString() + "Internal Error";
-        }
-    }
-
     // - Unexpected word error
 
     sealed class UnexpectedWordError : ParserError {
@@ -204,29 +188,26 @@ namespace IonS {
 
     // - Block errors
 
-    sealed class UnexpectedMarkerError : ParserError {
-        public UnexpectedMarkerError(Word word) {
-            Word = word;
+    sealed class MissingDoError : ParserError {
+        public MissingDoError(Position position) {
+            Position = position;
         }
         public override string ToString()
         {
-            return base.ToString() + "Unexpected marker: " + Word;
+            return base.ToString() + "Missing do marker: at " + Position;
         }
-        public Word Word { get; }
+        public Position Position { get; }
     }
 
-    sealed class IncompleteBlockError : ParserError {
-        public IncompleteBlockError(Block block) {
-            Block = block;
+    sealed class MissingWhileError : ParserError {
+        public MissingWhileError(Position position) {
+            Position = position;
         }
         public override string ToString()
         {
-            if(Block.GetType() == typeof(IfBlock)) return base.ToString() + "Incomplete block: 'if' at " + Block.Position + " is missing: 'end'";
-            else if(Block.GetType() == typeof(WhileBlock)) return base.ToString() + "Incomplete block: 'while' at " + Block.Position + " is missing: '" + (((WhileBlock) Block).HasDo ? "end" : "do") + "'";
-            else if(Block.GetType() == typeof(DoWhileBlock)) return base.ToString() + "Incomplete block: 'do-while' at " + Block.Position + " is missing: '" + (((DoWhileBlock) Block).HasWhile ? "end" : "while") + "'";
-            else return base.ToString() + "Incomplete block: '" + Block.GetType() + "' at " + Block.Position;
+            return base.ToString() + "Missing while marker: at " + Position;
         }
-        public Block Block { get; }
+        public Position Position { get; }
     }
 
     sealed class EOFInCodeBlockError : ParserError {
@@ -317,69 +298,28 @@ namespace IonS {
         public Position Position { get; }
     }
 
-    // Simulator errors
-    // - Stack errors
+    // - Invalid break/continue error
 
-    sealed class StackUnderflowError : SimulatorError {
-        public StackUnderflowError(string text) {
-            Text = text;
+    sealed class InvalidContinueError : ParserError {
+        public InvalidContinueError(Position position) {
+            Position = position;
         }
         public override string ToString()
         {
-            return base.ToString() + "Stack underflow: '" + Text + "'";
+            return base.ToString() + "'continue' outside a loop or switch: at " + Position;
         }
-        public string Text { get; }
+        public Position Position { get; }
     }
 
-    sealed class StackOverflowError : SimulatorError {
-        public StackOverflowError(string text) {
-            Text = text;
+    sealed class InvalidBreakError : ParserError {
+        public InvalidBreakError(Position position) {
+            Position = position;
         }
         public override string ToString()
         {
-            return base.ToString() + "Stack overflow: '" + Text + "'";
+            return base.ToString() + "'break' outside a loop or switch: at " + Position;
         }
-        public string Text { get; }
-    }
-
-    // - Divide by zero error
-
-    sealed class DivideByZeroError : SimulatorError {
-        public DivideByZeroError(string text) {
-            Text = text;
-        }
-        public override string ToString()
-        {
-            return base.ToString() + "Division by 0: '" + Text + "'";
-        }
-        public string Text { get; }
-    }
-
-    // Unimplemented operation error
-
-    sealed class UnimplementedOperationSimulatorError : SimulatorError {
-        public UnimplementedOperationSimulatorError(OperationType type) {
-            Type = type;
-        }
-        public override string ToString()
-        {
-            return base.ToString() + "Unimplemented operation: '" + Type + "'";
-        }
-        public OperationType Type { get; }
-    }
-
-    // AssemblyTranscriber errors
-    // - Unimplemented operation error
-    
-    sealed class UnimplementedOperationAssemblyTranscriberError : AssemblyTranscriberError {
-        public UnimplementedOperationAssemblyTranscriberError(OperationType type) {
-            Type = type;
-        }
-        public override string ToString()
-        {
-            return base.ToString() + "Unimplemented operation: '" + Type + "'";
-        }
-        public OperationType Type { get; }
+        public Position Position { get; }
     }
 
 }

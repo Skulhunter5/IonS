@@ -40,14 +40,14 @@ namespace IonS {
         public override string ToString()
         {
             if(ExpandedFrom != null) return "'" + Text + "' (expanded from " + ExpandedFrom + ")";
-            if(IncludedFrom != null) return "'" + Text + "' (Included from " + IncludedFrom + ")";
+            if(IncludedFrom != null) return "'" + Text + "' (Included from " + IncludedFrom[0] + " at " + IncludedFrom[1] + ")";
             return "'" + Text + "' at " + Position;
         }
 
         public Position Position { get; }
         public string Text { get; }
         public Word ExpandedFrom { get; set; }
-        public Word IncludedFrom { get; set; }
+        public Position[] IncludedFrom { get; set; }
     }
     
     abstract class Result {
@@ -71,12 +71,13 @@ namespace IonS {
             "min", "max",
             "==", "!=", "<", ">", "<=", ">=",
             ".",
-            "if", "while", "do", "end",
+            "if", "else", "while", "do",
             "continue", "break",
             "macro",
             "var",
             "include",
-            "here", "chere"
+            "here", "chere",
+            "{", "}",
         };
         public static bool isReserved(string word) {
             if(word.StartsWith("@") || word.StartsWith("!")) return true;

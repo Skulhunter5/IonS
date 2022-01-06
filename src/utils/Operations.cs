@@ -14,7 +14,6 @@ namespace IonS {
         Dup, Dup2,
         Over, Over2,
         Swap, Swap2, Rotate, Rotate2,
-        Label, Jump, JumpIfZero, JumpIfNotZero,
         Exit,
         VariableAccess,
         MemRead, MemWrite,
@@ -22,14 +21,12 @@ namespace IonS {
         Syscall,
 
         Block,
+        Break, Continue,
     }
 
-    enum ComparisonType {
-        EQ, NEQ,
-        B, A,
-        BEQ, AEQ,
-        LT, GT,
-        LTEQ, GTEQ
+    enum Direction2 {
+        Left,
+        Right
     }
 
     abstract class Operation {
@@ -47,7 +44,7 @@ namespace IonS {
             Value = value;
         }
         public override string nasm_linux_x86_64() {
-            return "    push " + ((Push_uint64_Operation) operation).Value + "\n";
+            return "    push " + Value + "\n";
         }
         public ulong Value { get; }
     }
@@ -253,7 +250,11 @@ namespace IonS {
         public ModuloOperation() : base(OperationType.Modulo) {}
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    xor rdx, rdx\n";
+            asm += "    div rbx\n";
+            asm += "    push rdx\n";
             return asm;
         }
     }
@@ -262,7 +263,12 @@ namespace IonS {
         public DivModOperation() : base(OperationType.DivMod) {}
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    xor rdx, rdx\n";
+            asm += "    div rbx\n";
+            asm += "    push rax\n";
+            asm += "    push rdx\n";
             return asm;
         }
     }
@@ -273,7 +279,10 @@ namespace IonS {
         public ShLOperation() : base(OperationType.ShL) {}
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rcx\n";
+            asm += "    pop rax\n";
+            asm += "    shl rax, cl\n";
+            asm += "    push rax\n";
             return asm;
         }
     }
@@ -282,7 +291,10 @@ namespace IonS {
         public ShROperation() : base(OperationType.ShR) {}
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rcx\n";
+            asm += "    pop rax\n";
+            asm += "    shr rax, cl\n";
+            asm += "    push rax\n";
             return asm;
         }
     }
@@ -291,7 +303,10 @@ namespace IonS {
         public BitAndOperation() : base(OperationType.BitAnd) {}
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    and rax, rbx\n";
+            asm += "    push rax\n";
             return asm;
         }
     }
@@ -300,7 +315,10 @@ namespace IonS {
         public BitOrOperation() : base(OperationType.BitOr) {}
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    or rax, rbx\n";
+            asm += "    push rax\n";
             return asm;
         }
     }
@@ -311,7 +329,11 @@ namespace IonS {
         public MinOperation() : base(OperationType.Min) {}
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    cmp rbx, rax\n";
+            asm += "    cmovb rax, rbx\n";
+            asm += "    push rax\n";
             return asm;
         }
     }
@@ -320,12 +342,24 @@ namespace IonS {
         public MaxOperation() : base(OperationType.Max) {}
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    cmp rbx, rax\n";
+            asm += "    cmova rax, rbx\n";
+            asm += "    push rax\n";
             return asm;
         }
     }
 
     // Comparison operations
+
+    enum ComparisonType {
+        EQ, NEQ,
+        B, A,
+        BEQ, AEQ,
+        LT, GT,
+        LTEQ, GTEQ
+    }
 
     sealed class ComparisonOperation : Operation {
         public ComparisonOperation(ComparisonType comparisonType) : base(OperationType.Comparison) {
@@ -334,7 +368,21 @@ namespace IonS {
         public ComparisonType ComparisonType { get; }
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    cmp rax, rbx\n";
+            asm += "    mov rax, 0\n";
+            if(ComparisonType == ComparisonType.EQ) asm += "    sete al\n";
+            else if(ComparisonType == ComparisonType.NEQ) asm += "    setne al\n";
+            else if(ComparisonType == ComparisonType.B) asm += "    setb al\n";
+            else if(ComparisonType == ComparisonType.A) asm += "    seta al\n";
+            else if(ComparisonType == ComparisonType.BEQ) asm += "    setbe al\n";
+            else if(ComparisonType == ComparisonType.AEQ) asm += "    setae al\n";
+            else if(ComparisonType == ComparisonType.LT) asm += "    setl al\n";
+            else if(ComparisonType == ComparisonType.GT) asm += "    setg al\n";
+            else if(ComparisonType == ComparisonType.LTEQ) asm += "    setle al\n";
+            else if(ComparisonType == ComparisonType.GTEQ) asm += "    setge al\n";
+            asm += "    push rax\n";
             return asm;
         }
     }
@@ -345,7 +393,8 @@ namespace IonS {
         public DumpOperation() : base(OperationType.Dump) {}
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rdi\n";
+            asm += "    call dump\n";
             return asm;
         }
     }
@@ -359,73 +408,15 @@ namespace IonS {
         }
     }
 
-    // Label and jump operations
-
-    sealed class LabelOperation : Operation {
-        public LabelOperation(string label) : base(OperationType.Label) {
-            Label = label;
-        }
-        public string Label { get; }
-        public override string nasm_linux_x86_64() {
-            string asm = "";
-            
-            return asm;
-        }
-    }
-
-    sealed class JumpOperation : Operation {
-        public JumpOperation(string label, int direction) : base(OperationType.Jump) {
-            Label = label;
-            Direction = direction;
-        }
-        public string Label { get; }
-        public int Direction { get; } // Only used for optimization of the simulator
-        public override string nasm_linux_x86_64() {
-            string asm = "";
-            
-            return asm;
-        }
-    }
-
-    sealed class JumpIfZeroOperation : Operation {
-        public JumpIfZeroOperation(string label, int direction) : base(OperationType.JumpIfZero) {
-            Label = label;
-            Direction = direction;
-        }
-        public string Label { get; }
-        public int Direction { get; } // Only used for optimization of the simulator
-        public override string nasm_linux_x86_64() {
-            string asm = "";
-            
-            return asm;
-        }
-    }
-
-    sealed class JumpIfNotZeroOperation : Operation {
-        public JumpIfNotZeroOperation(string label, int direction) : base(OperationType.JumpIfNotZero) {
-            Label = label;
-            Direction = direction;
-        }
-        public string Label { get; }
-        public int Direction { get; } // Only used for optimization of the simulator
-        public override string nasm_linux_x86_64() {
-            string asm = "";
-            
-            return asm;
-        }
-    }
-
     // Variable operations
     
     sealed class VariableAccessOperation : Operation {
-        public VariableAccessOperation(string identifier) : base(OperationType.VariableAccess) {
-            Identifier = identifier;
+        public VariableAccessOperation(int id) : base(OperationType.VariableAccess) {
+            Id = id;
         }
-        public string Identifier { get; }
+        public int Id { get; }
         public override string nasm_linux_x86_64() {
-            string asm = "";
-            
-            return asm;
+            return "    push var_" + Id + "\n";
         }
     }
 
@@ -438,7 +429,13 @@ namespace IonS {
         public byte Amount { get; }
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rax\n";
+            if(Amount < 64) asm += "    xor rbx, rbx\n";
+            if(Amount == 8) asm += "    mov bl, [rax]\n";
+            else if(Amount == 16) asm += "    mov bx, [rax]\n";
+            else if(Amount == 32) asm += "    mov ebx, [rax]\n";
+            else if(Amount == 64) asm += "    mov rbx, [rax]\n";
+            asm += "    push rbx\n";
             return asm;
         }
     }
@@ -450,7 +447,12 @@ namespace IonS {
         public byte Amount { get; }
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rax\n";
+            asm += "    pop rbx\n";
+            if(Amount == 8) asm += "    mov [rax], bl\n";
+            else if(Amount == 16) asm += "    mov [rax], bx\n";
+            else if(Amount == 32) asm += "    mov [rax], ebx\n";
+            else if(Amount == 64) asm += "    mov [rax], rbx\n";
             return asm;
         }
     }
@@ -458,13 +460,16 @@ namespace IonS {
     // String literal operation
 
     sealed class StringOperation : Operation {
-        public StringOperation(int id) : base(OperationType.String) {
+        public StringOperation(int id, int length) : base(OperationType.String) {
             Id = id;
+            Length = length;
         }
         public int Id { get; }
+        public int Length { get; }
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    push " + Length + "\n";
+            asm += "    push str_" + Id + "\n";
             return asm;
         }
     }
@@ -475,9 +480,7 @@ namespace IonS {
         }
         public int Id { get; }
         public override string nasm_linux_x86_64() {
-            string asm = "";
-            
-            return asm;
+            return "    push str_" + Id + "\n";
         }
     }
 
@@ -490,7 +493,9 @@ namespace IonS {
         public int Argc { get; }
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "    pop rax\n";
+            for(int i = 0; i < Argc; i++) asm += "    pop " + Utils.SyscallRegisters[i] + "\n";
+            asm += "    syscall\n";
             return asm;
         }
     }
@@ -528,40 +533,36 @@ namespace IonS {
         public List<Variable> Variables { get; }
     }
 
-    abstract class BlockOperation : Operation {
+    abstract class Block : Operation {
         private static int nextBlockId = 0;
         private static int BlockId() {
             return nextBlockId++;
         }
 
-        public BlockOperation(BlockType blockType) : base(OperationType.Block) {
+        public Block(BlockType blockType) : base(OperationType.Block) {
             Id = BlockId();
             BlockType = blockType;
         }
         public int Id { get; }
         public BlockType BlockType { get; }
-        public override string nasm_linux_x86_64() {
-            string asm = "";
-            
-            return asm;
-        }
     }
 
-    sealed class CodeBlock : BlockOperation {
-        public CodeBlock() : base(BlockType.Code) {
+    sealed class CodeBlock : Block {
+        public CodeBlock(Scope parentScope) : base(BlockType.Code) {
             Operations = new List<Operation>();
+            Scope = new Scope(parentScope);
         }
         public List<Operation> Operations { get; }
         public Scope Scope { get; }
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            foreach(Operation operation in Operations) asm += operation.nasm_linux_x86_64();
             return asm;
         }
     }
 
-    sealed class IfBlockOperation : BlockOperation {
-        public IfBlockOperation(CodeBlock blockIf, CodeBlock blockElse) : base(BlockType.Code) {
+    sealed class IfBlock : Block {
+        public IfBlock(CodeBlock blockIf, CodeBlock blockElse) : base(BlockType.If) {
             BlockIf = blockIf;
             BlockElse = blockElse;
         }
@@ -569,8 +570,96 @@ namespace IonS {
         public CodeBlock BlockElse { get; }
         public override string nasm_linux_x86_64() {
             string asm = "";
-            
+            asm += "if_" + Id + ":\n";
+            asm += "    pop rax\n";
+            asm += "    cmp rax, 0\n";
+            asm += "    je if_else_" + Id + "\n";
+            asm += BlockIf.nasm_linux_x86_64();
+            asm += "    jmp if_end_" + Id + "\n";
+            asm += "if_else_" + Id + ":\n";
+            asm += BlockElse != null ? BlockElse.nasm_linux_x86_64() : "";
+            asm += "if_end_" + Id + ":\n";
             return asm;
+        }
+    }
+
+    sealed class WhileBlock : BreakableBlock {
+        public WhileBlock(CodeBlock condition, CodeBlock block) : base(BlockType.While) {
+            Condition = condition;
+            Block = block;
+        }
+        public CodeBlock Condition { get; set; }
+        public CodeBlock Block { get; set; }
+        public override string nasm_linux_x86_64() { // CWD
+            string asm = "";
+            asm += "while_" + Id + ":\n";
+            asm += Condition.nasm_linux_x86_64();
+            asm += "    pop rax\n";
+            asm += "    cmp rax, 0\n";
+            asm += "    je while_end_" + Id + "\n";
+            asm += Block.nasm_linux_x86_64();
+            asm += "    jmp while_" + Id + "\n";
+            asm += "while_end_" + Id + ":\n";
+            return asm;
+        }
+        public override string continue___nasm_linux_x86_64() {
+            return "    jmp while_" + Id + "\n";
+        }
+        public override string break___nasm_linux_x86_64() {
+            return "    jmp while_end_" + Id + "\n";
+        }
+    }
+
+    sealed class DoWhileBlock : BreakableBlock {
+        public DoWhileBlock(CodeBlock block, CodeBlock condition) : base(BlockType.DoWhile) {
+            Block = block;
+            Condition = condition;
+        }
+        public CodeBlock Block { get; set; }
+        public CodeBlock Condition { get; set; }
+        public override string nasm_linux_x86_64() { // CWD
+            string asm = "";
+            asm += "dowhile_" + Id + ":\n";
+            asm += Block.nasm_linux_x86_64();
+            asm += "dowhile_do_" + Id + ":\n";
+            asm += Condition.nasm_linux_x86_64();
+            asm += "    pop rax\n";
+            asm += "    cmp rax, 0\n";
+            asm += "    jne dowhile_" + Id + "\n";
+            asm += "dowhile_end_" + Id + ":\n";
+            return asm;
+        }
+        public override string continue___nasm_linux_x86_64() {
+            return "    jmp dowhile_do_" + Id + "\n";
+        }
+        public override string break___nasm_linux_x86_64() {
+            return "    jmp dowhile_end_" + Id + "\n";
+        }
+    }
+
+    abstract class BreakableBlock : Block {
+        public BreakableBlock(BlockType blockType) : base(blockType) {}
+        public abstract string continue___nasm_linux_x86_64();
+        public abstract string break___nasm_linux_x86_64();
+    }
+
+    sealed class ContinueOperation : Operation {
+        public ContinueOperation(BreakableBlock block) : base(OperationType.Continue) {
+            Block = block;
+        }
+        public BreakableBlock Block { get; }
+        public override string nasm_linux_x86_64() {
+            return Block.continue___nasm_linux_x86_64();
+        }
+    }
+
+    sealed class BreakOperation : Operation {
+        public BreakOperation(BreakableBlock block) : base(OperationType.Break) {
+            Block = block;
+        }
+        public BreakableBlock Block { get; }
+        public override string nasm_linux_x86_64() {
+            return Block.break___nasm_linux_x86_64();
         }
     }
 

@@ -1,9 +1,5 @@
 include "./../ions-libs/std.ions"
 
-12345
-
 "Hello, world!\n" puts
-
-.
 
 0 exit

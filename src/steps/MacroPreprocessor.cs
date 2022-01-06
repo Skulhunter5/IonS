@@ -70,12 +70,17 @@ namespace IonS {
                     if(macro != null) return new MacroRedefinitionError(macro.Key, key);
 
                     List<Word> words1 = new List<Word>();
+                    int openBraces = 0;
                     if(_words[i].Text != "{") words1.Add(_words[i]);
                     else {
                         while(true) {
                             i++;
                             if(i >= _words.Length) return new IncompleteMacroDefinitionError(word, key);
-                            if(_words[i].Text == "}") break;
+                            if(_words[i].Text == "{") openBraces++;
+                            if(_words[i].Text == "}") {
+                                if(openBraces > 0) openBraces--;
+                                else break;
+                            }
                             words1.Add(_words[i]);
                         }
                     }
