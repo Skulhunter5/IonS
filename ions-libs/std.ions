@@ -71,6 +71,9 @@ macro streq {
 			rot 2swap
 			1 +
 		end
-
 	end
+}
+
+macro cstreq {
+	dup cstrlen swap rot dup cstrlen swap streq
 }
