@@ -12,13 +12,6 @@ namespace IonS {
         public Word[] Words { get; }
     }
 
-    class MacroExpansionResult : Result {
-        public MacroExpansionResult(Word[] words, Error error) : base(error) {
-            Words = words;
-        }
-        public Word[] Words { get; }
-    }
-
     class MacroPreprocessor {
 
         private Word[] _words;
@@ -103,10 +96,10 @@ namespace IonS {
             return words.ToArray();
         }
 
-        public MacroExpansionResult run() {
+        public PreprocessorResult run() {
             var result = CollectMacros();
-            if(result != null) return new MacroExpansionResult(null, result);
-            return new MacroExpansionResult(ExpandMacros(), null);
+            if(result != null) return new PreprocessorResult(null, result);
+            return new PreprocessorResult(ExpandMacros(), null);
         }
     }
 

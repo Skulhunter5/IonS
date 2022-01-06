@@ -99,7 +99,7 @@ namespace IonS {
                         if(len != 3 && len != 4) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, len))));
                     }
                     string text = _text.Substring(start, len);
-                    if(text.StartsWith("//")) {
+                    if(text.StartsWith("//")) { // TODO: somehow get this into the CommentPreprocessor aswell
                         while(c != '\n' && c != '\0') Next();
                         return NextWord();
                     }
