@@ -229,6 +229,14 @@ namespace IonS {
         public Block Block { get; }
     }
 
+    sealed class EOFInCodeBlockError : ParserError {
+        public EOFInCodeBlockError() {}
+        public override string ToString()
+        {
+            return base.ToString() + "EOF inside of a CodeBlock";
+        }
+    }
+
     // - Variable errors
 
     sealed class IncompleteVariableDeclarationError : ParserError {

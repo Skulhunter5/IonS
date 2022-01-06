@@ -34,7 +34,7 @@ namespace IonS
             }
             string path = Path.GetFullPath(filename);
             var asmTscr = new AssemblyTranscriber(File.ReadAllText(path).Replace("\r\n", "\n"), path);
-            AssemblyTranscriptionResult result = asmTscr.generate_nasm_linux_x86_64();
+            AssemblyTranscriptionResult result = asmTscr.generate_nasm_linux_x86_64_2();
             if(result.Error != null) {
                 Console.WriteLine(result.Error);
                 Environment.ExitCode = 1;

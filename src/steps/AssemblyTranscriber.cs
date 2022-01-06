@@ -16,6 +16,189 @@ namespace IonS {
             _source = source;
         }
 
+        public AssemblyTranscriptionResult generate_nasm_linux_x86_64_2() {
+            string asm = "BITS 64\n";
+            var parser = new Parser(_text, _source);
+            var result = parser.Parse2();
+            if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
+            var root = result.Root;
+
+            if(result.Variables.Count > 0) asm += "segment .bss\n";
+            foreach(Variable var in result.Variables) asm += "    var_" + var.Id + ": resb " + var.Bytesize + "\n";
+
+            if(result.Strings.Count > 0) asm += "segment .data\n";
+            for(int i = 0; i < result.Strings.Count; i++) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i]) + "\n";
+
+            asm += "segment .text\n";
+            asm += File.ReadAllText("res/asm snippets/dump.asm");
+            asm += "global _start\n_start:\n";
+
+            return new AssemblyTranscriptionResult(root.nasm_linux_x86_64(), null);
+
+            for(int i = 0; i < operations.Count; i++) {
+                Operation operation = operations[i];
+                switch(operation.Type) {
+                    case OperationType.Modulo: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    xor rdx, rdx\n";
+                        asm += "    div rbx\n";
+                        asm += "    push rdx\n";
+                        break;
+                    }
+                    case OperationType.DivMod: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    xor rdx, rdx\n";
+                        asm += "    div rbx\n";
+                        asm += "    push rax\n";
+                        asm += "    push rdx\n";
+                        break;
+                    }
+                    case OperationType.ShL: {
+                        asm += "    pop rcx\n";
+                        asm += "    pop rax\n";
+                        asm += "    shl rax, cl\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.ShR: {
+                        asm += "    pop rcx\n";
+                        asm += "    pop rax\n";
+                        asm += "    shr rax, cl\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.BitAnd: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    and rax, rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.BitOr: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    or rax, rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.Min: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    cmp rbx, rax\n";
+                        asm += "    cmovb rax, rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.Max: {
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    cmp rbx, rax\n";
+                        asm += "    cmova rax, rbx\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.Comparison: {
+                        ComparisonOperation comparison = (ComparisonOperation) operation;
+                        asm += "    pop rbx\n";
+                        asm += "    pop rax\n";
+                        asm += "    cmp rax, rbx\n";
+                        asm += "    mov rax, 0\n";
+                        if(comparison.ComparisonType == ComparisonType.EQ) asm += "    sete al\n";
+                        else if(comparison.ComparisonType == ComparisonType.NEQ) asm += "    setne al\n";
+                        else if(comparison.ComparisonType == ComparisonType.B) asm += "    setb al\n";
+                        else if(comparison.ComparisonType == ComparisonType.A) asm += "    seta al\n";
+                        else if(comparison.ComparisonType == ComparisonType.BEQ) asm += "    setbe al\n";
+                        else if(comparison.ComparisonType == ComparisonType.AEQ) asm += "    setae al\n";
+                        else if(comparison.ComparisonType == ComparisonType.LT) asm += "    setl al\n";
+                        else if(comparison.ComparisonType == ComparisonType.GT) asm += "    setg al\n";
+                        else if(comparison.ComparisonType == ComparisonType.LTEQ) asm += "    setle al\n";
+                        else if(comparison.ComparisonType == ComparisonType.GTEQ) asm += "    setge al\n";
+                        asm += "    push rax\n";
+                        break;
+                    }
+                    case OperationType.Dump: {
+                        asm += "    pop rdi\n";
+                        asm += "    call dump\n";
+                        break;
+                    }
+                    case OperationType.Label: {
+                        asm += ((LabelOperation) operation).Label + ":\n";
+                        break;
+                    }
+                    case OperationType.Jump: {
+                        asm += "    jmp " + ((JumpOperation) operation).Label + "\n";
+                        break;
+                    }
+                    case OperationType.JumpIfZero: {
+                        asm += "    pop rax\n";
+                        asm += "    cmp rax, 0\n";
+                        asm += "    je " + ((JumpIfZeroOperation) operation).Label + "\n";
+                        break;
+                    }
+                    case OperationType.JumpIfNotZero: {
+                        asm += "    pop rax\n";
+                        asm += "    cmp rax, 0\n";
+                        asm += "    jne " + ((JumpIfNotZeroOperation) operation).Label + "\n";
+                        break;
+                    }
+                    case OperationType.VariableAccess: {
+                        asm += "    push var_" + ((VariableAccessOperation) operation).Identifier + "\n";
+                        break;
+                    }
+                    case OperationType.MemWrite: {
+                        MemWriteOperation memWriteOperation = (MemWriteOperation) operation;
+                        asm += "    pop rax\n";
+                        asm += "    pop rbx\n";
+                        if(memWriteOperation.Amount == 8) asm += "    mov [rax], bl\n";
+                        else if(memWriteOperation.Amount == 16) asm += "    mov [rax], bx\n";
+                        else if(memWriteOperation.Amount == 32) asm += "    mov [rax], ebx\n";
+                        else if(memWriteOperation.Amount == 64) asm += "    mov [rax], rbx\n";
+                        break;
+                    }
+                    case OperationType.MemRead: {
+                        MemReadOperation memReadOperation = (MemReadOperation) operation;
+                        asm += "    pop rax\n";
+                        if(memReadOperation.Amount < 64) asm += "    xor rbx, rbx\n";
+                        if(memReadOperation.Amount == 8) asm += "    mov bl, [rax]\n";
+                        else if(memReadOperation.Amount == 16) asm += "    mov bx, [rax]\n";
+                        else if(memReadOperation.Amount == 32) asm += "    mov ebx, [rax]\n";
+                        else if(memReadOperation.Amount == 64) asm += "    mov rbx, [rax]\n";
+                        asm += "    push rbx\n";
+                        break;
+                    }
+                    case OperationType.String: {
+                        StringOperation op = (StringOperation) operation;
+                        asm += "    push " + result.Strings[op.Id].Length + "\n";
+                        asm += "    push str_" + op.Id + "\n";
+                        break;
+                    }
+                    case OperationType.CStyleString: {
+                        asm += "    push str_" + ((CStyleStringOperation) operation).Id + "\n";
+                        break;
+                    }
+                    case OperationType.Syscall: {
+                        SyscallOperation op = (SyscallOperation) operation;
+                        asm += "    pop rax\n";
+                        for(int j = 0; j < op.Argc; j++) {
+                            asm += "    pop " + Utils.SyscallRegisters[j] + "\n";
+                        }
+                        asm += "    syscall\n";
+                        break;
+                    }
+                    default: {
+                        return new AssemblyTranscriptionResult(null, new UnimplementedOperationAssemblyTranscriberError(operation.Type));
+                    }
+                }
+            }
+            asm += "exit:\n";
+            asm += "    mov rax, 60\n";
+            asm += "    pop rdi\n";
+            asm += "    syscall\n";
+            return new AssemblyTranscriptionResult(asm, null);
+        }
+
         public AssemblyTranscriptionResult generate_nasm_linux_x86_64() {
             string asm = "BITS 64\n";
             var parser = new Parser(_text, _source);
