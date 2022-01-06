@@ -178,7 +178,7 @@ namespace IonS {
                 }
                 operations.Add(new IfBlock(blockIf, blockElse));
                 return null;
-            } else if(Current.Text == "while") { // CWD
+            } else if(Current.Text == "while") {
                 NextWord();
                 WhileBlock whileBlock = new WhileBlock(null, null);
                 ParseBlockResult result = ParseBlock(scope, breakableBlock);

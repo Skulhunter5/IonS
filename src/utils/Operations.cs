@@ -590,7 +590,7 @@ namespace IonS {
         }
         public CodeBlock Condition { get; set; }
         public CodeBlock Block { get; set; }
-        public override string nasm_linux_x86_64() { // CWD
+        public override string nasm_linux_x86_64() {
             string asm = "";
             asm += "while_" + Id + ":\n";
             asm += Condition.nasm_linux_x86_64();
@@ -617,7 +617,7 @@ namespace IonS {
         }
         public CodeBlock Block { get; set; }
         public CodeBlock Condition { get; set; }
-        public override string nasm_linux_x86_64() { // CWD
+        public override string nasm_linux_x86_64() {
             string asm = "";
             asm += "dowhile_" + Id + ":\n";
             asm += Block.nasm_linux_x86_64();
