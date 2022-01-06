@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System.Text;
+
+using System;
 
 namespace IonS {
 
@@ -233,6 +236,24 @@ namespace IonS {
                         operations.Add(new CStyleStringOperation(_strings.Count));
                         _strings.Add(Current.Text.Substring(1, Current.Text.Length - 3) + "\0");
                     }
+                } else if(Current.Text.StartsWith("'")) {
+                    string text = Current.Text.Substring(1, Current.Text.Length-2);
+                    char c = text[0];
+                    if(text.Length == 2) {
+                        // TODO: factor out into function
+                        c = text[1];
+                        if(c == 'n') c = '\n';
+                        else if(c == 't') c = '\t';
+                        else if(c == 'r') c = '\r';
+                        else if(c == '\\') c = '\\';
+                        else if(c == '"') c = '"';
+                        else if(c == '0') c = '\0';
+                        else if(c == '\n') return new ParseResult(null, null, null, new InvalidEscapeCharacterError("\\n", new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                        else if(c == '\t') return new ParseResult(null, null, null, new InvalidEscapeCharacterError("\\t", new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                        else if(c == '\r') return new ParseResult(null, null, null, new InvalidEscapeCharacterError("\\r", new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                        else return new ParseResult(null, null, null, new InvalidEscapeCharacterError(""+c, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                    }
+                    operations.Add(new Push_uint64_Operation(Encoding.ASCII.GetBytes(""+c)[0]));
                 } else if(Current.Text == "here") {
                     operations.Add(new StringOperation(_strings.Count));
                     _strings.Add(""+Current.Position);

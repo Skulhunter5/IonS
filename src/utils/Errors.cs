@@ -86,6 +86,19 @@ namespace IonS {
         public Position Position { get; }
     }
 
+    // - Invalid char error
+
+    sealed class InvalidCharError : LexerError {
+        public InvalidCharError(Word word) {
+            Word = word;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid char: " + Word;
+        }
+        public Word Word { get; }
+    }
+
     // IncludePreprocessor errors
     // - File not found error
 
