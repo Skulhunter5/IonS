@@ -1,0 +1,12 @@
+12345
+
+1 if 69 else 420 .
+0 if 69 else 420 .
+1 if { 69 } else { 420 } .
+0 if { 69 } else { 420 } .
+1 if { 69 . } else { 420 . }
+0 if { 69 . } else { 420 . }
+
+.
+
+0 exit

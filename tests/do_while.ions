@@ -1,21 +1,19 @@
-10 do
+12345
+
+10 do {
     dup .
     1 -
-while
-    dup
-end
+} while { dup } drop
 
-10 do
+10 do {
     1 -
     dup .
-while
-    dup
-end
+} while { dup } drop
 
-0 do
+0 do {
     dup .
-while
-    dup
-end
+} while { dup } drop
+
+.
 
 0 exit

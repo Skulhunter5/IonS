@@ -7,8 +7,8 @@ namespace IonS
     class IonS
     {
         static void Main(string[] args) {
-            if(args.Length == 0 || args[0] == "-i" || args[0] == "--interpret") Interpret();
-            else if(args[0] == "--compile") {
+            if(args.Length == 0 || args[0] == "i" || args[0] == "interpret") Console.WriteLine("-> Disabled"); //Interpret();
+            else if(args[0] == "c" || args[0] == "compile") {
                 if(args.Length == 1) Compile("res/test.ions");
                 else if(args.Length >= 2) {
                     if(args[1].StartsWith("\"")) {
@@ -17,7 +17,7 @@ namespace IonS
                     }
                     Compile(args[1]);
                 }
-            } else if(args[0] == "-s" || args[0] == "--simulate") Simulate();
+            } else if(args[0] == "s" || args[0] == "simulate") Console.WriteLine("-> Disabled"); //Simulate();
             else Console.WriteLine("Invalid argument: '" + args[0] + "'");
         }
 
@@ -34,7 +34,7 @@ namespace IonS
             }
             string path = Path.GetFullPath(filename);
             var asmTscr = new AssemblyTranscriber(File.ReadAllText(path).Replace("\r\n", "\n"), path);
-            AssemblyTranscriptionResult result = asmTscr.generate_nasm_linux_x86_64();
+            AssemblyTranscriptionResult result = asmTscr.nasm_linux_x86_64();
             if(result.Error != null) {
                 Console.WriteLine(result.Error);
                 Environment.ExitCode = 1;
@@ -49,6 +49,7 @@ namespace IonS
             Console.WriteLine("Generated assembly with " + CountLines(result.Asm) + " lines.");
         }
 
+        /*
         private static void Interpret() {
             var simulator = new Simulator(100000);
             while(true) {
@@ -77,6 +78,7 @@ namespace IonS
             }
             Console.WriteLine("Exited with code " + result.Exitcode + ".");
         }
+        */
     }
 
 }

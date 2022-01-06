@@ -63,6 +63,7 @@ namespace IonS {
                     while(c != '\0' && c != '"') {
                         if(c == '\\') {
                             Next();
+                            // TODO: factor out into function
                             if(c == '\0') return new SingleWordResult(null, new EOFInStringLiteralError(position));
                             else if(c == 'n') text += '\n';
                             else if(c == 't') text += '\t';
@@ -92,7 +93,17 @@ namespace IonS {
                 } else {
                     while(!char.IsWhiteSpace(c) && c != '\0') Next();
                     int len = _position - start;
-                    return new SingleWordResult(new Word(position, _text.Substring(start, len)), null);
+                    if(_text[start] == '\'') {
+                        if(len == 3 && _text[start+2] != '\'') return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, len))));
+                        if(len == 4 && (_text[start+1] != '\\' || _text[start+3] != '\'')) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, len))));
+                        if(len != 3 && len != 4) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, len))));
+                    }
+                    string text = _text.Substring(start, len);
+                    if(text.StartsWith("//")) {
+                        while(c != '\n' && c != '\0') Next();
+                        return NextWord();
+                    }
+                    return new SingleWordResult(new Word(position, text), null);
                 }
             }
             return null;

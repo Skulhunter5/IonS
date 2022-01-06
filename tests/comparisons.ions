@@ -1,7 +1,13 @@
-10 0 while 2dup swap < do
+12345
+
+10 0 while { 2dup swap < } do {
     dup .
     1 +
-end 2drop
+} 2drop
+
+.
+
+12345
 
 0 0 == .
 0 1 == .
@@ -19,5 +25,7 @@ end 2drop
 0 1 >= .
 1 1 >= .
 2 1 >= .
+
+.
 
 0 exit
