@@ -47,7 +47,7 @@ namespace IonS {
                 Macro macro2 = GetMacro(word2.Text);
                 if(macro2 != null) ExpandMacro(macro.Words, words, i);
                 else {
-                    word2.ExpandedFrom = word;
+                    word2.ExpandedFrom = word; // TODO: rework ExpandedFrom (see IncludedFrom)
                     words.Add(word2);
                 }
             }

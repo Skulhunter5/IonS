@@ -58,7 +58,7 @@ namespace IonS {
                 if(incPreprocResult.Error != null) return new IncludePreprocessorResult(null, incPreprocResult.Error);
                 foreach(Word word in incPreprocResult.Words) {
                     Word includedFrom = _words[includes[i]+1];
-                    if(word.IncludedFrom == null) word.IncludedFrom = new Position[] {word.Position, includedFrom.Position};
+                    if(word.IncludedFrom == null) word.IncludedFrom = new Position[] {word.Position, includedFrom.Position}; // TODO: rework IncludedFrom (see ExpandedFrom)
                     words.Add(word);
                 }
                 i++;
