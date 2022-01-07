@@ -591,7 +591,7 @@ namespace IonS {
         public override string nasm_linux_x86_64() {
             string asm = "";
             for(int i = 0; i < Proc.Argc; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
-            asm += "    call proc_" + Proc.Name.Text + "\n";
+            asm += "    call proc_" + Proc.Id + "\n";
             for(int i = Proc.Rvc-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
             return asm;
         }
@@ -600,12 +600,12 @@ namespace IonS {
     // Procedure call operation
 
     sealed class ReturnOperation : Operation {
-        public ReturnOperation(string name) : base(OperationType.Return) {
-            Name = name;
+        public ReturnOperation(int id) : base(OperationType.Return) {
+            Id = id;
         }
-        public string Name { get; }
+        public int Id { get; }
         public override string nasm_linux_x86_64() {
-            return "    jmp procend_" + Name + "\n";
+            return "    jmp proc_" + Id + "_end\n";
         }
     }
 
@@ -645,9 +645,7 @@ namespace IonS {
 
     abstract class Block : Operation {
         private static int nextBlockId = 0;
-        private static int BlockId() {
-            return nextBlockId++;
-        }
+        private static int BlockId() { return nextBlockId++; }
 
         public Block(BlockType blockType) : base(OperationType.Block) {
             Id = BlockId();
@@ -687,21 +685,21 @@ namespace IonS {
             asm += "if_" + Id + ":\n";
             asm += "    pop rax\n";
             asm += "    cmp rax, 0\n";
-            asm += (Conditionals.Count > 0) ? "    je if_" + Id + "_elseif_" + 0 + "\n" : "    je if_else_" + Id + "\n";
+            asm += (Conditionals.Count > 0) ? "    je if_" + Id + "_elseif_" + 0 + "\n" : "    je if_" + Id + "_else\n";
             asm += BlockIf.nasm_linux_x86_64();
-            asm += "    jmp if_end_" + Id + "\n";
+            asm += "    jmp if_" + Id + "_end\n";
             for(int i = 0; i < Conditionals.Count; i++) {
                 asm += "if_" + Id + "_elseif_" + i + ":\n";
                 asm += Conditions[i].nasm_linux_x86_64();
                 asm += "    pop rax\n";
                 asm += "    cmp rax, 0\n";
-                asm += (i < Conditionals.Count - 1) ? "    je if_" + Id + "_elseif_" + (i+1) + "\n" : "    je if_else_" + Id + "\n";
+                asm += (i < Conditionals.Count - 1) ? "    je if_" + Id + "_elseif_" + (i+1) + "\n" : "    je if_" + Id + "_else\n";
                 asm += Conditionals[i].nasm_linux_x86_64();
-                asm += "jmp if_end_" + Id + "\n";
+                asm += "jmp if_" + Id + "_end\n";
             }
-            asm += "if_else_" + Id + ":\n";
+            asm += "if_" + Id + "_else:\n";
             asm += BlockElse != null ? BlockElse.nasm_linux_x86_64() : "";
-            asm += "if_end_" + Id + ":\n";
+            asm += "if_" + Id + "_end:\n";
             return asm;
         }
     }
@@ -719,17 +717,17 @@ namespace IonS {
             asm += Condition.nasm_linux_x86_64();
             asm += "    pop rax\n";
             asm += "    cmp rax, 0\n";
-            asm += "    je while_end_" + Id + "\n";
+            asm += "    je while_" + Id + "_end\n";
             asm += Block.nasm_linux_x86_64();
             asm += "    jmp while_" + Id + "\n";
-            asm += "while_end_" + Id + ":\n";
+            asm += "while_" + Id + "_end:\n";
             return asm;
         }
         public override string continue___nasm_linux_x86_64() {
             return "    jmp while_" + Id + "\n";
         }
         public override string break___nasm_linux_x86_64() {
-            return "    jmp while_end_" + Id + "\n";
+            return "    jmp while_" + Id + "_end\n";
         }
     }
 
@@ -744,19 +742,19 @@ namespace IonS {
             string asm = "";
             asm += "dowhile_" + Id + ":\n";
             asm += Block.nasm_linux_x86_64();
-            asm += "dowhile_do_" + Id + ":\n";
+            asm += "dowhile_" + Id + "_do:\n";
             asm += Condition.nasm_linux_x86_64();
             asm += "    pop rax\n";
             asm += "    cmp rax, 0\n";
             asm += "    jne dowhile_" + Id + "\n";
-            asm += "dowhile_end_" + Id + ":\n";
+            asm += "dowhile_" + Id + "_end:\n";
             return asm;
         }
         public override string continue___nasm_linux_x86_64() {
-            return "    jmp dowhile_do_" + Id + "\n";
+            return "    jmp dowhile_" + Id + "_do\n";
         }
         public override string break___nasm_linux_x86_64() {
-            return "    jmp dowhile_end_" + Id + "\n";
+            return "    jmp dowhile_" + Id + "_end\n";
         }
     }
 

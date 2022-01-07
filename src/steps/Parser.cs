@@ -90,7 +90,7 @@ namespace IonS {
             return new CStyleStringOperation(_strings.Count - 1);
         }
 
-        private ParseBlockResult ParseBlock(Scope scope, BreakableBlock breakableBlock, string procedureName) {
+        private ParseBlockResult ParseBlock(Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             bool root = scope == null;
             CodeBlock block = new CodeBlock(scope);
             if(Current == null) {
@@ -101,7 +101,7 @@ namespace IonS {
                 if(Current.Text == "{") NextWord();
                 while(Current != null && (Current.Text != "}" || root)) {
                     if(Current.Text == "}") break;
-                    var error = ParseOperation(block.Operations, block.Scope, breakableBlock, procedureName);
+                    var error = ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
                     if(error != null) return new ParseBlockResult(null, error);
                 }
                 if(!root) {
@@ -109,13 +109,13 @@ namespace IonS {
                     NextWord();
                 }
             } else {
-                var error = ParseOperation(block.Operations, block.Scope, breakableBlock, procedureName);
+                var error = ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
                 if(error != null) return new ParseBlockResult(null, error);
             }
             return new ParseBlockResult(block, null);
         }
 
-        private Error ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, string procedureName) {
+        private Error ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             if(Current.Text == "exit") {
                 operations.Add(new ExitOperation());
             } else if(Current.Text == "putc") {
@@ -190,18 +190,18 @@ namespace IonS {
                 operations.Add(new DumpOperation());
             } else if(Current.Text == "if") {
                 NextWord();
-                ParseBlockResult result = ParseBlock(scope, breakableBlock, procedureName);
+                ParseBlockResult result = ParseBlock(scope, breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 CodeBlock blockIf = result.Block;
                 IfBlock ifBlock = new IfBlock(blockIf, null);
                 while(Current.Text == "else*") {
                     NextWord();
-                    result = ParseBlock(scope, breakableBlock, procedureName);
+                    result = ParseBlock(scope, breakableBlock, currentProcedure);
                     if(result.Error != null) return result.Error;
                     CodeBlock Condition = result.Block;
                     if(Current.Text != "if") return new MissingIfError(Current.Position);
                     NextWord();
-                    result = ParseBlock(scope, breakableBlock, procedureName);
+                    result = ParseBlock(scope, breakableBlock, currentProcedure);
                     if(result.Error != null) return result.Error;
                     CodeBlock Conditional = result.Block;
                     ifBlock.Conditions.Add(Condition);
@@ -209,7 +209,7 @@ namespace IonS {
                 }
                 if(Current.Text == "else") {
                     NextWord();
-                    result = ParseBlock(scope, breakableBlock, procedureName);
+                    result = ParseBlock(scope, breakableBlock, currentProcedure);
                     if(result.Error != null) return result.Error;
                     ifBlock.BlockElse = result.Block;
                 }
@@ -218,12 +218,12 @@ namespace IonS {
             } else if(Current.Text == "while") {
                 NextWord();
                 WhileBlock whileBlock = new WhileBlock(null, null);
-                ParseBlockResult result = ParseBlock(scope, breakableBlock, procedureName);
+                ParseBlockResult result = ParseBlock(scope, breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 whileBlock.Condition = result.Block;
                 if(Current.Text != "do") return new MissingDoError(Current.Position);
                 NextWord();
-                result = ParseBlock(scope, whileBlock, procedureName);
+                result = ParseBlock(scope, whileBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 whileBlock.Block = result.Block;
                 operations.Add(whileBlock);
@@ -231,12 +231,12 @@ namespace IonS {
             } else if(Current.Text == "do") {
                 NextWord();
                 DoWhileBlock doWhileBlock = new DoWhileBlock(null, null);
-                ParseBlockResult result = ParseBlock(scope, doWhileBlock, procedureName);
+                ParseBlockResult result = ParseBlock(scope, doWhileBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 doWhileBlock.Block = result.Block;
                 if(Current.Text != "while") return new MissingWhileError(Current.Position);
                 NextWord();
-                result = ParseBlock(scope, breakableBlock, procedureName);
+                result = ParseBlock(scope, breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 doWhileBlock.Condition = result.Block;
                 operations.Add(doWhileBlock);
@@ -313,19 +313,19 @@ namespace IonS {
                 if(argc >= 0 && argc <= 6) operations.Add(new SyscallOperation(argc));
                 else return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
             } else if(Current.Text == "{") {
-                var result = ParseBlock(scope, breakableBlock, procedureName);
+                var result = ParseBlock(scope, breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 operations.Add(result.Block);
                 return null;
             } else if(Current.Text == "proc") {
-                if(procedureName != null || scope.Parent != null) return new ProcedureNotInGlobalScopeError(Current.Position);
+                if(currentProcedure != null || scope.Parent != null) return new ProcedureNotInGlobalScopeError(Current.Position);
                 Word procWord = Current;
                 NextWord();
 
                 if(Current == null) return new IncompleteProcedureError(procWord, null);
                 Word name = Current;
                 // TODO: Check that the name is valid for nasm aswell
-                if(Keyword.isReserved(name.Text) || long.TryParse(name.Text, out long _)) return new InvalidProcedureNameError(name);
+                if(Keyword.isReserved(name.Text) || long.TryParse(name.Text, out long _)) return new InvalidProcedureNameError(currentProcedure.Name);
                 NextWord();
 
                 if(Current == null) return new IncompleteProcedureError(procWord, name);
@@ -342,14 +342,14 @@ namespace IonS {
 
                 if(Current == null) return new IncompleteProcedureError(procWord, name);
 
-                ParseBlockResult result = ParseBlock(scope, null, proc.Name.Text);
+                ParseBlockResult result = ParseBlock(scope, null, proc);
                 if(result.Error != null) return result.Error;
                 proc.Body = result.Block;
 
                 return null;
             } else if(Current.Text == "return") {
-                if(procedureName == null) return new ReturnOutsideProcedureError(Current.Position);
-                operations.Add(new ReturnOperation(procedureName));
+                if(currentProcedure == null) return new ReturnOutsideProcedureError(Current.Position);
+                operations.Add(new ReturnOperation(currentProcedure.Id));
             } else {
                 if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value));
                 else {
