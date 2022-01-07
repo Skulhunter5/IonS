@@ -84,16 +84,22 @@ proc cstreq 2-1 {
 	dup cstrlen swap rot dup cstrlen swap streq
 }
 
-proc isAlpha 1-1 { // TODO: replace bitwise or with logical or
-    // c
+proc isAlpha 1-1 {
     dup 65 < swap
-    // (c < 65) c
     dup 122 > rot || swap
-    // ((c > 122) || (c < 65)) c
     dup 90 > swap
-    // ((c > 122) | (c < 65)) (c > 90) c
     97 <
-    // ((c > 122) || (c < 65)) (c > 90) (c < 97)
     && || not
-    // (((c > 122) || (c < 65)) || ((c > 90) && (c < 97)))
+}
+
+proc isDigit 1-1 {
+    dup 48 < swap
+    57 >
+    || not
+}
+
+proc isAlnum 1-1 {
+    dup isAlpha swap
+    isDigit
+    ||
 }

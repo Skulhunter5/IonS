@@ -1,9 +1,0 @@
-include "./../ions-libs/std.ions"
-
-"a"c @8 isAlpha .
-"z"c @8 isAlpha .
-"A"c @8 isAlpha .
-"Z"c @8 isAlpha .
-"\0"c @8 isAlpha .
-"?"c @8 isAlpha .
-"}"c @8 isAlpha .

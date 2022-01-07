@@ -1,0 +1,38 @@
+include "./../ions-libs/std.ions"
+
+12345
+
+'a' isAlpha .
+'z' isAlpha .
+'A' isAlpha .
+'Z' isAlpha .
+0 isAlpha .
+'?' isAlpha .
+'}' isAlpha .
+
+"-----\n" puts
+
+0 isDigit .
+'0' isDigit .
+'7' isDigit .
+'\n' isDigit .
+'A' isDigit .
+'a' isDigit .
+
+"-----\n" puts
+
+'a' isAlnum .
+'z' isAlnum .
+'A' isAlnum .
+'Z' isAlnum .
+0 isAlnum .
+'?' isAlnum .
+'}' isAlnum .
+0 isAlnum .
+'0' isAlnum .
+'7' isAlnum .
+'\n' isAlnum .
+'A' isAlnum .
+'a' isAlnum .
+
+.
