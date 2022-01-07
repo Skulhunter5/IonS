@@ -292,6 +292,10 @@ namespace IonS {
                 if(!int.TryParse(argcStr, out int argc)) return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
                 if(argc >= 0 && argc <= 6) operations.Add(new SyscallOperation(argc));
                 else return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
+            } else if(Current.Text == "{") {
+                var result = ParseBlock(scope, breakableBlock);
+                if(result.Error != null) return result.Error;
+                operations.Add(result.Block);
             } else {
                 if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value));
                 else {
