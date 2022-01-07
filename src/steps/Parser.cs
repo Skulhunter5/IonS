@@ -160,6 +160,16 @@ namespace IonS {
                 operations.Add(new BitAndOperation());
             } else if(Current.Text == "|") {
                 operations.Add(new BitOrOperation());
+            } else if(Current.Text == "^") {
+                operations.Add(new BitXorOperation());
+            } else if(Current.Text == "inv") {
+                operations.Add(new BitInvOperation());
+            } else if(Current.Text == "&&") {
+                operations.Add(new AndOperation());
+            } else if(Current.Text == "||") {
+                operations.Add(new OrOperation());
+            } else if(Current.Text == "not") {
+                operations.Add(new NotOperation());
             } else if(Current.Text == "min") {
                 operations.Add(new MinOperation());
             } else if(Current.Text == "max") {

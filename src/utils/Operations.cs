@@ -7,7 +7,8 @@ namespace IonS {
         Put_char,
         Add, Subtract, Multiply, Divide, Modulo, DivMod,
         Min, Max,
-        ShL, ShR, BitAnd, BitOr,
+        ShL, ShR, BitAnd, BitOr, BitXor, BitInv,
+        And, Or,
         Comparison,
         Dump,
         Drop, Drop2,
@@ -320,6 +321,80 @@ namespace IonS {
             asm += "    pop rbx\n";
             asm += "    pop rax\n";
             asm += "    or rax, rbx\n";
+            asm += "    push rax\n";
+            return asm;
+        }
+    }
+
+    sealed class BitXorOperation : Operation {
+        public BitXorOperation() : base(OperationType.BitXor) {}
+        public override string nasm_linux_x86_64() {
+            string asm = "";
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    xor rax, rbx\n";
+            asm += "    push rax\n";
+            return asm;
+        }
+    }
+
+    sealed class BitInvOperation : Operation {
+        public BitInvOperation() : base(OperationType.BitInv) {}
+        public override string nasm_linux_x86_64() {
+            string asm = "";
+            asm += "    pop rax\n";
+            asm += "    xor rax, 1111111111111111111111111111111111111111111111111111111111111111b\n";
+            asm += "    push rax\n";
+            return asm;
+        }
+    }
+
+    // Logical operations
+
+    sealed class AndOperation : Operation {
+        public AndOperation() : base(OperationType.And) {}
+        public override string nasm_linux_x86_64() {
+            string asm = "";
+            asm += "    xor rax, rax\n";
+            asm += "    xor rbx, rbx\n";
+            asm += "    pop rcx\n";
+            asm += "    cmp rcx, 0\n";
+            asm += "    setne al\n";
+            asm += "    pop rcx\n";
+            asm += "    cmp rcx, 0\n";
+            asm += "    setne bl\n";
+            asm += "    and rax, rbx\n";
+            asm += "    push rax\n";
+            return asm;
+        }
+    }
+
+    sealed class OrOperation : Operation {
+        public OrOperation() : base(OperationType.Or) {}
+        public override string nasm_linux_x86_64() {
+            string asm = "";
+            asm += "    xor rax, rax\n";
+            asm += "    xor rbx, rbx\n";
+            asm += "    pop rcx\n";
+            asm += "    cmp rcx, 0\n";
+            asm += "    setne al\n";
+            asm += "    pop rcx\n";
+            asm += "    cmp rcx, 0\n";
+            asm += "    setne bl\n";
+            asm += "    or rax, rbx\n";
+            asm += "    push rax\n";
+            return asm;
+        }
+    }
+
+    sealed class NotOperation : Operation {
+        public NotOperation() : base(OperationType.Or) {}
+        public override string nasm_linux_x86_64() {
+            string asm = "";
+            asm += "    xor rax, rax\n";
+            asm += "    pop rbx\n";
+            asm += "    cmp rbx, 0\n";
+            asm += "    sete al\n";
             asm += "    push rax\n";
             return asm;
         }
