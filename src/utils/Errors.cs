@@ -209,6 +209,17 @@ namespace IonS {
 
     // - Block errors
 
+    sealed class MissingIfError : ParserError {
+        public MissingIfError(Position position) {
+            Position = position;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Missing if: at " + Position;
+        }
+        public Position Position { get; }
+    }
+
     sealed class MissingDoError : ParserError {
         public MissingDoError(Position position) {
             Position = position;

@@ -1,0 +1,63 @@
+12345
+
+0 if 1
+else* 0 if 2
+else* 0 if 3
+else 4
+.
+
+0 if 1
+else* 0 if 2
+else* 1 if 3
+else 4
+.
+
+0 if 1
+else* 1 if 2
+else* 0 if 3
+else 4
+.
+
+0 if 1
+else* 1 if 2
+else* 1 if 3
+else 4
+.
+
+1 if 1
+else* 0 if 2
+else* 0 if 3
+else 4
+.
+
+1 if 1
+else* 0 if 2
+else* 1 if 3
+else 4
+.
+
+1 if 1
+else* 1 if 2
+else* 0 if 3
+else 4
+.
+
+1 if 1
+else* 1 if 2
+else* 1 if 3
+else 4
+.
+
+
+0 if 1
+else* 0 if 2
+else* 0 if 3
+
+0 if 1
+else* 1 if 2
+else* 0 if 3
+.
+
+.
+
+0 exit

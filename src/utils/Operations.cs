@@ -569,17 +569,30 @@ namespace IonS {
         public IfBlock(CodeBlock blockIf, CodeBlock blockElse) : base(BlockType.If) {
             BlockIf = blockIf;
             BlockElse = blockElse;
+            Conditions = new List<CodeBlock>();
+            Conditionals = new List<CodeBlock>();
         }
-        public CodeBlock BlockIf { get; }
-        public CodeBlock BlockElse { get; }
+        public CodeBlock BlockIf { get; set; }
+        public List<CodeBlock> Conditions { get; }
+        public List<CodeBlock> Conditionals { get; }
+        public CodeBlock BlockElse { get; set; }
         public override string nasm_linux_x86_64() {
             string asm = "";
             asm += "if_" + Id + ":\n";
             asm += "    pop rax\n";
             asm += "    cmp rax, 0\n";
-            asm += "    je if_else_" + Id + "\n";
+            asm += (Conditionals.Count > 0) ? "    je if_" + Id + "_elseif_" + 0 + "\n" : "    je if_else_" + Id + "\n";
             asm += BlockIf.nasm_linux_x86_64();
             asm += "    jmp if_end_" + Id + "\n";
+            for(int i = 0; i < Conditionals.Count; i++) {
+                asm += "if_" + Id + "_elseif_" + i + ":\n";
+                asm += Conditions[i].nasm_linux_x86_64();
+                asm += "    pop rax\n";
+                asm += "    cmp rax, 0\n";
+                asm += (i < Conditionals.Count - 1) ? "    je if_" + Id + "_elseif_" + (i+1) + "\n" : "    je if_else_" + Id + "\n";
+                asm += Conditionals[i].nasm_linux_x86_64();
+                asm += "jmp if_end_" + Id + "\n";
+            }
             asm += "if_else_" + Id + ":\n";
             asm += BlockElse != null ? BlockElse.nasm_linux_x86_64() : "";
             asm += "if_end_" + Id + ":\n";

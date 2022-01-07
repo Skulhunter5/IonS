@@ -158,14 +158,27 @@ namespace IonS {
                 ParseBlockResult result = ParseBlock(scope, breakableBlock);
                 if(result.Error != null) return result.Error;
                 CodeBlock blockIf = result.Block;
-                CodeBlock blockElse = null;
+                IfBlock ifBlock = new IfBlock(blockIf, null);
+                while(Current.Text == "else*") {
+                    NextWord();
+                    result = ParseBlock(scope, breakableBlock);
+                    if(result.Error != null) return result.Error;
+                    CodeBlock Condition = result.Block;
+                    if(Current.Text != "if") return new MissingIfError(Current.Position);
+                    NextWord();
+                    result = ParseBlock(scope, breakableBlock);
+                    if(result.Error != null) return result.Error;
+                    CodeBlock Conditional = result.Block;
+                    ifBlock.Conditions.Add(Condition);
+                    ifBlock.Conditionals.Add(Conditional);
+                }
                 if(Current.Text == "else") {
                     NextWord();
                     result = ParseBlock(scope, breakableBlock);
                     if(result.Error != null) return result.Error;
-                    blockElse = result.Block;
+                    ifBlock.BlockElse = result.Block;
                 }
-                operations.Add(new IfBlock(blockIf, blockElse));
+                operations.Add(ifBlock);
                 return null;
             } else if(Current.Text == "while") {
                 NextWord();
