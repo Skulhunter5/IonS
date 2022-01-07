@@ -65,6 +65,19 @@ namespace IonS {
             return null;
         }
 
+        private Operation RegisterString(string text) {
+            for(int i = 0; i < _strings.Count; i++) if(_strings[i] == text) return new StringOperation(i, text.Length);
+            _strings.Add(text);
+            return new StringOperation(_strings.Count - 1, text.Length);
+        }
+
+        private Operation RegisterCStyleString(string text) {
+            text = text + "\0";
+            for(int i = 0; i < _strings.Count; i++) if(_strings[i] == text) return new CStyleStringOperation(i);
+            _strings.Add(text);
+            return new CStyleStringOperation(_strings.Count - 1);
+        }
+
         private ParseBlockResult ParseBlock(Scope scope, BreakableBlock breakableBlock) {
             bool root = scope == null;
             CodeBlock block = new CodeBlock(scope);
@@ -227,7 +240,6 @@ namespace IonS {
                 if(Current.Text == null) return new IncompleteVariableDeclarationError(varWord, identifier);
 
                 if(byte.TryParse(Current.Text, out byte bytesize)) {
-                    //_vars.Add(new Variable(identifier, bytesize));
                     Error error = RegisterVariable(scope, new Variable(identifier, bytesize));
                     if(error != null) return error;
                 } else new InvalidVariableBytesizeError(Current);
@@ -247,15 +259,9 @@ namespace IonS {
                 if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
 
                 operations.Add(new MemReadOperation(amount));
-            } else if(Current.Text.StartsWith('"')) { // TODO: move into a function like RegisterString that returns the id and can then internally do deduplication
-                if(Current.Text.EndsWith("\"")) {
-                    string text = Current.Text.Substring(1, Current.Text.Length - 2);
-                    operations.Add(new StringOperation(_strings.Count, text.Length));
-                    _strings.Add(text);
-                } else if(Current.Text.EndsWith("\"c")) { // TODO: move into a function like RegisterCStyleString that returns the id and can then internally do deduplication
-                    operations.Add(new CStyleStringOperation(_strings.Count));
-                    _strings.Add(Current.Text.Substring(1, Current.Text.Length - 3) + "\0");
-                }
+            } else if(Current.Text.StartsWith('"')) {
+                if(Current.Text.EndsWith("\"")) operations.Add(RegisterString(Current.Text.Substring(1, Current.Text.Length - 2)));
+                else if(Current.Text.EndsWith("\"c")) operations.Add(RegisterCStyleString(Current.Text.Substring(1, Current.Text.Length - 3)));
             } else if(Current.Text.StartsWith("'")) {
                 string text = Current.Text.Substring(1, Current.Text.Length-2);
                 char c = text[0];
