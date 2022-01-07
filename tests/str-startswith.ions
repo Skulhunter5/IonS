@@ -1,0 +1,10 @@
+include "./../ions-libs/std.ions"
+
+12345
+
+"H" "Hello" str-startswith .
+"Hello, world!" "Hello" str-startswith .
+"Hello, world!" "Hello, world!" str-startswith .
+"abde" "abc" str-startswith .
+
+.

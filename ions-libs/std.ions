@@ -103,3 +103,13 @@ proc isAlnum 1-1 {
     isDigit
     ||
 }
+
+proc str-startswith 4-1 {
+    swap 2swap 2rot
+    2dup > if {
+        2drop 2drop
+        0 return
+    }
+    drop dup rot 2swap swap
+    streq
+}
