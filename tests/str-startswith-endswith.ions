@@ -7,4 +7,9 @@ include "./../ions-libs/std.ions"
 "Hello, world!" "Hello, world!" str-startswith .
 "abde" "abc" str-startswith .
 
+"H" "Hello" str-endswith .
+"Hello, world!" "world!" str-endswith .
+"Hello, world!" "Hello, world!" str-endswith .
+"abde" "bdf" str-endswith .
+
 .

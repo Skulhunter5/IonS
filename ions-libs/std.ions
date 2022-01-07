@@ -113,3 +113,19 @@ proc str-startswith 4-1 {
     drop dup rot 2swap swap
     streq
 }
+
+proc str-endswith 4-1 {
+    // len1 str1 len2 str2
+    swap 2swap 2rot
+    // str2 str1 len2 len1
+    2dup > if {
+        2drop 2drop
+        0 return
+    }
+    // str2 str1 len2 len1
+    over - rot +
+    // str2 len2 str1n
+    over swap 2swap swap
+    // len2 str1n len2 str2
+    streq
+}
