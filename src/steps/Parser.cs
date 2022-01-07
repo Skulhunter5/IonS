@@ -234,12 +234,12 @@ namespace IonS {
                 if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
 
                 operations.Add(new MemReadOperation(amount));
-            } else if(Current.Text.StartsWith('"')) {
+            } else if(Current.Text.StartsWith('"')) { // TODO: move into a function like RegisterString that returns the id and can then internally do deduplication
                 if(Current.Text.EndsWith("\"")) {
                     string text = Current.Text.Substring(1, Current.Text.Length - 2);
                     operations.Add(new StringOperation(_strings.Count, text.Length));
                     _strings.Add(text);
-                } else if(Current.Text.EndsWith("\"c")) {
+                } else if(Current.Text.EndsWith("\"c")) { // TODO: move into a function like RegisterCStyleString that returns the id and can then internally do deduplication
                     operations.Add(new CStyleStringOperation(_strings.Count));
                     _strings.Add(Current.Text.Substring(1, Current.Text.Length - 3) + "\0");
                 }
