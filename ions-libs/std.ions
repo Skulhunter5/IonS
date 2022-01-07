@@ -54,22 +54,30 @@ macro dec64 {
 }
 
 macro streq {
-	swap 2swap 2rot dup rot 1 2rot
+	swap 2swap 2rot dup rot
 	!= if {
-		2drop 2drop
-		0 0
-	}
-	if {
-		0 while { 2dup > } do {
-			2swap 2rot 2dup + @8
-			2swap 2dup + @8
-			2swap 2rot != if {
-				2drop 2drop
-				0
-				break
+		2drop drop
+		0
+	} else {
+		dup 0 == if {
+			2drop drop
+			1
+		} else {
+			0 while { 2dup > } do {
+				2swap 2rot 2dup + @8
+				2swap 2dup + @8
+				2swap 2rot != if {
+					2drop 2drop
+					0
+					break
+				}
+				rot 2swap
+				1 +
 			}
-			rot 2swap
-			1 +
+			dup 0 > if {
+				2drop 2drop
+				1
+			}
 		}
 	}
 }

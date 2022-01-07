@@ -27,7 +27,10 @@ namespace IonS {
             foreach(Variable var in result.Variables) asm += "    var_" + var.Id + ": resb " + var.Bytesize + "\n";
 
             if(result.Strings.Count > 0) asm += "segment .data\n";
-            for(int i = 0; i < result.Strings.Count; i++) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i]) + "\n";
+            for(int i = 0; i < result.Strings.Count; i++) {
+                if(result.Strings[i].Length > 0) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i]) + "\n";
+                else asm += "    str_" + i + ":\n";
+            }
 
             asm += "segment .text\n";
             asm += File.ReadAllText("res/asm snippets/dump.asm");

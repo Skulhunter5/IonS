@@ -1,0 +1,31 @@
+include "./../ions-libs/std.ions"
+
+12345
+
+"" "" streq .
+"a" "a" streq .
+"a" "b" streq .
+"a" "ab" streq .
+"a" "bc" streq .
+"ab" "ab" streq .
+"ab" "bc" streq .
+"ab" "ac" streq .
+"abc" "abc" streq .
+"abc" "abd" streq .
+"abc" "abcd" streq .
+
+""c ""c cstreq .
+"a"c "a"c cstreq .
+"a"c "b"c cstreq .
+"a"c "ab"c cstreq .
+"a"c "bc"c cstreq .
+"ab"c "ab"c cstreq .
+"ab"c "bc"c cstreq .
+"ab"c "ac"c cstreq .
+"abc"c "abc"c cstreq .
+"abc"c "abd"c cstreq .
+"abc"c "abcd"c cstreq .
+
+.
+
+0 exit
