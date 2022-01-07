@@ -80,6 +80,6 @@ proc streq 4-1 {
     0 return
 }
 
-macro cstreq {
+proc cstreq 2-1 {
 	dup cstrlen swap rot dup cstrlen swap streq
 }
