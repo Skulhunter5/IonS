@@ -51,13 +51,13 @@ namespace IonS
                 if(filename == null) filename = "res/test.ions";
                 Compile(filename);
             } else if(action == Action.Simulate) {
-                Console.WriteLine("Feature is currently disable.");
+                Console.WriteLine("Feature is currently disabled.");
                 Environment.ExitCode = 2;
                 return;
                 //if(filename != null) filename = "res/test.ions";
                 //Simulate(filename);
             } else if(action == Action.Interpret) {
-                Console.WriteLine("Feature is currently disable.");
+                Console.WriteLine("Feature is currently disabled.");
                 Environment.ExitCode = 2;
                 return;
                 //Interpret();
