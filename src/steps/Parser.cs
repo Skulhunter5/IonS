@@ -233,9 +233,7 @@ namespace IonS {
                 Word identifier = Current;
                 // TODO: Check that the identifier is valid for nasm aswell
                 if(Keyword.isReserved(identifier.Text) || long.TryParse(identifier.Text, out long _)) return new InvalidVariableIdentifierError(identifier);
-                Variable var = GetVariable(identifier.Text);
-                if(var != null) return new VariableRedeclarationError(var.Identifier, identifier);
-
+                
                 NextWord();
                 if(Current.Text == null) return new IncompleteVariableDeclarationError(varWord, identifier);
 
@@ -296,6 +294,7 @@ namespace IonS {
                 var result = ParseBlock(scope, breakableBlock);
                 if(result.Error != null) return result.Error;
                 operations.Add(result.Block);
+                return null;
             } else {
                 if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value));
                 else {
@@ -324,7 +323,7 @@ namespace IonS {
             var macroResult = new MacroPreprocessor(_words).run();
             if(macroResult.Error != null) return new ParseResult(null, null, null, macroResult.Error);
             _words = macroResult.Words;
-
+            
             _vars = new List<Variable>();
             _strings = new List<string>();
 

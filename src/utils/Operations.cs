@@ -529,7 +529,8 @@ namespace IonS {
             return null;
         }
         public Variable GetVariable(string identifier) {
-            foreach(Variable var in Variables) if(var.Identifier.Text == identifier) return var;
+            Variable ownVar = GetOwnVariable(identifier);
+            if(ownVar != null) return ownVar;
             if(Parent != null) return Parent.GetVariable(identifier);
             return null;
         }

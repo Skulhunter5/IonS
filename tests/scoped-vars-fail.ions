@@ -1,0 +1,10 @@
+var test 1
+123 test !8
+{
+    var test2 1
+    test @8 .
+    222 test2 !8
+    test2 @8 .
+}
+test @8 .
+test2 @8 .
