@@ -404,7 +404,11 @@ namespace IonS {
     sealed class ExitOperation : Operation {
         public ExitOperation() : base(OperationType.Exit) {}
         public override string nasm_linux_x86_64() {
-            return "    jmp exit\n";
+            string asm = "";
+            asm += "    mov rax, 60\n";
+            asm += "    pop rdi\n";
+            asm += "    syscall\n";
+            return asm;
         }
     }
 
