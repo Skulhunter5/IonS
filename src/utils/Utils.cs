@@ -6,6 +6,7 @@ namespace IonS {
 
     class Utils {
         
+        public static readonly string[] FreeUseRegisters = new string[] {"rax", "rbx", "rcx", "rdx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
         public static readonly string[] SyscallRegisters = new string[] {"rdi", "rsi", "rdx", "r10", "r8", "r9"};
 
         public static string StringLiteralToByteString(string literal) {
@@ -78,6 +79,7 @@ namespace IonS {
             "include",
             "here", "chere",
             "{", "}",
+            "proc", "return",
         };
         public static bool isReserved(string word) {
             if(word.StartsWith("@") || word.StartsWith("!")) return true;

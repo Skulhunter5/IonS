@@ -22,6 +22,8 @@ namespace IonS {
 
         Block,
         Break, Continue,
+
+        ProcedureCall, Return,
     }
 
     enum Direction2 {
@@ -501,6 +503,34 @@ namespace IonS {
             for(int i = 0; i < Argc; i++) asm += "    pop " + Utils.SyscallRegisters[i] + "\n";
             asm += "    syscall\n";
             return asm;
+        }
+    }
+
+    // Procedure call operation
+
+    sealed class ProcedureCallOperation : Operation {
+        public ProcedureCallOperation(Procedure proc) : base(OperationType.ProcedureCall) {
+            Proc = proc;
+        }
+        public Procedure Proc { get; }
+        public override string nasm_linux_x86_64() {
+            string asm = "";
+            for(int i = 0; i < Proc.Argc; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
+            asm += "    call proc_" + Proc.Name.Text + "\n";
+            for(int i = Proc.Rvc-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
+            return asm;
+        }
+    }
+
+    // Procedure call operation
+
+    sealed class ReturnOperation : Operation {
+        public ReturnOperation(string name) : base(OperationType.Return) {
+            Name = name;
+        }
+        public string Name { get; }
+        public override string nasm_linux_x86_64() {
+            return "    jmp procend_" + Name + "\n";
         }
     }
 

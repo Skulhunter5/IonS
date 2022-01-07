@@ -300,6 +300,80 @@ namespace IonS {
         public Word Bytesize { get; }
     }
 
+    // - Procedure errors
+
+    sealed class ProcedureNotInGlobalScopeError : ParserError {
+        public ProcedureNotInGlobalScopeError(Position position) {
+            Position = position;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Procedure inside a local scope: at " + Position;
+        }
+        public Position Position { get; }
+    }
+
+    sealed class InvalidProcedureNameError : ParserError {
+        public InvalidProcedureNameError(Word name) {
+            Name = name;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid name for procedure: " + Name;
+        }
+        public Word Name { get; }
+    }
+
+    sealed class ProcedureRedefinitionError : ParserError {
+        public ProcedureRedefinitionError(Word o, Word n) {
+            Old = o;
+            New = n;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Trying to redefine procedure: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
+        }
+        public Word Old { get; }
+        public Word New { get; }
+    }
+
+    sealed class IncompleteProcedureError : ParserError {
+        public IncompleteProcedureError(Word procWord, Word name) {
+            ProcWord = procWord;
+            Name = name;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Incomplete Procedure: " + (Name != null ? Name : "at " + ProcWord.Position);
+        }
+        public Word ProcWord { get; }
+        public Word Name { get; }
+    }
+
+    sealed class InvalidProcedureArgsError : ParserError {
+        public InvalidProcedureArgsError(Word args) {
+            Args = args;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid args for procedure: " + Args;
+        }
+        public Word Args { get; }
+    }
+
+    // - Return outside procedure error
+
+    sealed class ReturnOutsideProcedureError : ParserError {
+        public ReturnOutsideProcedureError(Position position) {
+            Position = position;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Return ouside of a procedure: at " + Position;
+        }
+        public Position Position { get; }
+    }
+
     // - Mem read/Write errors
 
     sealed class InvalidMemReadWriteAmountError : ParserError {

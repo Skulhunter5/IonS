@@ -34,6 +34,10 @@ namespace IonS {
 
             asm += "segment .text\n";
             asm += File.ReadAllText("res/asm snippets/dump.asm");
+
+            // TODO: also don't assemble the variables used inside a function that isn't used
+            foreach(Procedure proc in result.Procedures) if(proc.IsUsed) asm += proc.nasm_linux_x86_64();
+
             asm += "global _start\n_start:\n";
 
             asm += root.nasm_linux_x86_64();
