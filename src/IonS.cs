@@ -44,6 +44,8 @@ namespace IonS
                     }
                 }
                 Console.WriteLine("Invalid argument: '" + args[i] + "'");
+                Environment.ExitCode = 2;
+                return;
             }
             if(action == Action.Compile) {
                 if(filename == null) filename = "res/test.ions";
