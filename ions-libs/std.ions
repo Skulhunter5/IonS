@@ -1,11 +1,11 @@
-macro SYSCALL_READ 0
-macro SYSCALL_WRITE 1
+macro SYS_read 0
+macro SYS_write 1
 
 macro STDIN 0
 macro STDOUT 1
 
 macro fputs {
-  SYSCALL_WRITE syscall3
+  SYS_write syscall3
 }
 
 macro puts {
