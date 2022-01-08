@@ -14,7 +14,7 @@ namespace IonS {
         Drop, Drop2,
         Dup, Dup2,
         Over, Over2,
-        Swap, Swap2, Rotate, Rotate2,
+        Swap, Swap2, Rotate, Rotate2, Rotate5, Rotate52,
         Exit,
         VariableAccess,
         MemRead, MemWrite,
@@ -194,6 +194,42 @@ namespace IonS {
             asm += "    push rcx\n";
             asm += "    push rax\n";
             asm += "    push rbx\n";
+            return asm;
+        }
+    }
+
+    sealed class Rotate5Operation : Operation {
+        public Rotate5Operation() : base(OperationType.Rotate5) {}
+        public override string nasm_linux_x86_64() {
+            string asm = "";
+            asm += "    pop r8\n";
+            asm += "    pop rdx\n";
+            asm += "    pop rcx\n";
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    push rbx\n";
+            asm += "    push rcx\n";
+            asm += "    push rdx\n";
+            asm += "    push r8\n";
+            asm += "    push rax\n";
+            return asm;
+        }
+    }
+
+    sealed class Rotate52Operation : Operation {
+        public Rotate52Operation() : base(OperationType.Rotate52) {}
+        public override string nasm_linux_x86_64() {
+            string asm = "";
+            asm += "    pop r8\n";
+            asm += "    pop rdx\n";
+            asm += "    pop rcx\n";
+            asm += "    pop rbx\n";
+            asm += "    pop rax\n";
+            asm += "    push r8\n";
+            asm += "    push rax\n";
+            asm += "    push rbx\n";
+            asm += "    push rcx\n";
+            asm += "    push rdx\n";
             return asm;
         }
     }

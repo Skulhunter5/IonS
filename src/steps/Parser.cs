@@ -140,6 +140,10 @@ namespace IonS {
                 operations.Add(new RotateOperation());
             } else if(Current.Text == "2rot") {
                 operations.Add(new Rotate2Operation());
+            } else if(Current.Text == "rot5") {
+                operations.Add(new Rotate5Operation());
+            } else if(Current.Text == "2rot5") {
+                operations.Add(new Rotate52Operation());
             } else if(Current.Text == "+") {
                 operations.Add(new AddOperation());
             } else if(Current.Text == "-") {
