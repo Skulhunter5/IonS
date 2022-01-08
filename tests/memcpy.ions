@@ -1,0 +1,32 @@
+include "./../std/std.ions"
+
+12345
+
+var test1 32
+var test2 32
+
+32 0 while { 2dup > } do {
+    // size i
+    dup dup test1 + !8
+    ++
+} 2drop
+
+test1 test2 32 memcpy
+
+32 0 while { 2dup > } do {
+    // 32 i
+    dup test1 + @8 .
+    // 32 i
+    ++
+} 2drop
+
+"-----\n" puts
+
+32 0 while { 2dup > } do {
+    // 32 i
+    dup test2 + @8 .
+    // 32 i
+    ++
+} 2drop
+
+.

@@ -14,9 +14,7 @@ macro puts {
 
 proc cstrlen 1-1 {
 	dup
-	while { dup @8 } do {
-		1 +
-	}
+	while { dup @8 } do ++
 	swap -
 }
 
@@ -29,28 +27,28 @@ macro clamp {
 }
 
 macro inc8 {
-	dup @8 1 + swap !8
+	dup @8 ++ swap !8
 }
 macro dec8 {
-	dup @8 1 - swap !8
+	dup @8 -- swap !8
 }
 macro inc16 {
-	dup @16 1 + swap !16
+	dup @16 ++ swap !16
 }
 macro dec16 {
-	dup @16 1 - swap !16
+	dup @16 -- swap !16
 }
 macro inc32 {
-	dup @32 1 + swap !32
+	dup @32 ++ swap !32
 }
 macro dec32 {
-	dup @32 1 - swap !32
+	dup @32 -- swap !32
 }
 macro inc64 {
-	dup @64 1 + swap !64
+	dup @64 ++ swap !64
 }
 macro dec64 {
-	dup @64 1 - swap !64
+	dup @64 -- swap !64
 }
 
 proc streq 4-1 {
@@ -71,7 +69,7 @@ proc streq 4-1 {
             0 return
         }
         rot 2swap
-        1 +
+        ++
     }
     dup 0 > if {
         2drop 2drop
@@ -156,9 +154,26 @@ proc try-parse-uint64 3-1 { // TODO: fix it not going over the maximum uint64 va
         // len i str ptr
         swap 2swap
         // ptr str len i
-        1 +
+        ++
     }
     // ptr str len i
     2drop 2drop
     1 return
+}
+
+proc memcpy 3-0 {
+    // src dst size
+    0 while { 2dup > } do {
+        // src dst size i
+        rot 2dup +
+        // src size i dst (dst+i)
+        rot rot5 2dup + @8
+        // size dst (dst+i) i src src[i]
+        2swap 2rot !8
+        // size dst src i
+        2swap 2rot swap
+        // src dst size i
+        ++
+    }
+    2drop 2drop
 }
