@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text;
 
+using System;
+
 namespace IonS {
 
     class ParseResult : Result {
@@ -270,7 +272,7 @@ namespace IonS {
                 NextWord();
                 if(Current.Text == null) return new IncompleteVariableDeclarationError(varWord, identifier);
 
-                if(byte.TryParse(Current.Text, out byte bytesize)) {
+                if(int.TryParse(Current.Text, out int bytesize)) { // TODO: add support for endings like K or KB or something similar
                     Error error = RegisterVariable(scope, new Variable(identifier, bytesize));
                     if(error != null) return error;
                 } else new InvalidVariableBytesizeError(Current);

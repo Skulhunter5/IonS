@@ -177,3 +177,13 @@ proc memcpy 3-0 {
     }
     2drop 2drop
 }
+
+proc strcat 5-2 {
+    // len1 str1 len2 str2 buf
+    ctt4 over ctt7 memcpy
+    // len1 str1 len2 str2 buf
+    2dup ctt7 + ctt5 memcpy
+    // len1 str1 len2 str2 buf
+    2rot5 drop swap drop + swap
+    // len1+len2 buf
+}
