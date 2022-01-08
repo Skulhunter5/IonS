@@ -12,7 +12,7 @@ macro puts {
   STDOUT fputs
 }
 
-macro cstrlen {
+proc cstrlen 1-1 {
 	dup
 	while { dup @8 } do {
 		1 +
