@@ -36,6 +36,9 @@ namespace IonS {
             asm += File.ReadAllText("res/asm snippets/dump.asm");
 
             // TODO: also don't assemble the variables used inside a function that isn't used
+            // TODO: fix: procs used in other procs that aren't used still count as used
+            // --> maybe add a list that contains all used procs and only add the ones used directly
+            // --> the ones used by other procs should be collected inside the other proc and then added when that proc is added
             foreach(Procedure proc in result.Procedures) if(proc.IsUsed) asm += proc.nasm_linux_x86_64();
 
             asm += "global _start\n_start:\n";
