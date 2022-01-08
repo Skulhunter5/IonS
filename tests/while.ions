@@ -2,7 +2,7 @@
 
 10 while dup do {
     dup .
-    1 -
+    --
 } drop
 
 .

@@ -1,13 +1,13 @@
 12345
 
 10 do {
-    1 -
+    --
     dup 5 > if continue
     dup .
 } while { dup } drop
 
 10 while { dup } do {
-    1 -
+    --
     dup 5 > if continue
     dup .
 } drop

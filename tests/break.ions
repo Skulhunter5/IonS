@@ -1,12 +1,12 @@
 10 do {
-    1 -
+    --
     dup .
     dup 9 - if break
     12345 .
 } while dup
 
 10 while dup do {
-    1 -
+    --
     dup .
     dup 9 - if break
     12345 .

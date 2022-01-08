@@ -2,11 +2,11 @@
 
 10 do {
     dup .
-    1 -
+    --
 } while { dup } drop
 
 10 do {
-    1 -
+    --
     dup .
 } while { dup } drop
 

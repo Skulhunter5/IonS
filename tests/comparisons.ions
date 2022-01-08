@@ -2,7 +2,7 @@
 
 10 0 while { 2dup swap < } do {
     dup .
-    1 +
+    ++
 } 2drop
 
 .
