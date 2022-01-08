@@ -6,6 +6,6 @@ res/*
 
 tests/*.txt
 
-fun.py
+stats.py
 
 PLANNED.md
