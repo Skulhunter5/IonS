@@ -5,6 +5,7 @@ namespace IonS {
     enum OperationType {
         Push_uint64,
         Put_char,
+        Increment, Decrement,
         Add, Subtract, Multiply, Divide, Modulo, DivMod,
         Min, Max,
         ShL, ShR, BitAnd, BitOr, BitXor, BitInv,
@@ -210,6 +211,24 @@ namespace IonS {
     }
 
     // Calculation operations
+
+    sealed class IncrementOperation : Operation { // a b -- (a+b)
+        public IncrementOperation() : base(OperationType.Increment) {}
+        public override string nasm_linux_x86_64() {
+            //    pop rbx
+            //    add [rsp], rbx
+            return "    inc QWORD [rsp]\n";
+        }
+    }
+
+    sealed class DecrementOperation : Operation { // a b -- (a+b)
+        public DecrementOperation() : base(OperationType.Decrement) {}
+        public override string nasm_linux_x86_64() {
+            //    pop rbx
+            //    add [rsp], rbx
+            return "    dec QWORD [rsp]\n";
+        }
+    }
 
     sealed class AddOperation : Operation { // a b -- (a+b)
         public AddOperation() : base(OperationType.Add) {}
