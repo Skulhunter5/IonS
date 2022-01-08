@@ -16,6 +16,7 @@ namespace IonS {
         Dup, Dup2,
         Over, Over2,
         Swap, Swap2, Rotate, Rotate2, Rotate5, Rotate52,
+        CTT,
         Exit,
         VariableAccess,
         MemRead, MemWrite,
@@ -207,6 +208,17 @@ namespace IonS {
             //    mov [rsp+24], rax
             //    mov [rsp+32], r8
             return "    mov r8, [rsp]\n    mov rdx, [rsp+8]\n    mov rcx, [rsp+16]\n    mov rbx, [rsp+24]\n    mov rax, [rsp+32]\n    mov [rsp], rdx\n    mov [rsp+8], rcx\n    mov [rsp+16], rbx\n    mov [rsp+24], rax\n    mov [rsp+32], r8\n";
+        }
+    }
+
+    sealed class CTTOperation : Operation {
+        public CTTOperation(uint index) : base(OperationType.CTT) {
+            Index = index;
+        }
+        public uint Index { get; }
+        public override string nasm_linux_x86_64()
+        {
+            return "    mov rax, [rsp+" + (Index*8-8) + "]\n    push rax\n";
         }
     }
 

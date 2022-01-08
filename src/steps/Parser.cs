@@ -144,6 +144,9 @@ namespace IonS {
                 operations.Add(new Rotate5Operation());
             } else if(Current.Text == "2rot5") {
                 operations.Add(new Rotate52Operation());
+            } else if(Current.Text.StartsWith("ctt")) {
+                if(!uint.TryParse(Current.Text.Substring(3, Current.Text.Length - 3), out uint n) || n < 1) return new InvalidCTTIndexError(Current);
+                operations.Add(new CTTOperation(n));
             } else if(Current.Text == "++") {
                 operations.Add(new IncrementOperation());
             } else if(Current.Text == "--") {

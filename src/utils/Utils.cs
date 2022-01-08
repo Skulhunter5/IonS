@@ -86,6 +86,7 @@ namespace IonS {
         public static bool isReserved(string word) {
             if(word.StartsWith("@") || word.StartsWith("!")) return true;
             if(word.StartsWith("syscall")) return true;
+            if(word.StartsWith("ctt")) return true;
             foreach(string keyword in keywords) if(keyword == word) return true;
             return false;
         }

@@ -428,4 +428,17 @@ namespace IonS {
         public Position Position { get; }
     }
 
+    // - Invalid ctt index error
+
+    sealed class InvalidCTTIndexError : ParserError {
+        public InvalidCTTIndexError(Word index) {
+            Index = index;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid ctt index: " + Index;
+        }
+        public Word Index { get; }
+    }
+
 }
