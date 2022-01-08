@@ -1,4 +1,4 @@
-include "./../ions-libs/std.ions"
+include "./../std/std.ions"
 
 1 2 min .
 2 1 min .
