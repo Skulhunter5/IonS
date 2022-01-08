@@ -124,3 +124,41 @@ proc str-endswith 4-1 {
     over swap 2swap swap
     streq
 }
+
+proc try-parse-uint64 3-1 { // TODO: fix it not going over the maximum uint64 value
+    // len str ptr
+    2rot swap
+    // ptr str len
+    dup 20 > if {
+        2drop drop
+        0 return
+    }
+    // ptr str len
+    rot 0 over !64
+    // str len ptr
+    2rot
+    // ptr str len
+    0 while { 2dup > } do {
+        // ptr str len i
+        2swap swap dup @64 10 * over !64
+        // len i str ptr
+        swap 2swap
+        // ptr str len i
+        rot 2dup + @8
+        // ptr len i str str[i]
+        dup isDigit not if {
+            // ptr len i str str[i]
+            2drop 2drop drop
+            0 return
+        }
+        // ptr len i str str[i]
+        48 - rot5 dup @64 rot + over !64
+        // len i str ptr
+        swap 2swap
+        // ptr str len i
+        1 +
+    }
+    // ptr str len i
+    2drop 2drop
+    1 return
+}
