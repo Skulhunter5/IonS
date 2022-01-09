@@ -629,13 +629,13 @@ namespace IonS {
         public Scope(Scope parent, Procedure procedure) {
             Id = ScopeId();
             Parent = parent;
-            ProcedureVariables = procedure != null ? procedure.Variables : null;
+            Procedure = procedure;
             Variables = new Dictionary<string, Variable>();
         }
         
         public int Id { get; }
         public Scope Parent { get; }
-        public List<Variable> ProcedureVariables { get; }
+        public Procedure Procedure { get; }
         public Dictionary<string, Variable> Variables { get; }
 
         public Error RegisterVariable(Variable var) {

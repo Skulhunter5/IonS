@@ -61,8 +61,8 @@ namespace IonS {
         private Error RegisterVariable(Scope scope, Variable var) {
             var error = scope.RegisterVariable(var);
             if(error != null) return error;
-            if(scope.ProcedureVariables == null) _vars.Add(var);
-            else scope.ProcedureVariables.Add(var);
+            if(scope.Procedure == null) _vars.Add(var);
+            else scope.Procedure.Variables.Add(var);
             return null;
         }
 
