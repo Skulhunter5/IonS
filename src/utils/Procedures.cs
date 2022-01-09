@@ -14,6 +14,7 @@ namespace IonS {
             Body = body;
             Variables = new List<Variable>();
             IsUsed = false;
+            UsedProcedures = new List<Procedure>();
         }
 
         public int Id { get; }
@@ -23,6 +24,7 @@ namespace IonS {
         public CodeBlock Body { get; set; }
         public List<Variable> Variables { get; }
         public bool IsUsed { get; set; }
+        public List<Procedure> UsedProcedures { get; }
 
         string IAssemblyGenerator.nasm_linux_x86_64() {
             string asm = "";

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text;
 
+using System;
+
 namespace IonS {
 
     class ParseResult : Result {
@@ -72,8 +74,14 @@ namespace IonS {
 
         private Procedure GetProcedure(string name, bool use) {
             _procs.TryGetValue(name, out Procedure procedure);
-            if(procedure != null) procedure.IsUsed = true;
             return procedure;
+        }
+
+        private void UseProcedure(Procedure currentProcedure, Procedure procedure) {
+            if(currentProcedure == null) {
+                procedure.IsUsed = true;
+                foreach(Procedure proc in procedure.UsedProcedures) proc.IsUsed = true;
+            } else if(!currentProcedure.UsedProcedures.Contains(procedure)) currentProcedure.UsedProcedures.Add(procedure);
         }
 
         private Operation RegisterString(string text) {
@@ -355,6 +363,7 @@ namespace IonS {
                 ParseBlockResult result = ParseBlock(scope, null, proc);
                 if(result.Error != null) return result.Error;
                 proc.Body = result.Block;
+                //Console.WriteLine("Procedure " + proc.Id + ": '" + proc.Name.Text + "'");
 
                 return null;
             } else if(Current.Text == "return") {
@@ -367,8 +376,10 @@ namespace IonS {
                     if(var != null) operations.Add(new VariableAccessOperation(var.Id));
                     else {
                         Procedure proc = GetProcedure(Current.Text, true);
-                        if(proc != null) operations.Add(new ProcedureCallOperation(proc));
-                        else return new UnexpectedWordError(Current);
+                        if(proc != null) {
+                            operations.Add(new ProcedureCallOperation(proc));
+                            UseProcedure(currentProcedure, proc);
+                        } else return new UnexpectedWordError(Current);
                     }
                 }
             }
