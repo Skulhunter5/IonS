@@ -1,6 +1,8 @@
+using System.Collections.Generic;
+
 namespace IonS {
 
-    class Procedure {
+    class Procedure : IAssemblyGenerator {
         private static int nextProcedureId = 0;
         private static int ProcedureId() { return nextProcedureId++; }
 
@@ -10,15 +12,19 @@ namespace IonS {
             Argc = argc;
             Rvc = rvc;
             Body = body;
+            Variables = new List<Variable>();
             IsUsed = false;
         }
+
         public int Id { get; }
         public Word Name { get; }
         public int Argc { get; }
         public int Rvc { get; }
         public CodeBlock Body { get; set; }
+        public List<Variable> Variables { get; }
         public bool IsUsed { get; set; }
-        public string nasm_linux_x86_64() {
+
+        string IAssemblyGenerator.nasm_linux_x86_64() {
             string asm = "";
             asm += "proc_" + Id + ":\n";
             for(int i = Argc-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";

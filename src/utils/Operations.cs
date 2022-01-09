@@ -34,7 +34,7 @@ namespace IonS {
         Right
     }
 
-    abstract class Operation {
+    abstract class Operation : IAssemblyGenerator {
         public Operation(OperationType type) {
             Type = type;
         }
@@ -622,19 +622,31 @@ namespace IonS {
     }
 
     class Scope {
-        public Scope(Scope parent) {
+
+        private static int nextScopeId = 0;
+        private static int ScopeId() { return nextScopeId++; }
+
+        public Scope(Scope parent, Procedure procedure) {
+            Id = ScopeId();
             Parent = parent;
-            Variables = new List<Variable>();
+            ProcedureVariables = procedure != null ? procedure.Variables : null;
+            Variables = new Dictionary<string, Variable>();
         }
+        
+        public int Id { get; }
+        public Scope Parent { get; }
+        public List<Variable> ProcedureVariables { get; }
+        public Dictionary<string, Variable> Variables { get; }
+
         public Error RegisterVariable(Variable var) {
             Variable ownVar = GetOwnVariable(var.Identifier.Text);
             if(ownVar != null) return new VariableRedeclarationError(ownVar.Identifier, var.Identifier);
-            Variables.Add(var);
+            Variables.Add(Id + "_" + var.Identifier.Text, var);
             return null;
         }
         private Variable GetOwnVariable(string identifier) {
-            foreach(Variable var in Variables) if(var.Identifier.Text == identifier) return var;
-            return null;
+            Variables.TryGetValue(Id + "_" + identifier, out Variable variable);
+            return variable;
         }
         public Variable GetVariable(string identifier) {
             Variable ownVar = GetOwnVariable(identifier);
@@ -642,8 +654,7 @@ namespace IonS {
             if(Parent != null) return Parent.GetVariable(identifier);
             return null;
         }
-        public Scope Parent { get; }
-        public List<Variable> Variables { get; }
+
     }
 
     abstract class Block : Operation {
@@ -659,9 +670,9 @@ namespace IonS {
     }
 
     sealed class CodeBlock : Block {
-        public CodeBlock(Scope parentScope) : base(BlockType.Code) {
+        public CodeBlock(Scope parentScope, Procedure procedure) : base(BlockType.Code) {
             Operations = new List<Operation>();
-            Scope = new Scope(parentScope);
+            Scope = new Scope(parentScope, procedure);
         }
         public List<Operation> Operations { get; }
         public Scope Scope { get; }

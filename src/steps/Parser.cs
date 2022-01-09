@@ -6,7 +6,7 @@ using System;
 namespace IonS {
 
     class ParseResult : Result {
-        public ParseResult(CodeBlock root, List<string> strings, List<Variable> variables, List<Procedure> procedures, Error error) : base(error) {
+        public ParseResult(CodeBlock root, List<string> strings, List<Variable> variables, Dictionary<string, Procedure> procedures, Error error) : base(error) {
             Root = root;
             Strings = strings;
             Variables = variables;
@@ -15,7 +15,7 @@ namespace IonS {
         public CodeBlock Root { get; }
         public List<string> Strings { get; }
         public List<Variable> Variables { get; }
-        public List<Procedure> Procedures { get; }
+        public Dictionary<string, Procedure> Procedures { get; }
     }
 
     class ParseBlockResult : Result {
@@ -31,7 +31,7 @@ namespace IonS {
         private int _position;
 
         private List<Variable> _vars;
-        private List<Procedure> _procs;
+        private Dictionary<string, Procedure> _procs;
         private List<string> _strings;
 
         public Parser(string text, string source)
@@ -61,22 +61,21 @@ namespace IonS {
         private Error RegisterVariable(Scope scope, Variable var) {
             var error = scope.RegisterVariable(var);
             if(error != null) return error;
-            _vars.Add(var);
+            if(scope.ProcedureVariables == null) _vars.Add(var);
+            else scope.ProcedureVariables.Add(var);
             return null;
         }
 
         private Error RegisterProcedure(Procedure procedure) {
-            foreach(Procedure proc in _procs) if(proc.Name.Text == procedure.Name.Text) return new ProcedureRedefinitionError(proc.Name, procedure.Name);
-            _procs.Add(procedure);
+            if(_procs.ContainsKey(procedure.Name.Text)) return new ProcedureRedefinitionError(_procs[procedure.Name.Text].Name, procedure.Name);
+            _procs.Add(procedure.Name.Text, procedure);
             return null;
         }
 
         private Procedure GetProcedure(string name, bool use) {
-            foreach(Procedure proc in _procs) if(proc.Name.Text == name) {
-                if(use) proc.IsUsed = true;
-                return proc;
-            }
-            return null;
+            _procs.TryGetValue(name, out Procedure procedure);
+            if(procedure != null) procedure.IsUsed = true;
+            return procedure;
         }
 
         private Operation RegisterString(string text) {
@@ -94,7 +93,7 @@ namespace IonS {
 
         private ParseBlockResult ParseBlock(Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             bool root = scope == null;
-            CodeBlock block = new CodeBlock(scope);
+            CodeBlock block = new CodeBlock(scope, currentProcedure);
             if(Current == null) {
                 if(root) return new ParseBlockResult(block, null);
                 return new ParseBlockResult(null, new EOFInCodeBlockError());
@@ -397,7 +396,7 @@ namespace IonS {
             _words = macroResult.Words;
             
             _vars = new List<Variable>();
-            _procs = new List<Procedure>();
+            _procs = new Dictionary<string, Procedure>();
             _strings = new List<string>();
 
             ParseBlockResult parseResult = ParseBlock(null, null, null);

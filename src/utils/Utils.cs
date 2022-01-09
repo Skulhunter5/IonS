@@ -4,6 +4,10 @@ using System.Text;
 
 namespace IonS {
 
+    interface IAssemblyGenerator {
+        string nasm_linux_x86_64();
+    }
+
     class Utils {
         
         public static readonly string[] FreeUseRegisters = new string[] {"rax", "rbx", "rcx", "rdx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};

@@ -15,20 +15,15 @@ namespace IonS {
     class MacroPreprocessor {
 
         private Word[] _words;
-        private Macro[] _macros;
+        private Dictionary<string, Macro> _macros;
 
         public MacroPreprocessor(Word[] words) {
             _words = words;
         }
 
         private Macro GetMacro(string key) {
-            foreach(Macro macro in _macros) if(macro.Key.Text == key) return macro;
-            return null;
-        }
-
-        private Macro GetMacro(List<Macro> macros, string key) {
-            foreach(Macro macro in macros) if(macro.Key.Text == key) return macro;
-            return null;
+            _macros.TryGetValue(key, out Macro macro);
+            return macro;
         }
 
         private void ExpandMacro(Word[] _words, List<Word> words, int index) {
@@ -48,7 +43,7 @@ namespace IonS {
 
         private Error CollectMacros() {
             List<Word> words = new List<Word>();
-            List<Macro> macros = new List<Macro>();
+            _macros = new Dictionary<string, Macro>();
             for(int i = 0; i < _words.Length; i++) {
                 Word word = _words[i];
                 if(word.Text == "macro") {
@@ -59,7 +54,7 @@ namespace IonS {
 
                     if(i++ == _words.Length-2) return new IncompleteMacroDefinitionError(word, key);
 
-                    Macro macro = GetMacro(macros, key.Text);
+                    Macro macro = GetMacro(key.Text);
                     if(macro != null) return new MacroRedefinitionError(macro.Key, key);
 
                     List<Word> words1 = new List<Word>();
@@ -77,11 +72,10 @@ namespace IonS {
                             words1.Add(_words[i]);
                         }
                     }
-                    macros.Add(new Macro(key, words1.ToArray()));
+                    _macros.Add(key.Text, new Macro(key, words1.ToArray()));
                 } else words.Add(word);
             }
             _words = words.ToArray();
-            _macros = macros.ToArray();
             return null;
         }
 
@@ -101,6 +95,7 @@ namespace IonS {
             if(result != null) return new PreprocessorResult(null, result);
             return new PreprocessorResult(ExpandMacros(), null);
         }
+
     }
 
 }
