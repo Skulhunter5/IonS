@@ -9,7 +9,7 @@ namespace IonS {
         public string Asm { get; }
     }
 
-    class AssemblyTranscriber { // TODO: Add support for other assemblers (such as fasm)
+    class AssemblyTranscriber {
 
         private readonly string _text, _source;
 
