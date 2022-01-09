@@ -43,14 +43,14 @@ RESULT_SKIPPED = 2
 RESULT_GENERATED = 3
 RESULT_KEPT = 4
 
-def runFile(file):
+def runFile(file, assembler="Fasm"):
     print("'" + file + "':")
     if(not isfile("tests/" + file[:-5] + ".txt")):
         print("  No expectation found\n")
         return RESULT_SKIPPED
     with open("tests/" + file[:-5] + ".txt", 'r') as f:
         lines = f.readlines()
-        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file, "--assembler", assembler.lower()], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if(transcriptionProcess.returncode != 0):
             transcriptionOutput = transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
             if(not lines[0][4:].startswith("Transcription")):
@@ -70,7 +70,7 @@ def runFile(file):
             print("  Failed:\n")
             diff(expectation, transcriptionOutput)
             return RESULT_FAILED
-        compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest" + assembler], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if(compilationProcess.returncode != 0):
             compilationOutput = compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n')
             if(not lines[0][4:].startswith("Compilation")):
@@ -106,12 +106,12 @@ def runFile(file):
             diff(expectation, executionOutput)
             return RESULT_FAILED
 
-def run(files):
+def run(files, assembler):
     res = {RESULT_SKIPPED: 0, RESULT_PASSED: 0, RESULT_FAILED: 0}
     failedTests = []
     skippedTests = []
     for file in files:
-        result = runFile(file)
+        result = runFile(file, assembler)
         res[result] += 1
         if(result == RESULT_FAILED):
             failedTests.append(file)
@@ -124,19 +124,19 @@ def run(files):
     for test in failedTests:
         print("  - " + test)
 
-def generateFile(file, force=False):
+def generateFile(file, assembler="Nasm", force=False):
     print("'" + file + "':")
     if(isfile("tests/" + file[:-5] + ".txt") and not force):
         print("  Expectation found\n")
         return RESULT_KEPT
     with open("tests/" + file[:-5] + ".txt", 'w') as out:
-        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file, "--assembler", assembler.lower()], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if(transcriptionProcess.returncode != 0):
             out.write("--->Transcription:exitcode=" + str(transcriptionProcess.returncode) + "\n")
             out.write(transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
             print("  Generated expectation\n")
             return RESULT_GENERATED
-        compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest" + assembler], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if(compilationProcess.returncode != 0):
             out.write("--->Compilation:exitcode=" + str(compilationProcess.returncode) + "\n")
             out.write(compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
@@ -148,10 +148,10 @@ def generateFile(file, force=False):
         print("  Generated expectation\n")
         return RESULT_GENERATED
 
-def generate(files, force=False):
+def generate(files, assembler, force=False):
     res = {RESULT_GENERATED: 0, RESULT_KEPT: 0}
     for file in files:
-        result = generateFile(file, force)
+        result = generateFile(file, assembler, force)
         res[result] += 1
     print("Result:\n  Generated: " + str(res[RESULT_GENERATED]) + "\n  Kept: " + str(res[RESULT_KEPT]))
 
@@ -162,6 +162,7 @@ if(__name__ == "__main__"):
     action = None
     force = False
     filenames = None
+    assembler = "Nasm"
     build = True
     # parsing the arguments
     while(i < len(args)):
@@ -193,6 +194,20 @@ if(__name__ == "__main__"):
             build = False
             i += 1
             continue
+        if(args[i] in ["-a", "--assembler"]):
+            i += 1
+            if(i >= len(args)):
+                print("Missing argument for -a | --assembler")
+                exit()
+            if(args[i] in ["nasm", "nasm-linux-x86_64"]):
+                assembler = "Nasm"
+            elif(args[i] in ["fasm", "fasm-linux-x86_64"]):
+                assembler = "Fasm"
+            else:
+                print("Invalid assembler: '" + args[i] + "'")
+                exit()
+            i += 1
+            continue
         # action-specific arguments
         if(action == "generate"):
             if(args[i] in ["-f", "--force"]):
@@ -210,8 +225,8 @@ if(__name__ == "__main__"):
     if(build):
         subprocess.run(["dotnet", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if(action == "run"):
-        run(files)
+        run(files, assembler)
     elif(action == "generate"):
-        generate(files, force=force if filenames == None else True)
+        generate(files, assembler, force=force if filenames == None else True)
     else:
         run()

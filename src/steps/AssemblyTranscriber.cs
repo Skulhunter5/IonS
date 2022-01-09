@@ -51,6 +51,39 @@ namespace IonS {
             return new AssemblyTranscriptionResult(asm, null);
         }
 
+        public AssemblyTranscriptionResult fasm_linux_x86_64() {
+            string asm = "format ELF64 executable 3\n";
+            var parser = new Parser(_text, _source);
+            var result = parser.Parse();
+            if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
+            var root = result.Root;
+
+            if(result.Variables.Count > 0 || result.Strings.Count > 0) asm += "segment readable writeable\n";
+
+            foreach(Variable var in result.Variables) asm += ((IAssemblyGenerator) var).nasm_linux_x86_64().Replace("resb", "rb");
+            foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += ((IAssemblyGenerator) var).nasm_linux_x86_64();
+
+            for(int i = 0; i < result.Strings.Count; i++) {
+                if(result.Strings[i].Length > 0) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i]) + "\n";
+                else asm += "    str_" + i + ":\n";
+            }
+
+            asm += "segment readable executable\n";
+            asm += File.ReadAllText("res/asm snippets/dump.asm");
+
+            foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += ((IAssemblyGenerator) proc).nasm_linux_x86_64();
+
+            asm += "entry _start\n_start:\n";
+
+            asm += root.nasm_linux_x86_64();
+
+            asm += "exit:\n";
+            asm += "    mov rax, 60\n";
+            asm += "    mov rdi, 0\n";
+            asm += "    syscall\n";
+            return new AssemblyTranscriptionResult(asm, null);
+        }
+
     }
 
 }
