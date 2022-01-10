@@ -122,7 +122,7 @@ namespace IonS {
             "include",
             "here", "chere",
             "{", "}",
-            "proc", "return",
+            "proc", "return", "inline",
         };
         public static bool isReserved(string word) {
             if(word.StartsWith("@") || word.StartsWith("!")) return true;

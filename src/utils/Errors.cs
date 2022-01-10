@@ -361,6 +361,17 @@ namespace IonS {
         public Word Args { get; }
     }
 
+    sealed class MissingProcAfterInlineError : ParserError {
+        public MissingProcAfterInlineError(Word procWord) {
+            ProcWord = procWord;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Expecting 'proc' after 'inline': got " + ProcWord;
+        }
+        public Word ProcWord { get; }
+    }
+
     // - Return outside procedure error
 
     sealed class ReturnOutsideProcedureError : ParserError {

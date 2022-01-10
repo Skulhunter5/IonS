@@ -122,6 +122,38 @@ namespace IonS {
             return new ParseBlockResult(block, null);
         }
 
+        private Error ParseProcedure(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure, bool isInlined) {
+            if(currentProcedure != null || scope.Parent != null) return new ProcedureNotInGlobalScopeError(Current.Position);
+            Word procWord = Current;
+            NextWord();
+
+            if(Current == null) return new IncompleteProcedureError(procWord, null);
+            Word name = Current;
+            // TODO: Check that the name is valid for nasm aswell
+            if(Keyword.isReserved(name.Text) || long.TryParse(name.Text, out long _)) return new InvalidProcedureNameError(currentProcedure.Name);
+            NextWord();
+
+            if(Current == null) return new IncompleteProcedureError(procWord, name);
+            Word argsWord = Current;
+            string[] args = Current.Text.Split("-");
+            if(args.Length != 2) return new InvalidProcedureArgsError(argsWord);
+            if(!int.TryParse(args[0], out int argc) || argc < 0 || argc > Utils.FreeUseRegisters.Length) return new InvalidProcedureArgsError(argsWord);
+            if(!int.TryParse(args[1], out int rvc) || rvc < 0 || rvc > Utils.FreeUseRegisters.Length) return new InvalidProcedureArgsError(argsWord);
+            NextWord();
+
+            Procedure proc = new Procedure(name, argc, rvc, null, isInlined);
+            Error error = RegisterProcedure(proc);
+            if(error != null) return error;
+
+            if(Current == null) return new IncompleteProcedureError(procWord, name);
+
+            ParseBlockResult result = ParseBlock(scope, null, proc);
+            if(result.Error != null) return result.Error;
+            proc.Body = result.Block;
+
+            return null;
+        }
+
         private Error ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             if(Current.Text == "exit") operations.Add(new ExitOperation());
             else if(Current.Text == "putc") operations.Add(new Put_char_Operation());
@@ -297,8 +329,13 @@ namespace IonS {
                 if(result.Error != null) return result.Error;
                 operations.Add(result.Block);
                 return null;
+            } else if(Current.Text == "inline") {
+                NextWord();
+                if(Current.Text != "proc") return new MissingProcAfterInlineError(Current);
+                return ParseProcedure(operations, scope, breakableBlock, currentProcedure, true);
             } else if(Current.Text == "proc") {
-                if(currentProcedure != null || scope.Parent != null) return new ProcedureNotInGlobalScopeError(Current.Position);
+                return ParseProcedure(operations, scope, breakableBlock, currentProcedure, false);
+                /* if(currentProcedure != null || scope.Parent != null) return new ProcedureNotInGlobalScopeError(Current.Position);
                 Word procWord = Current;
                 NextWord();
 
@@ -316,7 +353,7 @@ namespace IonS {
                 if(!int.TryParse(args[1], out int rvc) || rvc < 0 || rvc > Utils.FreeUseRegisters.Length) return new InvalidProcedureArgsError(argsWord);
                 NextWord();
 
-                Procedure proc = new Procedure(name, argc, rvc, null);
+                Procedure proc = new Procedure(name, argc, rvc, null, false);
                 Error error = RegisterProcedure(proc);
                 if(error != null) return error;
 
@@ -325,9 +362,8 @@ namespace IonS {
                 ParseBlockResult result = ParseBlock(scope, null, proc);
                 if(result.Error != null) return result.Error;
                 proc.Body = result.Block;
-                //Console.WriteLine("Procedure " + proc.Id + ": '" + proc.Name.Text + "'");
 
-                return null;
+                return null; */
             } else if(Current.Text == "return") {
                 if(currentProcedure == null) return new ReturnOutsideProcedureError(Current.Position);
                 operations.Add(new ReturnOperation(currentProcedure.Id));
@@ -372,6 +408,10 @@ namespace IonS {
 
             ParseBlockResult parseResult = ParseBlock(null, null, null);
             if(parseResult.Error != null) return new ParseResult(null, null, null, null, parseResult.Error);
+
+            List<string> toRemove = new List<string>();
+            foreach(string proc in _procs.Keys) if(_procs[proc].IsInlined) toRemove.Add(proc);
+            foreach(string proc in toRemove) _procs.Remove(proc);
 
             return new ParseResult(parseResult.Block, _strings, _vars, _procs, null);
         }

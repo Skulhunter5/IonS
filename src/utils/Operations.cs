@@ -583,17 +583,22 @@ namespace IonS {
 
     // Procedure call operation
 
-    sealed class ProcedureCallOperation : Operation { // args[] --
+    sealed class ProcedureCallOperation : Operation { // args[] -- ret[]
         public ProcedureCallOperation(Procedure proc) : base(OperationType.ProcedureCall) {
             Proc = proc;
         }
+
         public Procedure Proc { get; }
+
         public override string nasm_linux_x86_64() {
-            string asm = "";
-            for(int i = 0; i < Proc.Argc; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
-            asm += "    call proc_" + Proc.Id + "\n";
-            for(int i = Proc.Rvc-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
-            return asm;
+            if(Proc.IsInlined) return ((IAssemblyGenerator) Proc).nasm_linux_x86_64();
+            else {
+                string asm = "";
+                for(int i = 0; i < Proc.Argc; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
+                asm += "    call proc_" + Proc.Id + "\n";
+                for(int i = Proc.Rvc-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
+                return asm;
+            }
         }
     }
 
