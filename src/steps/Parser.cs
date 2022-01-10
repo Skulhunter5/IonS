@@ -123,89 +123,51 @@ namespace IonS {
         }
 
         private Error ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
-            if(Current.Text == "exit") {
-                operations.Add(new ExitOperation());
-            } else if(Current.Text == "putc") {
-                operations.Add(new Put_char_Operation());
-            } else if(Current.Text == "drop") {
-                operations.Add(new DropOperation());
-            } else if(Current.Text == "2drop") {
-                operations.Add(new Drop2Operation());
-            } else if(Current.Text == "dup") {
-                operations.Add(new DupOperation());
-            } else if(Current.Text == "2dup") {
-                operations.Add(new Dup2Operation());
-            } else if(Current.Text == "over") {
-                operations.Add(new OverOperation());
-            } else if(Current.Text == "2over") {
-                operations.Add(new Over2Operation());
-            } else if(Current.Text == "swap") {
-                operations.Add(new SwapOperation());
-            } else if(Current.Text == "2swap") {
-                operations.Add(new Swap2Operation());
-            } else if(Current.Text == "rot") {
-                operations.Add(new RotateOperation());
-            } else if(Current.Text == "2rot") {
-                operations.Add(new Rotate2Operation());
-            } else if(Current.Text == "rot5") {
-                operations.Add(new Rotate5Operation());
-            } else if(Current.Text == "2rot5") {
-                operations.Add(new Rotate52Operation());
-            } else if(Current.Text.StartsWith("ctt")) {
+            if(Current.Text == "exit") operations.Add(new ExitOperation());
+            else if(Current.Text == "putc") operations.Add(new Put_char_Operation());
+            else if(Current.Text == "drop") operations.Add(new DropOperation());
+            else if(Current.Text == "2drop") operations.Add(new Drop2Operation());
+            else if(Current.Text == "dup") operations.Add(new DupOperation());
+            else if(Current.Text == "2dup") operations.Add(new Dup2Operation());
+            else if(Current.Text == "over") operations.Add(new OverOperation());
+            else if(Current.Text == "2over") operations.Add(new Over2Operation());
+            else if(Current.Text == "swap") operations.Add(new SwapOperation());
+            else if(Current.Text == "2swap") operations.Add(new Swap2Operation());
+            else if(Current.Text == "rot") operations.Add(new RotateOperation());
+            else if(Current.Text == "2rot") operations.Add(new Rotate2Operation());
+            else if(Current.Text == "rot5") operations.Add(new Rotate5Operation());
+            else if(Current.Text == "2rot5") operations.Add(new Rotate52Operation());
+            else if(Current.Text == "++") operations.Add(new IncrementOperation());
+            else if(Current.Text == "--") operations.Add(new DecrementOperation());
+            else if(Current.Text == "+") operations.Add(new AddOperation());
+            else if(Current.Text == "-") operations.Add(new SubtractOperation());
+            else if(Current.Text == "*") operations.Add(new MultiplyOperation());
+            else if(Current.Text == "/") operations.Add(new DivideOperation());
+            else if(Current.Text == "%") operations.Add(new ModuloOperation());
+            else if(Current.Text == "/%") operations.Add(new DivModOperation());
+            else if(Current.Text == "<<") operations.Add(new ShLOperation());
+            else if(Current.Text == ">>") operations.Add(new ShROperation());
+            else if(Current.Text == "&") operations.Add(new BitAndOperation());
+            else if(Current.Text == "|") operations.Add(new BitOrOperation());
+            else if(Current.Text == "^") operations.Add(new BitXorOperation());
+            else if(Current.Text == "inv") operations.Add(new BitInvOperation());
+            else if(Current.Text == "&&") operations.Add(new AndOperation());
+            else if(Current.Text == "||") operations.Add(new OrOperation());
+            else if(Current.Text == "not") operations.Add(new NotOperation());
+            else if(Current.Text == "min") operations.Add(new MinOperation());
+            else if(Current.Text == "max") operations.Add(new MaxOperation());
+            else if(Current.Text == "==") operations.Add(new ComparisonOperation(ComparisonType.EQ));
+            else if(Current.Text == "!=") operations.Add(new ComparisonOperation(ComparisonType.NEQ));
+            else if(Current.Text == "<") operations.Add(new ComparisonOperation(ComparisonType.B));
+            else if(Current.Text == ">") operations.Add(new ComparisonOperation(ComparisonType.A));
+            else if(Current.Text == "<=") operations.Add(new ComparisonOperation(ComparisonType.BEQ));
+            else if(Current.Text == ">=") operations.Add(new ComparisonOperation(ComparisonType.AEQ));
+            else if(Current.Text == ".") operations.Add(new DumpOperation());
+            else if(Current.Text == "true") operations.Add(new Push_uint64_Operation(1));
+            else if(Current.Text == "false") operations.Add(new Push_uint64_Operation(0));
+            else if(Current.Text.StartsWith("ctt")) {
                 if(!uint.TryParse(Current.Text.Substring(3, Current.Text.Length - 3), out uint n) || n < 1) return new InvalidCTTIndexError(Current);
                 operations.Add(new CTTOperation(n));
-            } else if(Current.Text == "++") {
-                operations.Add(new IncrementOperation());
-            } else if(Current.Text == "--") {
-                operations.Add(new DecrementOperation());
-            } else if(Current.Text == "+") {
-                operations.Add(new AddOperation());
-            } else if(Current.Text == "-") {
-                operations.Add(new SubtractOperation());
-            } else if(Current.Text == "*") {
-                operations.Add(new MultiplyOperation());
-            } else if(Current.Text == "/") {
-                operations.Add(new DivideOperation());
-            } else if(Current.Text == "%") {
-                operations.Add(new ModuloOperation());
-            } else if(Current.Text == "/%") {
-                operations.Add(new DivModOperation());
-            } else if(Current.Text == "<<") {
-                operations.Add(new ShLOperation());
-            } else if(Current.Text == ">>") {
-                operations.Add(new ShROperation());
-            } else if(Current.Text == "&") {
-                operations.Add(new BitAndOperation());
-            } else if(Current.Text == "|") {
-                operations.Add(new BitOrOperation());
-            } else if(Current.Text == "^") {
-                operations.Add(new BitXorOperation());
-            } else if(Current.Text == "inv") {
-                operations.Add(new BitInvOperation());
-            } else if(Current.Text == "&&") {
-                operations.Add(new AndOperation());
-            } else if(Current.Text == "||") {
-                operations.Add(new OrOperation());
-            } else if(Current.Text == "not") {
-                operations.Add(new NotOperation());
-            } else if(Current.Text == "min") {
-                operations.Add(new MinOperation());
-            } else if(Current.Text == "max") {
-                operations.Add(new MaxOperation());
-            } else if(Current.Text == "==") {
-                operations.Add(new ComparisonOperation(ComparisonType.EQ));
-            } else if(Current.Text == "!=") {
-                operations.Add(new ComparisonOperation(ComparisonType.NEQ));
-            } else if(Current.Text == "<") {
-                operations.Add(new ComparisonOperation(ComparisonType.B));
-            } else if(Current.Text == ">") {
-                operations.Add(new ComparisonOperation(ComparisonType.A));
-            } else if(Current.Text == "<=") {
-                operations.Add(new ComparisonOperation(ComparisonType.BEQ));
-            } else if(Current.Text == ">=") {
-                operations.Add(new ComparisonOperation(ComparisonType.AEQ));
-            } else if(Current.Text == ".") {
-                operations.Add(new DumpOperation());
             } else if(Current.Text == "if") {
                 NextWord();
                 ParseBlockResult result = ParseBlock(scope, breakableBlock, currentProcedure);
