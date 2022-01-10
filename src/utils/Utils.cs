@@ -114,6 +114,7 @@ namespace IonS {
             "min", "max",
             "==", "!=", "<", ">", "<=", ">=",
             ".",
+            "true", "false",
             "if", "else", "while", "do",
             "continue", "break",
             "macro",
@@ -122,7 +123,6 @@ namespace IonS {
             "here", "chere",
             "{", "}",
             "proc", "return",
-            "true", "false",
         };
         public static bool isReserved(string word) {
             if(word.StartsWith("@") || word.StartsWith("!")) return true;
