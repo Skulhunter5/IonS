@@ -8,42 +8,13 @@ namespace IonS {
         string nasm_linux_x86_64();
     }
 
-    class Scope {
-
-        private static int nextScopeId = 0;
-        private static int ScopeId() { return nextScopeId++; }
-
-        public Scope(Scope parent, Procedure procedure) {
-            Id = ScopeId();
-            Parent = parent;
-            Procedure = procedure;
-            Variables = new Dictionary<string, Variable>();
+    abstract class Result {
+        public Result(Error error) {
+            Error = error;
         }
-        
-        public int Id { get; }
-        public Scope Parent { get; }
-        public Procedure Procedure { get; }
-        public Dictionary<string, Variable> Variables { get; }
-
-        public Error RegisterVariable(Variable var) {
-            Variable ownVar = GetOwnVariable(var.Identifier.Text);
-            if(ownVar != null) return new VariableRedeclarationError(ownVar.Identifier, var.Identifier);
-            Variables.Add(Id + "_" + var.Identifier.Text, var);
-            return null;
-        }
-        private Variable GetOwnVariable(string identifier) {
-            Variables.TryGetValue(Id + "_" + identifier, out Variable variable);
-            return variable;
-        }
-        public Variable GetVariable(string identifier) {
-            Variable ownVar = GetOwnVariable(identifier);
-            if(ownVar != null) return ownVar;
-            if(Parent != null) return Parent.GetVariable(identifier);
-            return null;
-        }
-
+        public Error Error { get; }
     }
-
+    
     class Utils {
         
         public static readonly string[] FreeUseRegisters = new string[] {"rax", "rbx", "rcx", "rdx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
@@ -91,13 +62,6 @@ namespace IonS {
         public Position[] IncludedFrom { get; set; }
     }
     
-    abstract class Result {
-        public Result(Error error) {
-            Error = error;
-        }
-        public Error Error { get; }
-    }
-
     class Keyword {
         // Remember: Whenever new keyword is added: put it here
         private static readonly string[] keywords = new string[] {
