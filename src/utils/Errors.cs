@@ -194,6 +194,19 @@ namespace IonS {
     }
 
     // Parser errors
+    // - Internal parser error
+
+    sealed class InternalParserError : ParserError {
+        public InternalParserError(string message) {
+            Message = message;
+        }
+        public override string ToString()
+        {
+            return base.ToString() + "Internal error: " + Message;
+        }
+        public string Message { get; }
+    }
+
     // - Unexpected word error
 
     sealed class UnexpectedWordError : ParserError {

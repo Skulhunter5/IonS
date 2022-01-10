@@ -39,8 +39,8 @@ namespace IonS {
             while(i < includes.Count) {
                 for(int j = (i > 0 ? includes[i-1]+2 : 0); j < includes[i]; j++) words.Add(_words[j]);
                 Word nameWord = _words[includes[i]+1];
-                if(!nameWord.Text.StartsWith('"') || !nameWord.Text.EndsWith('"')) return new PreprocessorResult(null, new FilePathNotAStringLiteralError(nameWord));
-                string filename = AlterPath(_source, nameWord.Text.Substring(1, nameWord.Text.Length-2));
+                if(nameWord.GetType() != typeof(StringWord) || ((StringWord) nameWord).StringType != "") return new PreprocessorResult(null, new FilePathNotAStringLiteralError(nameWord));
+                string filename = AlterPath(_source, nameWord.Text);
                 
                 if(!File.Exists(filename)) return new PreprocessorResult(null, new FileNotFoundError(filename, Directory.GetCurrentDirectory(), nameWord.Position));
                 string path = Path.GetFullPath(filename);

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace IonS {
@@ -15,6 +14,13 @@ namespace IonS {
         public Error Error { get; }
     }
     
+    class ConvertEscapeCharactersResult : Result {
+        public ConvertEscapeCharactersResult(string text, Error error) : base(error) {
+            Text = text;
+        }
+        public string Text { get; }
+    }
+
     class Utils {
         
         public static readonly string[] FreeUseRegisters = new string[] {"rax", "rbx", "rcx", "rdx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
@@ -22,6 +28,49 @@ namespace IonS {
 
         public static string StringLiteralToByteString(string literal) {
             return String.Join(',', Encoding.ASCII.GetBytes(literal));
+        }
+
+        public static Position GetNewPosition(string text, Position position, int n) {
+            int line = position.Line;
+            int column = position.Column;
+            for(int i = 0; i < n; i++) {
+                if(text[i] == '\n') {
+                    line++;
+                    column = 0;
+                }
+            }
+            return new Position(position.File, line, column);
+        }
+
+        public static string GetStringType(string text) {
+            int index = 0;
+            for(int i = 1; i < text.Length; i++) if(text[i] == '"' && text[i-1] != '\\') {
+                index = i;
+                break;
+            }
+            return text.Substring(index+1, text.Length-index-1);
+        }
+
+        public static ConvertEscapeCharactersResult ConvertEscapeCharacters(string _text, Position position) {
+            string text = "";
+            for(int i = 0; i < _text.Length; i++) {
+                char c = _text[i];
+                if(c != '\\') text += c;
+                else {
+                    c = _text[++i];
+                    if(c == 'n') text += '\n';
+                    else if(c == 't') text += '\t';
+                    else if(c == 'r') text += '\r';
+                    else if(c == '\\') text += '\\';
+                    else if(c == '"') text += '"';
+                    else if(c == '0') text += '\0';
+                    else if(c == '\n') return new ConvertEscapeCharactersResult(null, new InvalidEscapeCharacterError("\\n", GetNewPosition(_text, position, i)));
+                    else if(c == '\t') return new ConvertEscapeCharactersResult(null, new InvalidEscapeCharacterError("\\t", GetNewPosition(_text, position, i)));
+                    else if(c == '\r') return new ConvertEscapeCharactersResult(null, new InvalidEscapeCharacterError("\\r", GetNewPosition(_text, position, i)));
+                    else return new ConvertEscapeCharactersResult(null, new InvalidEscapeCharacterError(""+c, GetNewPosition(_text, position, i)));
+                }
+            }
+            return new ConvertEscapeCharactersResult(text, null);
         }
 
     }
@@ -39,27 +88,6 @@ namespace IonS {
         public string File { get; }
         public int Line { get; }
         public int Column { get; }
-    }
-
-    class Word {
-        public Word(Position position, string text) {
-            Position = position;
-            Text = text;
-            ExpandedFrom = null;
-            IncludedFrom = null;
-        }
-
-        public override string ToString()
-        {
-            if(ExpandedFrom != null) return "'" + Text + "' (expanded from " + ExpandedFrom + ")";
-            if(IncludedFrom != null) return "'" + Text + "' (Included from " + IncludedFrom[0] + " at " + IncludedFrom[1] + ")";
-            return "'" + Text + "' at " + Position;
-        }
-
-        public Position Position { get; }
-        public string Text { get; }
-        public Word ExpandedFrom { get; set; }
-        public Position[] IncludedFrom { get; set; }
     }
     
 }

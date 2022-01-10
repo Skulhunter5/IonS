@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
 
-using System;
-
 namespace IonS {
 
     class ParseResult : Result {
@@ -97,6 +95,14 @@ namespace IonS {
             return new CStyleStringOperation(_strings.Count - 1);
         }
 
+        private bool IsBraceOpen() {
+            return Current.Text == "{" && Current.GetType() != typeof(StringWord) && Current.GetType() != typeof(CharWord);
+        }
+
+        private bool IsBraceClose() {
+            return Current.Text == "}" && Current.GetType() != typeof(StringWord) && Current.GetType() != typeof(CharWord);
+        }
+
         private ParseBlockResult ParseBlock(Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             bool root = scope == null;
             CodeBlock block = new CodeBlock(scope, currentProcedure);
@@ -104,15 +110,15 @@ namespace IonS {
                 if(root) return new ParseBlockResult(block, null);
                 return new ParseBlockResult(null, new EOFInCodeBlockError());
             }
-            if(Current.Text == "{" || root) {
-                if(Current.Text == "{") NextWord();
-                while(Current != null && (Current.Text != "}" || root)) {
-                    if(Current.Text == "}") break;
+            if(IsBraceOpen() || root) {
+                if(IsBraceOpen()) NextWord();
+                while(Current != null && (!IsBraceClose() || root)) {
+                    if(IsBraceClose()) break;
                     var error = ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
                     if(error != null) return new ParseBlockResult(null, error);
                 }
                 if(!root) {
-                    if(Current.Text != "}") return new ParseBlockResult(null, new EOFInCodeBlockError());
+                    if(!IsBraceClose()) return new ParseBlockResult(null, new EOFInCodeBlockError());
                     NextWord();
                 }
             } else {
@@ -291,27 +297,13 @@ namespace IonS {
                 if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
 
                 operations.Add(new MemReadOperation(amount));
-            } else if(Current.Text.StartsWith('"')) {
-                if(Current.Text.EndsWith("\"")) operations.Add(RegisterString(Current.Text.Substring(1, Current.Text.Length - 2)));
-                else if(Current.Text.EndsWith("\"c")) operations.Add(RegisterCStyleString(Current.Text.Substring(1, Current.Text.Length - 3)));
-            } else if(Current.Text.StartsWith("'")) {
-                string text = Current.Text.Substring(1, Current.Text.Length-2);
-                char c = text[0];
-                if(text.Length == 2) {
-                    // TODO: factor out into function
-                    c = text[1];
-                    if(c == 'n') c = '\n';
-                    else if(c == 't') c = '\t';
-                    else if(c == 'r') c = '\r';
-                    else if(c == '\\') c = '\\';
-                    else if(c == '"') c = '"';
-                    else if(c == '0') c = '\0';
-                    else if(c == '\n') return new InvalidEscapeCharacterError("\\n", new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
-                    else if(c == '\t') return new InvalidEscapeCharacterError("\\t", new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
-                    else if(c == '\r') return new InvalidEscapeCharacterError("\\r", new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
-                    else return new InvalidEscapeCharacterError(""+c, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
-                }
-                operations.Add(new Push_uint64_Operation(Encoding.ASCII.GetBytes(""+c)[0]));
+            } else if(Current.GetType() == typeof(StringWord)) {
+                StringWord stringWord = (StringWord) Current;
+                if(stringWord.StringType == "") operations.Add(RegisterString(Current.Text));
+                else if(stringWord.StringType == "c") operations.Add(RegisterCStyleString(Current.Text));
+                else return new InternalParserError("Forgot to add a new StringType in Parser.ParseOperation");
+            } else if(Current.GetType() == typeof(CharWord)) {
+                operations.Add(new Push_uint64_Operation(Encoding.ASCII.GetBytes(""+Current.Text)[0]));
             } else if(Current.Text == "here") {
                 string text = Current.Position.ToString();
                 operations.Add(new StringOperation(_strings.Count, text.Length));
@@ -324,7 +316,7 @@ namespace IonS {
                 if(!int.TryParse(argcStr, out int argc)) return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
                 if(argc >= 0 && argc <= 6) operations.Add(new SyscallOperation(argc));
                 else return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
-            } else if(Current.Text == "{") {
+            } else if(IsBraceOpen()) {
                 var result = ParseBlock(scope, breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 operations.Add(result.Block);

@@ -34,12 +34,17 @@ namespace IonS {
             }
         }
 
+        private char GetChar(int offset) {
+            if(_position+offset >= _text.Length) return '\0';
+            return _text[_position+offset];
+        }
+
         private void Next() {
             _position++;
             _column++;
         }
 
-        private void skipWhiteSpace() {
+        private void SkipWhiteSpace() {
             while(char.IsWhiteSpace(c)) {
                 if(c == '\n') {
                     _line++;
@@ -49,64 +54,84 @@ namespace IonS {
             }
         }
 
-        public SingleWordResult NextWord() {
-            if(_position < _text.Length) {
-                skipWhiteSpace();
-                if(c == '\0') return null;
-                Position position = new Position(_source, _line, _column);
-                int start = _position;
-                int end = 0;
-                Position endPos = null;
-                if(c == '"') {
-                    string text = "";
-                    Next();
-                    while(c != '\0' && c != '"') {
-                        if(c == '\\') {
-                            Next();
-                            // TODO: factor out into function
-                            if(c == '\0') return new SingleWordResult(null, new EOFInStringLiteralError(position));
-                            else if(c == 'n') text += '\n';
-                            else if(c == 't') text += '\t';
-                            else if(c == 'r') text += '\r';
-                            else if(c == '\\') text += '\\';
-                            else if(c == '"') text += '"';
-                            else if(c == '0') text += '\0';
-                            else if(c == '\n') return new SingleWordResult(null, new InvalidEscapeCharacterError("\\n", new Position(_source, _line, _column)));
-                            else if(c == '\t') return new SingleWordResult(null, new InvalidEscapeCharacterError("\\t", new Position(_source, _line, _column)));
-                            else if(c == '\r') return new SingleWordResult(null, new InvalidEscapeCharacterError("\\r", new Position(_source, _line, _column)));
-                            else return new SingleWordResult(null, new InvalidEscapeCharacterError(""+c, new Position(_source, _line, _column)));
-                        } else text += c;
-                        Next();
-                    }
-                    Next();
-                    if(start + (_position - start) > _text.Length) return new SingleWordResult(null, new EOFInStringLiteralError(position));
+        private int FindWhiteSpace() {
+            while(!char.IsWhiteSpace(c) && c != '\0') Next();
+            return c != '\0' ? _position : -1;
+        }
 
-                    end = _position;
-
-                    while(!char.IsWhiteSpace(c) && c != '\0') Next();
-
-                    if(end == _position) return new SingleWordResult(new Word(position, '"' + text + '"'), null);
-
-                    string type = _text.Substring(end, _position - end);
-                    if(type == "c") return new SingleWordResult(new Word(position, '"' + text + "\"c"), null);
-                    else return new SingleWordResult(null, new InvalidStringTypeError(type, endPos));
-                } else {
-                    while(!char.IsWhiteSpace(c) && c != '\0') Next();
-                    int len = _position - start;
-                    if(_text[start] == '\'') {
-                        if(len == 3 && _text[start+2] != '\'') return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, len))));
-                        if(len == 4 && (_text[start+1] != '\\' || _text[start+3] != '\'')) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, len))));
-                        if(len != 3 && len != 4) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, len))));
-                    }
-                    string text = _text.Substring(start, len);
-                    if(text.StartsWith("//")) { // TODO: somehow get this into the CommentPreprocessor aswell
-                        while(c != '\n' && c != '\0') Next();
-                        return NextWord();
-                    }
-                    return new SingleWordResult(new Word(position, text), null);
+        private int Find(char toFind) {
+            while(c != toFind && c != '\0') {
+                if(c == '\n') {
+                    _line++;
+                    _column = 0;
                 }
+                Next();
             }
-            return null;
+            return c != '\0' ? _position : -1;
+        }
+
+        private int FindDoubleQuote(bool raw) {
+            char last = '\0';
+            while((c != '"' || (last == '\\' || raw)) && c != '\0') {
+                if(c == '\n') {
+                    _line++;
+                    _column = 0;
+                }
+                last = c;
+                Next();
+            }
+            return c != '\0' ? _position : -1;
+        }
+
+        public SingleWordResult NextWord() {
+            SkipWhiteSpace();
+            if(_position >= _text.Length-1) return null;
+
+            Position position = new Position(_source, _line, _column);
+            int start = _position;
+            
+            int index = 0;
+            bool raw = false;
+            if(c == 'r' && GetChar(1) == '"') {
+                raw = true;
+                Next();
+            }
+            if(c == '"') {
+                Next();
+                index = FindDoubleQuote(raw);
+                if(index == -1) return new SingleWordResult(null, new EOFInStringLiteralError(position));
+            }
+
+            if(c == '/' && GetChar(1) == '/') {
+                index = Find('\n');
+                if(index == -1) return null;
+                return NextWord();
+            }
+            index = FindWhiteSpace();
+            if(index == -1) return new SingleWordResult(new Word(position, _text.Substring(start, _text.Length - start)), null);
+
+            string text = _text.Substring(start, index - start);
+            if(text.StartsWith('\'')) {
+                if(text.Length == 3 && text[2] != '\'') return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, text.Length))));
+                if(text.Length == 4 && (text[1] != '\\' || text[3] != '\'')) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, text.Length))));
+                if(text.Length != 3 && text.Length != 4) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, text.Length))));
+
+                var result = Utils.ConvertEscapeCharacters(text.Substring(1,text.Length-2), position);
+                if(result.Error != null) return new SingleWordResult(null, result.Error);
+                return new SingleWordResult(new CharWord(position, result.Text), null);
+            }
+            if(text.StartsWith('"')) {
+                string type = Utils.GetStringType(text);
+                if(type != "c" && type != "") return new SingleWordResult(null, new InvalidStringTypeError(type, Utils.GetNewPosition(text, position, text.Length - type.Length)));
+                if(!raw) {
+                    var result = Utils.ConvertEscapeCharacters(text.Substring(1, text.Length - 2 - type.Length), position);
+                    if(result.Error != null) return new SingleWordResult(null, result.Error);
+                    text = result.Text;
+                }
+                return new SingleWordResult(new StringWord(position, text, type), null);
+            }
+
+            return new SingleWordResult(new Word(position, text), null);
         }
 
         public LexingResult run() {
@@ -119,6 +144,7 @@ namespace IonS {
             }
             return new LexingResult(words.ToArray(), null);
         }
+
     }
 
 }
