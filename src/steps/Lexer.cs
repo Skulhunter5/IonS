@@ -85,7 +85,7 @@ namespace IonS {
 
         public SingleWordResult NextWord() {
             SkipWhiteSpace();
-            if(_position >= _text.Length-1) return null;
+            if(_position >= _text.Length) return null;
 
             Position position = new Position(_source, _line, _column);
             int start = _position;
