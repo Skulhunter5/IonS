@@ -108,9 +108,11 @@ namespace IonS {
             CodeBlock block = new CodeBlock(scope, currentProcedure);
             if(Current == null) {
                 if(root) return new ParseBlockResult(block, null);
-                return new ParseBlockResult(null, new EOFInCodeBlockError());
+                return new ParseBlockResult(null, new MissingCodeBlockError());
             }
+            block.Start = Current.Position;
             if(IsBraceOpen() || root) {
+                Position openBracePosition = Current.Position;
                 if(IsBraceOpen()) NextWord();
                 while(Current != null && (!IsBraceClose() || root)) {
                     if(IsBraceClose()) break;
@@ -118,10 +120,12 @@ namespace IonS {
                     if(error != null) return new ParseBlockResult(null, error);
                 }
                 if(!root) {
-                    if(!IsBraceClose()) return new ParseBlockResult(null, new EOFInCodeBlockError());
+                    if(!IsBraceClose()) return new ParseBlockResult(null, new EOFInCodeBlockError(openBracePosition));
+                    block.End = Current.Position;
                     NextWord();
                 }
             } else {
+                block.End = Current.Position;
                 var error = ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
                 if(error != null) return new ParseBlockResult(null, error);
             }

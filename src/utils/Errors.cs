@@ -3,44 +3,38 @@ namespace IonS {
     abstract class Error {}
 
     abstract class LexerError : Error {
-        public override string ToString()
-        {
+        public override string ToString() {
             return "[Lexer]: ";
         }
     }
 
     abstract class CommentPreprocessorError : Error {
-        public override string ToString()
-        {
+        public override string ToString() {
             return "[CommentPreprocessorError]: ";
         }
     }
 
     abstract class IncludePreprocessorError : Error {
-        public override string ToString()
-        {
+        public override string ToString() {
             return "[IncludePreprocessor]: ";
         }
     }
 
     abstract class MacroPreprocessorError : Error {
-        public override string ToString()
-        {
+        public override string ToString() {
             return "[MacroPreprocessor]: ";
         }
     }
 
     abstract class ParserError : Error {
-        public override string ToString()
-        {
+        public override string ToString() {
             return "[Parser]: ";
         }
     }
 
-    abstract class AssemblyTranscriberError : Error {
-        public override string ToString()
-        {
-            return "[AssemblyTranscriber]: ";
+    abstract class TypeCheckerError : Error {
+        public override string ToString() {
+            return "[TypeChecker]: ";
         }
     }
 
@@ -248,18 +242,31 @@ namespace IonS {
         public MissingWhileError(Position position) {
             Position = position;
         }
-        public override string ToString()
-        {
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Missing while marker: at " + Position;
         }
-        public Position Position { get; }
+    }
+
+    sealed class MissingCodeBlockError : ParserError {
+        public MissingCodeBlockError() {}
+
+        public override string ToString() {
+            return base.ToString() + "Missing CodeBlock at the end of the file";
+        }
     }
 
     sealed class EOFInCodeBlockError : ParserError {
-        public EOFInCodeBlockError() {}
-        public override string ToString()
-        {
-            return base.ToString() + "EOF inside of a CodeBlock";
+        public EOFInCodeBlockError(Position position) {
+            Position = position;
+        }
+
+        public Position Position { get; }
+
+        public override string ToString() {
+            return base.ToString() + "EOF inside of a CodeBlock: starting at " + Position;
         }
     }
 
@@ -270,12 +277,13 @@ namespace IonS {
             VarWord = varWord;
             Identifier = identifier;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "Incomplete variable: " + (Identifier != null ? Identifier : "at " + VarWord.Position);
-        }
+        
         public Word VarWord { get; }
         public Word Identifier { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Incomplete variable: " + (Identifier != null ? Identifier : "at " + VarWord.Position);
+        }
     }
 
     sealed class VariableRedeclarationError : ParserError {
@@ -283,34 +291,37 @@ namespace IonS {
             Old = o;
             New = n;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "Trying to redeclare variable: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
-        }
+        
         public Word Old { get; }
         public Word New { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Trying to redeclare variable: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
+        }
     }
 
     sealed class InvalidVariableIdentifierError : ParserError {
         public InvalidVariableIdentifierError(Word identifier) {
             Identifier = identifier;
         }
-        public override string ToString()
-        {
+        
+        public Word Identifier { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Invalid identifier for variable: " + Identifier;
         }
-        public Word Identifier { get; }
     }
 
     sealed class InvalidVariableBytesizeError : ParserError {
         public InvalidVariableBytesizeError(Word bytesize) {
             Bytesize = bytesize;
         }
-        public override string ToString()
-        {
+        
+        public Word Bytesize { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Invalid bytesize for variable: " + Bytesize;
         }
-        public Word Bytesize { get; }
     }
 
     // - Procedure errors
@@ -319,22 +330,24 @@ namespace IonS {
         public ProcedureNotInGlobalScopeError(Position position) {
             Position = position;
         }
-        public override string ToString()
-        {
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Procedure inside a local scope: at " + Position;
         }
-        public Position Position { get; }
     }
 
     sealed class InvalidProcedureNameError : ParserError {
         public InvalidProcedureNameError(Word name) {
             Name = name;
         }
-        public override string ToString()
-        {
+        
+        public Word Name { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Invalid name for procedure: " + Name;
         }
-        public Word Name { get; }
     }
 
     sealed class ProcedureRedefinitionError : ParserError {
@@ -342,12 +355,13 @@ namespace IonS {
             Old = o;
             New = n;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "Trying to redefine procedure: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
-        }
+        
         public Word Old { get; }
         public Word New { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Trying to redefine procedure: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
+        }
     }
 
     sealed class IncompleteProcedureError : ParserError {
@@ -355,34 +369,37 @@ namespace IonS {
             ProcWord = procWord;
             Name = name;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "Incomplete Procedure: " + (Name != null ? Name : "at " + ProcWord.Position);
-        }
+        
         public Word ProcWord { get; }
         public Word Name { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Incomplete Procedure: " + (Name != null ? Name : "at " + ProcWord.Position);
+        }
     }
 
     sealed class InvalidProcedureArgsError : ParserError {
         public InvalidProcedureArgsError(Word args) {
             Args = args;
         }
-        public override string ToString()
-        {
+        
+        public Word Args { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Invalid args for procedure: " + Args;
         }
-        public Word Args { get; }
     }
 
     sealed class MissingProcAfterInlineError : ParserError {
         public MissingProcAfterInlineError(Word procWord) {
             ProcWord = procWord;
         }
-        public override string ToString()
-        {
+        
+        public Word ProcWord { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Expecting 'proc' after 'inline': got " + ProcWord;
         }
-        public Word ProcWord { get; }
     }
 
     // - Return outside procedure error
@@ -391,11 +408,12 @@ namespace IonS {
         public ReturnOutsideProcedureError(Position position) {
             Position = position;
         }
-        public override string ToString()
-        {
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Return ouside of a procedure: at " + Position;
         }
-        public Position Position { get; }
     }
 
     // - Mem read/Write errors
@@ -405,12 +423,13 @@ namespace IonS {
             Amount = amount;
             Position = position;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "Invalid amount for memory read/write: '" + Amount + "' at " + Position;
-        }
+        
         public string Amount { get; }
         public Position Position { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Invalid amount for memory read/write: '" + Amount + "' at " + Position;
+        }
     }
 
     // - Invalid syscall argc error
@@ -420,12 +439,13 @@ namespace IonS {
             Argc = argc;
             Position = position;
         }
-        public override string ToString()
-        {
+        
+        public Position Position { get; }
+        public string Argc { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Invalid argument count for syscall: '" + Argc + "' at " + Position;
         }
-        public string Argc { get; }
-        public Position Position { get; }
     }
 
     // - Invalid break/continue error
@@ -434,22 +454,24 @@ namespace IonS {
         public InvalidContinueError(Position position) {
             Position = position;
         }
-        public override string ToString()
-        {
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
             return base.ToString() + "'continue' outside a loop or switch: at " + Position;
         }
-        public Position Position { get; }
     }
 
     sealed class InvalidBreakError : ParserError {
         public InvalidBreakError(Position position) {
             Position = position;
         }
-        public override string ToString()
-        {
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
             return base.ToString() + "'break' outside a loop or switch: at " + Position;
         }
-        public Position Position { get; }
     }
 
     // - Invalid ctt index error
@@ -458,11 +480,39 @@ namespace IonS {
         public InvalidCTTIndexError(Word index) {
             Index = index;
         }
-        public override string ToString()
-        {
+
+        public Word Index { get; }
+
+        public override string ToString() {
             return base.ToString() + "Invalid ctt index: " + Index;
         }
-        public Word Index { get; }
+    }
+
+    // TypeChecker errors
+    // - Invalid stack after block errors
+
+    sealed class MissingDataAfterBlockError : TypeCheckerError {
+        public MissingDataAfterBlockError(DataType[] missing) {
+            Missing = missing;
+        }
+
+        public DataType[] Missing { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Missing elements on the stack after Block: " + Missing;
+        }
+    }
+
+    sealed class ExcessDataAfterBlockError : TypeCheckerError {
+        public ExcessDataAfterBlockError(DataType[] excess) {
+            Excess = excess;
+        }
+
+        public DataType[] Excess { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Excess elements on the stack after Block: " + Excess;
+        }
     }
 
 }

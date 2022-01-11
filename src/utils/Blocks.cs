@@ -26,10 +26,15 @@ namespace IonS {
         public CodeBlock(Scope parentScope, Procedure procedure) : base(BlockType.Code) {
             Operations = new List<Operation>();
             Scope = new Scope(parentScope, procedure);
+
+            Start = null;
+            End = null;
         }
 
         public List<Operation> Operations { get; }
         public Scope Scope { get; }
+        public Position Start { get; set; }
+        public Position End { get; set; }
         
         public override string generateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
