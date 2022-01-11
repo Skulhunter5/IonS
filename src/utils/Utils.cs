@@ -3,8 +3,13 @@ using System.Text;
 
 namespace IonS {
 
-    interface IAssemblyGenerator {
-        string nasm_linux_x86_64();
+    enum Assembler {
+        nasm_linux_x86_64,
+        fasm_linux_x86_64,
+    }
+
+    abstract class AssemblyGenerator {
+        public abstract string generateAssembly(Assembler assembler);
     }
 
     abstract class Result {

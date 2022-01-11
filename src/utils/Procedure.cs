@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 
 namespace IonS {
 
-    class Procedure : IAssemblyGenerator {
+    class Procedure : AssemblyGenerator {
         private static int nextProcedureId = 0;
         private static int ProcedureId() { return nextProcedureId++; }
 
@@ -28,19 +29,22 @@ namespace IonS {
         public List<Procedure> UsedProcedures { get; }
         public bool IsInlined { get; set; }
 
-        string IAssemblyGenerator.nasm_linux_x86_64() { // args[] -- ret[]
-            string asm = "";
-            if(!IsInlined) {
-                asm += "proc_" + Id + ":\n";
-                for(int i = Argc-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
+        public override string generateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                string asm = "";
+                if(!IsInlined) {
+                    asm += "proc_" + Id + ":\n";
+                    for(int i = Argc-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
+                }
+                asm += Body.generateAssembly(assembler);
+                if(!IsInlined) {
+                    asm += "proc_" + Id + "_end:\n";
+                    for(int i = 0; i < Rvc; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
+                    asm += "    ret\n";
+                }
+                return asm;
             }
-            asm += Body.nasm_linux_x86_64();
-            if(!IsInlined) {
-                asm += "proc_" + Id + "_end:\n";
-                for(int i = 0; i < Rvc; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
-                asm += "    ret\n";
-            }
-            return asm;
+            throw new NotImplementedException();
         }
     }
 

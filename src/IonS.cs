@@ -10,17 +10,12 @@ namespace IonS
         Simulate,
     }
 
-    enum Assembler {
-        NASM_Linux_x86_86,
-        FASM_Linux_x86_86,
-    }
-
     class IonS
     {
         static void Main(string[] args) {
             // parameters
             Action action = Action.Compile;
-            Assembler assembler = Assembler.NASM_Linux_x86_86;
+            Assembler assembler = Assembler.nasm_linux_x86_64;
             string filename = null;
             // parsing the parameters
             int i = 0;
@@ -57,8 +52,8 @@ namespace IonS
                             Environment.ExitCode = 2;
                             return;
                         }
-                        if(args[i] == "nasm-linux-x86_64" || args[i] == "nasm") assembler = Assembler.NASM_Linux_x86_86;
-                        else if(args[i] == "fasm-linux-x86_64" || args[i] == "fasm") assembler = Assembler.FASM_Linux_x86_86;
+                        if(args[i] == "nasm-linux-x86_64" || args[i] == "nasm") assembler = Assembler.nasm_linux_x86_64;
+                        else if(args[i] == "fasm-linux-x86_64" || args[i] == "fasm") assembler = Assembler.fasm_linux_x86_64;
                         else {
                             Console.WriteLine("Invalid assembler: '" + args[i] + "'");
                             Environment.ExitCode = 2;
@@ -102,9 +97,7 @@ namespace IonS
             }
             string path = Path.GetFullPath(filename);
             var asmTscr = new AssemblyTranscriber(File.ReadAllText(path).Replace("\r\n", "\n"), path);
-            AssemblyTranscriptionResult result = null;
-            if(assembler == Assembler.NASM_Linux_x86_86) result = asmTscr.nasm_linux_x86_64();
-            else if(assembler == Assembler.FASM_Linux_x86_86) result = asmTscr.fasm_linux_x86_64();
+            AssemblyTranscriptionResult result = asmTscr.run(assembler);
             if(result.Error != null) {
                 Console.WriteLine(result.Error);
                 Environment.ExitCode = 1;

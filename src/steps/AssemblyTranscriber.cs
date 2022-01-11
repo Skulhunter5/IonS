@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 namespace IonS {
@@ -18,70 +19,57 @@ namespace IonS {
             _source = source;
         }
 
-        public AssemblyTranscriptionResult nasm_linux_x86_64() {
-            string asm = "BITS 64\n";
-            var parser = new Parser(_text, _source);
-            var result = parser.Parse();
-            if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
-            var root = result.Root;
+        public AssemblyTranscriptionResult run(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                string asm = "";
 
-            if(result.Variables.Count > 0) asm += "segment .bss\n";
-            foreach(Variable var in result.Variables) asm += ((IAssemblyGenerator) var).nasm_linux_x86_64();
-            foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += ((IAssemblyGenerator) var).nasm_linux_x86_64();
+                if(assembler == Assembler.nasm_linux_x86_64) asm += "BITS 64\n";
+                else asm += "format ELF64 executable 3\n";
 
-            if(result.Strings.Count > 0) asm += "segment .data\n";
-            for(int i = 0; i < result.Strings.Count; i++) {
-                if(result.Strings[i].Length > 0) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i]) + "\n";
-                else asm += "    str_" + i + ":\n";
+                var parser = new Parser(_text, _source);
+                var result = parser.Parse();
+                if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
+                var root = result.Root;
+
+                // Begin data segment
+                if(assembler == Assembler.nasm_linux_x86_64 && result.Variables.Count > 0) asm += "segment .bss\n";
+                else if(assembler == Assembler.fasm_linux_x86_64 && (result.Variables.Count > 0 || result.Strings.Count > 0)) asm += "segment readable writeable\n";
+
+                foreach(Variable var in result.Variables) asm += var.generateAssembly(assembler);
+                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += var.generateAssembly(assembler);
+
+                // Begin data segment
+                if(assembler == Assembler.nasm_linux_x86_64 && result.Strings.Count > 0) asm += "segment .data\n";
+
+                for(int i = 0; i < result.Strings.Count; i++) {
+                    if(result.Strings[i].Length > 0) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i]) + "\n";
+                    else asm += "    str_" + i + ":\n";
+                }
+
+                // Begin data segment
+                if(assembler == Assembler.nasm_linux_x86_64) asm += "segment .text\n";
+                else asm += "segment readable executable\n";
+
+                // Dump function
+                asm += File.ReadAllText("res/asm snippets/dump.asm");
+
+                // Procedures (only used ones for now)
+                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += proc.generateAssembly(Assembler.fasm_linux_x86_64);
+
+                if(assembler == Assembler.nasm_linux_x86_64) asm += "global _start\n_start:\n";
+                else asm += "entry _start\n_start:\n";
+
+                // Actual code
+                asm += root.generateAssembly(Assembler.fasm_linux_x86_64);
+
+                // Exit code
+                asm += "exit:\n";
+                asm += "    mov rax, 60\n";
+                asm += "    mov rdi, 0\n";
+                asm += "    syscall\n";
+                return new AssemblyTranscriptionResult(asm, null);
             }
-
-            asm += "segment .text\n";
-            asm += File.ReadAllText("res/asm snippets/dump.asm");
-
-            foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += ((IAssemblyGenerator) proc).nasm_linux_x86_64();
-
-            asm += "global _start\n_start:\n";
-
-            asm += root.nasm_linux_x86_64();
-
-            asm += "exit:\n";
-            asm += "    mov rax, 60\n";
-            asm += "    mov rdi, 0\n";
-            asm += "    syscall\n";
-            return new AssemblyTranscriptionResult(asm, null);
-        }
-
-        public AssemblyTranscriptionResult fasm_linux_x86_64() {
-            string asm = "format ELF64 executable 3\n";
-            var parser = new Parser(_text, _source);
-            var result = parser.Parse();
-            if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
-            var root = result.Root;
-
-            if(result.Variables.Count > 0 || result.Strings.Count > 0) asm += "segment readable writeable\n";
-
-            foreach(Variable var in result.Variables) asm += ((IAssemblyGenerator) var).nasm_linux_x86_64().Replace("resb", "rb");
-            foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += ((IAssemblyGenerator) var).nasm_linux_x86_64();
-
-            for(int i = 0; i < result.Strings.Count; i++) {
-                if(result.Strings[i].Length > 0) asm += "    str_" + i + ": db " + Utils.StringLiteralToByteString(result.Strings[i]) + "\n";
-                else asm += "    str_" + i + ":\n";
-            }
-
-            asm += "segment readable executable\n";
-            asm += File.ReadAllText("res/asm snippets/dump.asm");
-
-            foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += ((IAssemblyGenerator) proc).nasm_linux_x86_64();
-
-            asm += "entry _start\n_start:\n";
-
-            asm += root.nasm_linux_x86_64();
-
-            asm += "exit:\n";
-            asm += "    mov rax, 60\n";
-            asm += "    mov rdi, 0\n";
-            asm += "    syscall\n";
-            return new AssemblyTranscriptionResult(asm, null);
+            throw new NotImplementedException();
         }
 
     }
