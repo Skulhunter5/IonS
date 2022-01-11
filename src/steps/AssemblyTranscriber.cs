@@ -3,7 +3,7 @@ using System.IO;
 
 namespace IonS {
 
-    class AssemblyTranscriptionResult : Result {
+    sealed class AssemblyTranscriptionResult : Result {
         public AssemblyTranscriptionResult(string asm, Error error) : base(error) {
             Asm = asm;
         }

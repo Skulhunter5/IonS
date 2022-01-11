@@ -371,6 +371,9 @@ namespace IonS {
             ParseBlockResult parseResult = ParseBlock(null, null, null);
             if(parseResult.Error != null) return new ParseResult(null, null, null, null, parseResult.Error);
 
+            TypeCheckingResult typeCheckingResult = new TypeChecker(parseResult.Block, _procs).run();
+            if(typeCheckingResult.Error != null) return new ParseResult(null, null, null, null, typeCheckingResult.Error);
+
             List<string> toRemove = new List<string>();
             foreach(string proc in _procs.Keys) if(_procs[proc].IsInlined) toRemove.Add(proc);
             foreach(string proc in toRemove) _procs.Remove(proc);
