@@ -4,54 +4,58 @@ macro SYS_write 1
 macro STDIN 0
 macro STDOUT 1
 
-inline proc fputs 3-0 {
-  SYS_write syscall3
+inline proc fputs ( uint64 ptr uint64 -- ) {
+    SYS_write syscall3
 }
 
-inline proc puts 2-0 {
-  STDOUT fputs
+inline proc puts ( uint64 ptr -- ) {
+    STDOUT fputs
 }
 
-proc cstrlen 1-1 {
+inline proc putc ( ptr -- ) {
+    1 swap puts
+}
+
+proc cstrlen ( ptr -- uint64 ) {
 	dup
 	while { dup @8 } do ++
 	swap -
 }
 
-inline proc cputs 1-0 {
+inline proc cputs ( ptr -- ) {
 	dup cstrlen swap puts
 }
 
-inline proc clamp 3-1 {
-   rot min max
+inline proc clamp ( uint64 uint64 uint64 -- uint64 ) {
+    rot min max
 }
 
-inline proc inc8 1-0 {
+inline proc inc8 ( ptr -- ) {
 	dup @8 ++ swap !8
 }
-inline proc dec8 1-0 {
+inline proc dec8 ( ptr -- ) {
 	dup @8 -- swap !8
 }
-inline proc inc16 1-0 {
+inline proc inc16 ( ptr -- ) {
 	dup @16 ++ swap !16
 }
-inline proc dec16 1-0 {
+inline proc dec16 ( ptr -- ) {
 	dup @16 -- swap !16
 }
-inline proc inc32 1-0 {
+inline proc inc32 ( ptr -- ) {
 	dup @32 ++ swap !32
 }
-inline proc dec32 1-0 {
+inline proc dec32 ( ptr -- ) {
 	dup @32 -- swap !32
 }
-inline proc inc64 1-0 {
+inline proc inc64 ( ptr -- ) {
 	dup @64 ++ swap !64
 }
-inline proc dec64 1-0 {
+inline proc dec64 ( ptr -- ) {
 	dup @64 -- swap !64
 }
 
-proc streq 4-1 {
+proc streq ( uint64 ptr uint64 ptr -- bool ) {
 	swap 2swap 2rot dup rot
 	!= if {
 		2drop drop
@@ -78,11 +82,11 @@ proc streq 4-1 {
     0
 }
 
-proc cstreq 2-1 {
+proc cstreq ( ptr ptr -- bool ) {
 	dup cstrlen swap rot dup cstrlen swap streq
 }
 
-proc isAlpha 1-1 {
+proc isAlpha ( uint8 -- bool ) {
     dup 65 < swap
     dup 122 > rot || swap
     dup 90 > swap
@@ -90,19 +94,19 @@ proc isAlpha 1-1 {
     && || not
 }
 
-proc isDigit 1-1 {
+proc isDigit ( uint8 -- bool ) {
     dup 48 < swap
     57 >
     || not
 }
 
-proc isAlnum 1-1 {
+proc isAlnum ( uint8 -- bool ) {
     dup isAlpha swap
     isDigit
     ||
 }
 
-proc str-startswith 4-1 {
+proc str-startswith ( uint64 ptr uint64 ptr -- ) {
     swap 2swap 2rot
     2dup > if {
         2drop 2drop
@@ -112,7 +116,7 @@ proc str-startswith 4-1 {
     streq
 }
 
-proc str-endswith 4-1 {
+proc str-endswith ( uint64 ptr uint64 ptr -- ) {
     swap 2swap 2rot
     2dup > if {
         2drop 2drop
@@ -123,7 +127,7 @@ proc str-endswith 4-1 {
     streq
 }
 
-proc try-parse-uint64 3-1 { // TODO: fix it not going over the maximum uint64 value
+proc try-parse-uint64 ( uint64 ptr ptr -- ) { // TODO: fix it not going over the maximum uint64 value
     // len str ptr
     2rot swap
     // ptr str len
@@ -161,7 +165,7 @@ proc try-parse-uint64 3-1 { // TODO: fix it not going over the maximum uint64 va
     1 return
 }
 
-proc memcpy 3-0 {
+proc memcpy ( ptr ptr uint64 -- ) {
     0 while { 2dup > } do {
         rot 2dup +
         rot rot5 2dup + @8
@@ -172,7 +176,7 @@ proc memcpy 3-0 {
     2drop 2drop
 }
 
-proc strcat 5-2 {
+proc strcat ( uint64 ptr uint64 ptr ptr -- uint64 ptr ) {
     ctt4 over ctt7 memcpy
     2dup ctt7 + ctt5 memcpy
     2rot5 drop swap drop + swap

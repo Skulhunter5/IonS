@@ -2,7 +2,7 @@ using System;
 
 namespace IonS {
     
-    class Variable : AssemblyGenerator {
+    class Variable {
         private static int nextVariableId = 0;
         private static int VariableId() { return nextVariableId++; }
 
@@ -16,7 +16,7 @@ namespace IonS {
         public Word Identifier { get; }
         public int Bytesize { get; }
 
-        public override string generateAssembly(Assembler assembler) {
+        public string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    var_{Id}: resb {Bytesize}
                 return "    var_" + Id + ": resb " + Bytesize + "\n";

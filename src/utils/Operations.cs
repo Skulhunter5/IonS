@@ -3,8 +3,7 @@ using System;
 namespace IonS {
 
     enum OperationType {
-        Push_uint64,
-        Put_char,
+        Push_bool, Push_uint8, Push_uint64,
         Increment, Decrement,
         Add, Subtract, Multiply, Divide, Modulo, DivMod,
         Min, Max,
@@ -34,76 +33,128 @@ namespace IonS {
         Right
     }
 
-    abstract class Operation : AssemblyGenerator {
-        public Operation(OperationType type) {
+    abstract class Operation {
+        /* public Operation(OperationType type) {
             Type = type;
+        } */
+        public Operation(OperationType type, Position position) {
+            Type = type;
+            Position = position;
         }
         public OperationType Type { get; }
+        public Position Position { get; }
+
+        public override string ToString() { // TODO: add ToString() for all Operations
+            return "Operation:" + Type.ToString() + " at " + Position;
+        }
+
+        public abstract string GenerateAssembly(Assembler assembler);
+        public abstract Error TypeCheck(TypeCheckContract contract);
     }
 
     // Push operations
 
-    sealed class Push_uint64_Operation : Operation { // -- n
-        public Push_uint64_Operation(ulong value) : base(OperationType.Push_uint64) {
+    sealed class Push_bool_Operation : Operation { // -- n
+        public Push_bool_Operation(bool value, Position position) : base(OperationType.Push_bool, position) {
             Value = value;
         }
+
+        public bool Value { get; }
+        
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    push {bool}
+                return "    push " + (Value ? '1' : '0') + "\n";
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(DataType.boolean, this);
+        }
+    }
+
+    sealed class Push_uint8_Operation : Operation { // -- n
+        public Push_uint8_Operation(byte value, Position position) : base(OperationType.Push_uint8, position) {
+            Value = value;
+        }
+
+        public byte Value { get; }
+        
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    push {uint8}
+                return "    push " + Value + "\n";
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(DataType.uint8, this);
+        }
+    }
+
+    sealed class Push_uint64_Operation : Operation { // -- n
+        public Push_uint64_Operation(ulong value, Position position) : base(OperationType.Push_uint64, position) {
+            Value = value;
+        }
+
         public ulong Value { get; }
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    push {uint64}
                 return "    push " + Value + "\n";
             }
             throw new NotImplementedException();
         }
-    }
 
-    // Put operations
-
-    sealed class Put_char_Operation : Operation { // a --
-        public Put_char_Operation() : base(OperationType.Put_char) {}
-        
-        public override string generateAssembly(Assembler assembler) {
-            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                //    mov rax, 1
-                //    mov rdi, 1
-                //    pop rsi
-                //    mov rdx, 1
-                //    syscall
-                return "    mov rax, 1\n    mov rdi, 1\n    pop rsi\n    mov rdx, 1\n    syscall\n";
-            }
-            throw new NotImplementedException();
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(DataType.uint64, this);
         }
     }
 
     // Stack manipulation operations
 
     sealed class DropOperation : Operation { // a --
-        public DropOperation() : base(OperationType.Drop) {}
+        public DropOperation(Position position) : base(OperationType.Drop, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                return "    add rsp, 8\n"; 
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
+            contract.Pop();
+            return null;
+        }
     }
 
     sealed class Drop2Operation : Operation { // a b --
-        public Drop2Operation() : base(OperationType.Drop2) {}
+        public Drop2Operation(Position position) : base(OperationType.Drop2, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                return "    add rsp, 16\n";
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            contract.Pop();
+            contract.Pop();
+            return null;
+        }
     }
 
-    sealed class DupOperation : Operation { // a a -- a a
-        public DupOperation() : base(OperationType.Dup) {}
+    sealed class DupOperation : Operation { // a -- a a
+        public DupOperation(Position position) : base(OperationType.Dup, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rax, [rsp]
                 //    push rax
@@ -111,12 +162,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
+            return contract.Provide(contract.Peek(), this);
+        }
     }
 
     sealed class Dup2Operation : Operation { // a b -- a b a b
-        public Dup2Operation() : base(OperationType.Dup2) {}
+        public Dup2Operation(Position position) : base(OperationType.Dup2, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rbx, [rsp]
                 //    mov rax, [rsp+8]
@@ -126,12 +182,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            return contract.Provide(new DataType[] {contract.Peek(1), contract.Peek()}, this);
+        }
     }
 
     sealed class OverOperation : Operation { // a b -- a b a
-        public OverOperation() : base(OperationType.Over) {}
+        public OverOperation(Position position) : base(OperationType.Over, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rax, [rsp+8]
                 //    push rax
@@ -139,12 +200,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            return contract.Provide(contract.Peek(1), this);
+        }
     }
 
     sealed class Over2Operation : Operation { // a b c d -- a b c d a b
-        public Over2Operation() : base(OperationType.Over2) {}
+        public Over2Operation(Position position) : base(OperationType.Over2, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rbx, [rsp+16]
                 //    mov rax, [rsp+24]
@@ -154,12 +220,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 4) return new StackUnderflowError(this);
+            return contract.Provide(new DataType[] {contract.Peek(3), contract.Peek(2)}, this);
+        }
     }
 
     sealed class SwapOperation : Operation { // a b -- b a
-        public SwapOperation() : base(OperationType.Swap) {}
+        public SwapOperation(Position position) : base(OperationType.Swap, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rbx, [rsp]
                 //    mov rax, [rsp+8]
@@ -169,12 +240,18 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            DataType[] provided = new DataType[] {contract.Pop(), contract.Pop()};
+            return contract.Provide(provided, this);
+        }
     }
 
     sealed class Swap2Operation : Operation { // a b c d -- c d a b
-        public Swap2Operation() : base(OperationType.Swap2) {}
+        public Swap2Operation(Position position) : base(OperationType.Swap2, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rax, [rsp]
                 //    mov rbx, [rsp+16]
@@ -188,12 +265,21 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            DataType d = contract.Pop();
+            DataType c = contract.Pop();
+            DataType b = contract.Pop();
+            DataType a = contract.Pop();
+            return contract.Provide(new DataType[] {c, d, a, b}, this);
+        }
     }
 
     sealed class RotateOperation : Operation { // a b c -- b c a
-        public RotateOperation() : base(OperationType.Rotate) {}
+        public RotateOperation(Position position) : base(OperationType.Rotate, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rcx, [rsp]
                 //    mov rbx, [rsp+8]
@@ -205,12 +291,20 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 3) return new StackUnderflowError(this);
+            DataType c = contract.Pop();
+            DataType b = contract.Pop();
+            DataType a = contract.Pop();
+            return contract.Provide(new DataType[] {b, c, a}, this);
+        }
     }
 
     sealed class Rotate2Operation : Operation { // a b c -- c a b
-        public Rotate2Operation() : base(OperationType.Rotate2) {}
+        public Rotate2Operation(Position position) : base(OperationType.Rotate2, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rcx, [rsp]
                 //    mov rbx, [rsp+8]
@@ -222,12 +316,20 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 3) return new StackUnderflowError(this);
+            DataType c = contract.Pop();
+            DataType b = contract.Pop();
+            DataType a = contract.Pop();
+            return contract.Provide(new DataType[] {c, a, b}, this);
+        }
     }
 
     sealed class Rotate5Operation : Operation { // a b c d e -- b c d e a
-        public Rotate5Operation() : base(OperationType.Rotate5) {}
+        public Rotate5Operation(Position position) : base(OperationType.Rotate5, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov r8, [rsp]
                 //    mov rdx, [rsp+8]
@@ -243,12 +345,22 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 5) return new StackUnderflowError(this);
+            DataType e = contract.Pop();
+            DataType d = contract.Pop();
+            DataType c = contract.Pop();
+            DataType b = contract.Pop();
+            DataType a = contract.Pop();
+            return contract.Provide(new DataType[] {b, c, d, e, a}, this);
+        }
     }
 
     sealed class Rotate52Operation : Operation { // a b c d e -- e a b c d
-        public Rotate52Operation() : base(OperationType.Rotate52) {}
+        public Rotate52Operation(Position position) : base(OperationType.Rotate52, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov r8, [rsp]
                 //    mov rdx, [rsp+8]
@@ -264,28 +376,44 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 5) return new StackUnderflowError(this);
+            DataType e = contract.Pop();
+            DataType d = contract.Pop();
+            DataType c = contract.Pop();
+            DataType b = contract.Pop();
+            DataType a = contract.Pop();
+            return contract.Provide(new DataType[] {e, a, b, c, d}, this);
+        }
     }
 
-    sealed class CTTOperation : Operation {
-        public CTTOperation(uint index) : base(OperationType.CTT) {
+    sealed class CTTOperation : Operation { // a [] -- a [] a
+        public CTTOperation(int index, Position position) : base(OperationType.CTT, position) {
             Index = index;
         }
-        public uint Index { get; }
+
+        public int Index { get; }
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 return "    mov rax, [rsp+" + (Index*8-8) + "]\n    push rax\n";
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) { // DOCHECK
+            if(contract.GetElementsLeft() < Index) return new StackUnderflowError(this);
+            return contract.Provide(contract.Peek(Index-1), this);
+        }
     }
 
     // Calculation operations
 
-    sealed class IncrementOperation : Operation { // a b -- (a+b)
-        public IncrementOperation() : base(OperationType.Increment) {}
+    sealed class IncrementOperation : Operation { // a -- (a+1)
+        public IncrementOperation(Position position) : base(OperationType.Increment, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    add [rsp], rbx
@@ -293,12 +421,16 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.CheckFor(DataType.uint64, this);
+        }
     }
 
-    sealed class DecrementOperation : Operation { // a b -- (a+b)
-        public DecrementOperation() : base(OperationType.Decrement) {}
+    sealed class DecrementOperation : Operation { // a -- (a-1)
+        public DecrementOperation(Position position) : base(OperationType.Decrement, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    add [rsp], rbx
@@ -306,12 +438,16 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.CheckFor(DataType.uint64, this);
+        }
     }
 
     sealed class AddOperation : Operation { // a b -- (a+b)
-        public AddOperation() : base(OperationType.Add) {}
+        public AddOperation(Position position) : base(OperationType.Add, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    add [rsp], rbx
@@ -319,12 +455,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.RequireAndProvide(required, DataType.uint64, this);
+        }
     }
 
     sealed class SubtractOperation : Operation { // a b -- (a-b)
-        public SubtractOperation() : base(OperationType.Subtract) {}
+        public SubtractOperation(Position position) : base(OperationType.Subtract, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    sub [rsp], rbx
@@ -332,12 +473,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.RequireAndProvide(required, DataType.uint64, this);
+        }
     }
 
     sealed class MultiplyOperation : Operation { // a b -- (a*b)
-        public MultiplyOperation() : base(OperationType.Multiply) {}
+        public MultiplyOperation(Position position) : base(OperationType.Multiply, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    mov rax, [rsp]
@@ -347,12 +493,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.RequireAndProvide(required, DataType.uint64, this);
+        }
     }
 
     sealed class DivideOperation : Operation { // a b -- (a/b)
-        public DivideOperation() : base(OperationType.Divide) {}
+        public DivideOperation(Position position) : base(OperationType.Divide, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    mov rax, [rsp]
@@ -363,12 +514,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.RequireAndProvide(required, DataType.uint64, this);
+        }
     }
 
     sealed class ModuloOperation : Operation { // a b -- (a%b)
-        public ModuloOperation() : base(OperationType.Modulo) {}
+        public ModuloOperation(Position position) : base(OperationType.Modulo, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    mov rax, [rsp]
@@ -379,12 +535,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.RequireAndProvide(required, DataType.uint64, this);
+        }
     }
 
     sealed class DivModOperation : Operation { // a b -- (a/b) (a%b)
-        public DivModOperation() : base(OperationType.DivMod) {}
+        public DivModOperation(Position position) : base(OperationType.DivMod, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rbx, [rsp]
                 //    mov rax, [rsp+8]
@@ -396,14 +557,19 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.CheckFor(required, this);
+        }
     }
 
     // Bitwise operations
 
     sealed class ShLOperation : Operation { // a b -- (a<<b)
-        public ShLOperation() : base(OperationType.ShL) {}
+        public ShLOperation(Position position) : base(OperationType.ShL, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rcx
                 //    shl QWORD [rsp], cl
@@ -411,12 +577,21 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            DataType dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            return contract.Provide(dataType, this);
+        }
     }
 
     sealed class ShROperation : Operation { // a b -- (a>>b)
-        public ShROperation() : base(OperationType.ShR) {}
+        public ShROperation(Position position) : base(OperationType.ShR, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rcx
                 //    shr QWORD [rsp], cl
@@ -424,12 +599,21 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            DataType dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            return contract.Provide(dataType, this);
+        }
     }
 
     sealed class BitAndOperation : Operation { // a b -- (a&b)
-        public BitAndOperation() : base(OperationType.BitAnd) {}
+        public BitAndOperation(Position position) : base(OperationType.BitAnd, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    and [rsp], rbx
@@ -437,12 +621,21 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            DataType dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            return contract.Provide(dataType, this); // TODONOW: overthink this (do I have to push the bigger or the smaller one or do I have to make them the same size)
+        }
     }
 
     sealed class BitOrOperation : Operation { // a b -- (a|b)
-        public BitOrOperation() : base(OperationType.BitOr) {}
+        public BitOrOperation(Position position) : base(OperationType.BitOr, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    or [rsp], rbx
@@ -450,12 +643,21 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            DataType dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            return contract.Provide(dataType, this); // TODONOW: overthink this (do I have to push the bigger or the smaller one or do I have to make them the same size)
+        }
     }
 
     sealed class BitXorOperation : Operation { // a b -- (a^b)
-        public BitXorOperation() : base(OperationType.BitXor) {}
+        public BitXorOperation(Position position) : base(OperationType.BitXor, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    xor [rsp], rbx
@@ -463,26 +665,41 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            DataType dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            return contract.Provide(dataType, this); // TODONOW: overthink this (do I have to push the bigger or the smaller one or do I have to make them the same size)
+        }
     }
 
     sealed class BitInvOperation : Operation { // a -- (bitwise inverted a)
-        public BitInvOperation() : base(OperationType.BitInv) {}
+        public BitInvOperation(Position position) : base(OperationType.BitInv, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    xor [rsp], 1111111111111111111111111111111111111111111111111111111111111111b
                 return "    xor [rsp], 1111111111111111111111111111111111111111111111111111111111111111b\n";
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
+            if(!EDataType.Is_uint(contract.Peek())) return new UnexpectedDataTypeError(contract.Peek(), "uint8|uint16|uint32|uint64", this);
+            return null;
+        }
     }
 
     // Logical operations
 
     sealed class AndOperation : Operation { // a b -- (a&&b)
-        public AndOperation() : base(OperationType.And) {}
+        public AndOperation(Position position) : base(OperationType.And, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    xor rax, rax
                 //    xor rbx, rbx
@@ -498,12 +715,18 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            Error error = contract.Require(new DataType[] {DataType.uint64, DataType.uint64}, this);
+            if(error != null) return error;
+            return contract.Provide(DataType.boolean, this);
+        }
     }
 
     sealed class OrOperation : Operation { // a b -- (a||b)
-        public OrOperation() : base(OperationType.Or) {}
+        public OrOperation(Position position) : base(OperationType.Or, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    xor rax, rax
                 //    xor rbx, rbx
@@ -519,12 +742,18 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            Error error = contract.Require(new DataType[] {DataType.uint64, DataType.uint64}, this);
+            if(error != null) return error;
+            return contract.Provide(DataType.boolean, this);
+        }
     }
 
     sealed class NotOperation : Operation { // a -- !a
-        public NotOperation() : base(OperationType.Or) {}
+        public NotOperation(Position position) : base(OperationType.Or, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    xor rax, rax
                 //    mov rbx, [rsp]
@@ -535,14 +764,18 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) { // TODONOW: do it right and for all sizes
+            return contract.CheckFor(DataType.uint64, this);
+        }
     }
 
     // Min/Max operations
 
     sealed class MinOperation : Operation { // a b -- min(a,b)
-        public MinOperation() : base(OperationType.Min) {}
+        public MinOperation(Position position) : base(OperationType.Min, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    mov rax, [rsp]
@@ -553,12 +786,17 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            
+            throw new NotImplementedException();
+        }
     }
 
     sealed class MaxOperation : Operation { // a b -- max(a,b)
-        public MaxOperation() : base(OperationType.Max) {}
+        public MaxOperation(Position position) : base(OperationType.Max, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rbx
                 //    mov rax, [rsp]
@@ -567,6 +805,11 @@ namespace IonS {
                 //    mov [rsp], rax
                 return "    pop rbx\n    mov rax, [rsp]\n    cmp rbx, rax\n    cmova rax, rbx\n    mov [rsp], rax\n";
             }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            
             throw new NotImplementedException();
         }
     }
@@ -582,12 +825,12 @@ namespace IonS {
     }
 
     sealed class ComparisonOperation : Operation { // a b -- (a cmp b)
-        public ComparisonOperation(ComparisonType comparisonType) : base(OperationType.Comparison) {
+        public ComparisonOperation(ComparisonType comparisonType, Position position) : base(OperationType.Comparison, position) {
             ComparisonType = comparisonType;
         }
         public ComparisonType ComparisonType { get; }
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    xor rax, rax
                 //    pop rbx
@@ -607,14 +850,20 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) { // TODONOW: do it right and for all sizes
+            Error error = contract.Require(new DataType[] {DataType.uint64, DataType.uint64}, this);
+            if(error != null) return error;
+            return contract.Provide(DataType.uint64, this);
+        }
     }
 
     // Dump operation
 
     sealed class DumpOperation : Operation { // a --
-        public DumpOperation() : base(OperationType.Dump) {}
+        public DumpOperation(Position position) : base(OperationType.Dump, position) {}
 
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rdi
                 //    call dump
@@ -622,14 +871,18 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Require(DataType.uint64, this);
+        }
     }
 
     // Exit operation
 
     sealed class ExitOperation : Operation { // a --
-        public ExitOperation() : base(OperationType.Exit) {}
+        public ExitOperation(Position position) : base(OperationType.Exit, position) {}
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rax, 60
                 //    pop rdi
@@ -638,33 +891,49 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
+            Error error = contract.Require(DataType.uint8, this);
+            if(error != null) return error;
+            /* DataType dataType = contract.Pop();
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this); */
+            if(!contract.IsEmpty()) Console.WriteLine("[TypeChecker] Warning: excess data on the stack after exit: [" + String.Join(", ", contract.Stack) + "]");  // Error-Warning-System
+            return null;
+        }
     }
 
     // Variable operations
     
     sealed class VariableAccessOperation : Operation { // -- ptr
-        public VariableAccessOperation(int id) : base(OperationType.VariableAccess) {
+        public VariableAccessOperation(int id, Position position) : base(OperationType.VariableAccess, position) {
             Id = id;
         }
+
         public int Id { get; }
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 return "    push var_" + Id + "\n";
             }
             throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(DataType.Pointer, this);
         }
     }
 
     // Mem read/write operations
 
     sealed class MemReadOperation : Operation { // ptr -- *ptr
-        public MemReadOperation(byte amount) : base(OperationType.MemRead) {
+        public MemReadOperation(byte amount, Position position) : base(OperationType.MemRead, position) {
             Amount = amount;
         }
+
         public byte Amount { get; }
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rax, [rsp]
                 string asm = "    mov rax, [rsp]\n";
@@ -677,15 +946,22 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            Error error = contract.Require(DataType.Pointer, this);
+            if(error != null) return error;
+            return contract.Provide(DataType.uint64, this); // TODONOW: change to work for all amounts
+        }
     }
 
     sealed class MemWriteOperation : Operation { // x ptr --
-        public MemWriteOperation(byte amount) : base(OperationType.MemWrite) {
+        public MemWriteOperation(byte amount, Position position) : base(OperationType.MemWrite, position) {
             Amount = amount;
         }
+
         public byte Amount { get; }
         
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    pop rax
                 //    pop rbx
@@ -698,19 +974,25 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.Pointer};
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Require(required, this); // TODONOW: change to work for all amounts
+        }
     }
 
     // String literal operation
 
     sealed class StringOperation : Operation { // -- len ptr
-        public StringOperation(int id, int length) : base(OperationType.String) {
+        public StringOperation(int id, int length, Position position) : base(OperationType.String, position) {
             Id = id;
             Length = length;
         }
+
         public int Id { get; }
         public int Length { get; }
 
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    push {len}
                 //    push str_{Id}
@@ -718,31 +1000,43 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        private static DataType[] provided = new DataType[] {DataType.uint64, DataType.Pointer};
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(provided, this);
+        }
     }
 
     sealed class CStyleStringOperation : Operation { // -- ptr
-        public CStyleStringOperation(int id) : base(OperationType.CStyleString) {
+        public CStyleStringOperation(int id, Position position) : base(OperationType.CStyleString, position) {
             Id = id;
         }
+
         public int Id { get; }
 
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    push str_{Id}
                 return "    push str_" + Id + "\n";
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(DataType.Pointer, this);
+        }
     }
 
     // Syscall operation
 
     sealed class SyscallOperation : Operation { // args[] syscall --
-        public SyscallOperation(int argc) : base(OperationType.Syscall) {
+        public SyscallOperation(int argc, Position position) : base(OperationType.Syscall, position) {
             Argc = argc;
         }
+
         public int Argc { get; }
-        public override string generateAssembly(Assembler assembler) {
+
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 string asm = "    pop rax\n";
                 for(int i = 0; i < Argc; i++) asm += "    pop " + Utils.SyscallRegisters[i] + "\n";
@@ -750,44 +1044,63 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() <= Argc) return new StackUnderflowError(this);
+            for(int i = -1; i < Argc; i++) contract.Pop();
+            return null;
+        }
     }
 
     // Procedure call operation
 
     sealed class ProcedureCallOperation : Operation { // args[] -- ret[]
-        public ProcedureCallOperation(Procedure proc) : base(OperationType.ProcedureCall) {
+        public ProcedureCallOperation(Procedure proc, Position position) : base(OperationType.ProcedureCall, position) {
             Proc = proc;
         }
+
         public Procedure Proc { get; }
 
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                if(Proc.IsInlined) return Proc.generateAssembly(assembler);
+                if(Proc.IsInlined) return Proc.GenerateAssembly(assembler);
                 else {
                     string asm = "";
-                    for(int i = 0; i < Proc.Argc; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
+                    for(int i = 0; i < Proc.Args.Length; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
                     asm += "    call proc_" + Proc.Id + "\n";
-                    for(int i = Proc.Rvc-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
+                    for(int i = Proc.Rets.Length-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
                     return asm;
                 }
             }
             throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) { // TODONOW: see if this works
+            Error error = contract.Require(Proc.Args, this);
+            if(error != null) return error;
+            return contract.Provide(Proc.Rets, this);
         }
     }
 
     // Procedure call operation
 
     sealed class ReturnOperation : Operation { // --
-        public ReturnOperation(int id) : base(OperationType.Return) {
+        public ReturnOperation(int id, Position position) : base(OperationType.Return, position) {
             Id = id;
         }
+
         public int Id { get; }
 
-        public override string generateAssembly(Assembler assembler) {
+        public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    jmp proc_{Id}_end
                 return "    jmp proc_" + Id + "_end\n";
             }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            
             throw new NotImplementedException();
         }
     }

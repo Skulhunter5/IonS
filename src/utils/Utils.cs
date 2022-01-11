@@ -8,10 +8,6 @@ namespace IonS {
         fasm_linux_x86_64,
     }
 
-    abstract class AssemblyGenerator {
-        public abstract string generateAssembly(Assembler assembler);
-    }
-
     abstract class Result {
         public Result(Error error) {
             Error = error;
@@ -76,6 +72,13 @@ namespace IonS {
                 }
             }
             return new ConvertEscapeCharactersResult(text, null);
+        }
+
+        public static T[] Reverse<T>(T[] array) {
+            int size = array.Length;
+            T[] result = new T[size];
+            for(int i = 0; i < array.Length; i++) result[i] = array[size-1 - i];
+            return result;
         }
 
     }

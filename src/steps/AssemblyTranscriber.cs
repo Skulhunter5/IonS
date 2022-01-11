@@ -35,8 +35,8 @@ namespace IonS {
                 if(assembler == Assembler.nasm_linux_x86_64 && result.Variables.Count > 0) asm += "segment .bss\n";
                 else if(assembler == Assembler.fasm_linux_x86_64 && (result.Variables.Count > 0 || result.Strings.Count > 0)) asm += "segment readable writeable\n";
 
-                foreach(Variable var in result.Variables) asm += var.generateAssembly(assembler);
-                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += var.generateAssembly(assembler);
+                foreach(Variable var in result.Variables) asm += var.GenerateAssembly(assembler);
+                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += var.GenerateAssembly(assembler);
 
                 // Begin data segment
                 if(assembler == Assembler.nasm_linux_x86_64 && result.Strings.Count > 0) asm += "segment .data\n";
@@ -54,13 +54,13 @@ namespace IonS {
                 asm += File.ReadAllText("res/asm snippets/dump.asm");
 
                 // Procedures (only used ones for now)
-                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += proc.generateAssembly(Assembler.fasm_linux_x86_64);
+                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += proc.GenerateAssembly(Assembler.fasm_linux_x86_64);
 
                 if(assembler == Assembler.nasm_linux_x86_64) asm += "global _start\n_start:\n";
                 else asm += "entry _start\n_start:\n";
 
                 // Actual code
-                asm += root.generateAssembly(Assembler.fasm_linux_x86_64);
+                asm += root.GenerateAssembly(Assembler.fasm_linux_x86_64);
 
                 // Exit code
                 asm += "exit:\n";

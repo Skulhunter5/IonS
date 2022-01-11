@@ -2,6 +2,12 @@ namespace IonS {
 
     abstract class Error {}
 
+    abstract class GeneralError : Error {
+        public override string ToString() {
+            return "[General]: ";
+        }
+    }
+
     abstract class LexerError : Error {
         public override string ToString() {
             return "[Lexer]: ";
@@ -38,6 +44,22 @@ namespace IonS {
         }
     }
 
+    // General errors
+    // - Invalid DataType error
+
+    sealed class InvalidDataTypeError : LexerError {
+        public InvalidDataTypeError(Word dataType) {
+            DataType = dataType;
+        }
+
+        public Word DataType { get; }
+
+        public override string ToString()
+        {
+            return base.ToString() + "Invalid DataType: " + DataType;
+        }
+    }
+
     // Lexer errors
     // - Invalid string literal errors
 
@@ -46,23 +68,25 @@ namespace IonS {
             Type = type;
             Position = position;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "Invalid string type: '" + Type + "' at " + Position;
-        }
+        
         public string Type { get; }
         public Position Position { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Invalid string type: '" + Type + "' at " + Position;
+        }
     }
 
     sealed class EOFInStringLiteralError : LexerError {
         public EOFInStringLiteralError(Position start) {
             Start = start;
         }
-        public override string ToString()
-        {
+        
+        public Position Start { get; }
+
+        public override string ToString() {
             return base.ToString() + "EOF inside string literal: starts at " + Start;
         }
-        public Position Start { get; }
     }
 
     // - Invalid escape character error
@@ -72,12 +96,13 @@ namespace IonS {
             Text = text;
             Position = position;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "Invalid escape character: '" + Text + "' at " + Position;
-        }
+        
         public string Text { get; }
         public Position Position { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Invalid escape character: '" + Text + "' at " + Position;
+        }
     }
 
     // - Invalid char error
@@ -86,11 +111,12 @@ namespace IonS {
         public InvalidCharError(Word word) {
             Word = word;
         }
-        public override string ToString()
-        {
+        
+        public Word Word { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Invalid char: " + Word;
         }
-        public Word Word { get; }
     }
 
     // CommentPreprocessor errors
@@ -100,11 +126,12 @@ namespace IonS {
         public EOFInBlockCommentError(Position start) {
             Start = start;
         }
-        public override string ToString()
-        {
+        
+        public Position Start { get; }
+        
+        public override string ToString() {
             return base.ToString() + "EOF in block comment: starts at " + Start;
         }
-        public Position Start { get; }
     }
 
     // IncludePreprocessor errors
@@ -116,35 +143,38 @@ namespace IonS {
             Directory = directory;
             Position = position;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "File not found: '" + Path + "' " + (Directory != null ? "(cwd: " + Directory + ") " : "") + "at " + Position;
-        }
+        
         public string Path { get; }
         public string Directory { get; }
         public Position Position { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "File not found: '" + Path + "' " + (Directory != null ? "(cwd: " + Directory + ") " : "") + "at " + Position;
+        }
     }
 
     sealed class IncompleteIncludeError : IncludePreprocessorError {
         public IncompleteIncludeError(Position position) {
             Position = position;
         }
-        public override string ToString()
-        {
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Incomplete include: at " + Position;
         }
-        public Position Position { get; }
     }
 
     sealed class FilePathNotAStringLiteralError : IncludePreprocessorError {
         public FilePathNotAStringLiteralError(Word word) {
             Word = word;
         }
-        public override string ToString()
-        {
+        
+        public Word Word { get; }
+        
+        public override string ToString() {
             return base.ToString() + "File path not a string: " + Word;
         }
-        public Word Word { get; }
     }
 
     // MacroPreprocessor errors
@@ -155,23 +185,25 @@ namespace IonS {
             MacroWord = macroWord;
             Key = key;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "Incomplete macro: " + (Key != null ? Key : "at " + MacroWord.Position);
-        }
+        
         public Word MacroWord { get; }
         public Word Key { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Incomplete macro: " + (Key != null ? Key : "at " + MacroWord.Position);
+        }
     }
 
     sealed class InvalidMacroKeyError : MacroPreprocessorError {
         public InvalidMacroKeyError(Word key) {
             Key = key;
         }
-        public override string ToString()
-        {
+        
+        public Word Key { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Invalid key for macro: " + Key;
         }
-        public Word Key { get; }
     }
 
     sealed class MacroRedefinitionError : MacroPreprocessorError {
@@ -179,12 +211,13 @@ namespace IonS {
             Old = o;
             New = n;
         }
-        public override string ToString()
-        {
-            return base.ToString() + "Trying to redifine macro: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
-        }
+        
         public Word Old { get; }
         public Word New { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Trying to redifine macro: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
+        }
     }
 
     // Parser errors
@@ -194,11 +227,12 @@ namespace IonS {
         public InternalParserError(string message) {
             Message = message;
         }
-        public override string ToString()
-        {
+        
+        public string Message { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Internal error: " + Message;
         }
-        public string Message { get; }
     }
 
     // - Unexpected word error
@@ -207,11 +241,12 @@ namespace IonS {
         public UnexpectedWordError(Word word) {
             Word = word;
         }
-        public override string ToString()
-        {
+        
+        public Word Word { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Unexpected word: " + Word;
         }
-        public Word Word { get; }
     }
 
     // - Block errors
@@ -220,22 +255,24 @@ namespace IonS {
         public MissingIfError(Position position) {
             Position = position;
         }
-        public override string ToString()
-        {
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Missing if: at " + Position;
         }
-        public Position Position { get; }
     }
 
     sealed class MissingDoError : ParserError {
         public MissingDoError(Position position) {
             Position = position;
         }
-        public override string ToString()
-        {
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
             return base.ToString() + "Missing do marker: at " + Position;
         }
-        public Position Position { get; }
     }
 
     sealed class MissingWhileError : ParserError {
@@ -378,15 +415,32 @@ namespace IonS {
         }
     }
 
-    sealed class InvalidProcedureArgsError : ParserError {
-        public InvalidProcedureArgsError(Word args) {
+    sealed class InvalidProcedureParametersError : ParserError {
+        public InvalidProcedureParametersError(Word name) {
+            Name = name;
+        }
+        public InvalidProcedureParametersError(Word name, Word wrong) {
+            Name = name;
+            Wrong = wrong;
+        }
+        
+        public Word Name { get; }
+        public Word Wrong { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Invalid parameters for procedure: " + (Wrong != null ? Wrong + " for " + Name : Name);
+        }
+    }
+
+    sealed class EOFInProcedureParametersError : ParserError {
+        public EOFInProcedureParametersError(Word args) {
             Args = args;
         }
         
         public Word Args { get; }
         
         public override string ToString() {
-            return base.ToString() + "Invalid args for procedure: " + Args;
+            return base.ToString() + "Invalid parameters for procedure: " + Args;
         }
     }
 
@@ -489,29 +543,39 @@ namespace IonS {
     }
 
     // TypeChecker errors
-    // - Invalid stack after block errors
 
-    sealed class MissingDataAfterBlockError : TypeCheckerError {
-        public MissingDataAfterBlockError(DataType[] missing) {
-            Missing = missing;
+    sealed class StackUnderflowError : TypeCheckerError {
+        public StackUnderflowError(Operation operation) {
+            Operation = operation;
         }
 
-        public DataType[] Missing { get; }
+        public Operation Operation { get; }
 
         public override string ToString() {
-            return base.ToString() + "Missing elements on the stack after Block: " + Missing;
+            return base.ToString() + "Stack underflow: during " + Operation;
         }
     }
 
-    sealed class ExcessDataAfterBlockError : TypeCheckerError {
-        public ExcessDataAfterBlockError(DataType[] excess) {
-            Excess = excess;
+    sealed class UnexpectedDataTypeError : TypeCheckerError {
+        public UnexpectedDataTypeError(DataType gotType, DataType expectedType, Operation operation) {
+            GotType = gotType;
+            ExpectedType = expectedType;
+            ExpectedString = null;
+            Operation = operation;
+        }
+        public UnexpectedDataTypeError(DataType gotType, string expectedString, Operation operation) {
+            GotType = gotType;
+            ExpectedString = expectedString;
+            Operation = operation;
         }
 
-        public DataType[] Excess { get; }
+        public DataType GotType { get; }
+        public DataType ExpectedType { get; }
+        public string ExpectedString { get; }
+        public Operation Operation { get; }
 
         public override string ToString() {
-            return base.ToString() + "Excess elements on the stack after Block: " + Excess;
+            return base.ToString() + "Unexpected DataType on stack: expected " + (ExpectedString != null ? ExpectedString : ExpectedType) + " but got " + GotType + " during " + Operation;
         }
     }
 
