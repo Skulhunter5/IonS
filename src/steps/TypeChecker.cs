@@ -15,8 +15,15 @@ namespace IonS {
         }
 
         public Error run() { // TODO: TypeCheck Procedures
+            Error error;
+
+            foreach(Procedure procedure in _procs.Values) {
+                error = procedure.TypeCheck();
+                if(error != null) return error;
+            }
+
             TypeCheckContract contract = new TypeCheckContract();
-            Error error = _root.TypeCheck(contract);
+            error = _root.TypeCheck(contract);
             if(error != null) return error;
 
             if(!contract.IsEmpty()) Console.WriteLine("[TypeChecker] Warning: excess data on the stack after exit: [" + String.Join(", ", contract.Stack) + "]"); // Error-Warning-System

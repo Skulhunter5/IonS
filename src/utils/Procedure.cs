@@ -50,6 +50,20 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
+        public Error TypeCheck() {
+            TypeCheckContract contract = new TypeCheckContract();
+            foreach(DataType dataType in Args) contract.Push(dataType);
+
+            Body.TypeCheck(contract);
+
+            if(contract.GetElementsLeft() != Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
+
+            for(int i = 0; i < Rets.Length; i++) if(contract.Peek(Rets.Length-1-i) != Rets[i]) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
+
+            return null;
+        }
+
     }
 
 }

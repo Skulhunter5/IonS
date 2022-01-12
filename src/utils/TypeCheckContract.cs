@@ -7,9 +7,6 @@ namespace IonS {
         public TypeCheckContract() {
             Stack = new List<DataType>();
         }
-        public TypeCheckContract(List<DataType> stack) {
-            Stack = new List<DataType>();
-        }
 
         public List<DataType> Stack  { get; }
 

@@ -1,3 +1,5 @@
+using System;
+
 namespace IonS {
 
     abstract class Error {}
@@ -576,6 +578,20 @@ namespace IonS {
 
         public override string ToString() {
             return base.ToString() + "Unexpected DataType on stack: expected " + (ExpectedString != null ? ExpectedString : ExpectedType) + " but got " + GotType + " during " + Operation;
+        }
+    }
+
+    sealed class InvalidReturnDataError : TypeCheckerError {
+        public InvalidReturnDataError(DataType[] gotTypes, Procedure procedure) {
+            GotTypes = gotTypes;
+            Procedure = procedure;
+        }
+
+        public DataType[] GotTypes { get; }
+        public Procedure Procedure { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Unexpected DataType on stack: expected [" + String.Join(", ", Procedure.Rets) + "] but got [" + String.Join(", ", GotTypes) + "] during " + Procedure;
         }
     }
 
