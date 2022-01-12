@@ -8,7 +8,7 @@ namespace IonS {
         private static int ProcedureId() { return nextProcedureId++; }
 
         private int nextOccurrenceId = 0;
-        private int OccurrenceId() { return nextOccurrenceId++; }
+        private int Occurrence() { return nextOccurrenceId++; }
 
         public Procedure(Word name, DataType[] args, DataType[] rets, CodeBlock body, bool isInlined) {
             Id = ProcedureId();
@@ -20,7 +20,6 @@ namespace IonS {
             IsUsed = false;
             UsedProcedures = new List<Procedure>();
             IsInlined = isInlined;
-            if(IsInlined) Occurrence = OccurrenceId();
         }
 
         public int Id { get; }
@@ -32,7 +31,6 @@ namespace IonS {
         public bool IsUsed { get; set; }
         public List<Procedure> UsedProcedures { get; }
         public bool IsInlined { get; }
-        public int Occurrence { get; }
 
         public override string ToString() {
             return Name + (Args != null ? "(" + String.Join(" ", Args) + " -- " + String.Join(" ", Rets) + ")" : "");
@@ -40,17 +38,18 @@ namespace IonS {
 
         public string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                int occurrence = Occurrence();
                 string asm = "";
                 if(!IsInlined) {
                     asm += "proc_" + Id + ":\n";
                     for(int i = Args.Length-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
-                } else asm += "proc_" + Id + "_" + Occurrence + ":\n";
+                } else asm += "proc_" + Id + "_" + occurrence + ":\n";
                 asm += Body.GenerateAssembly(assembler);
                 if(!IsInlined) {
                     asm += "proc_" + Id + "_end:\n";
                     for(int i = 0; i < Rets.Length; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
                     asm += "    ret\n";
-                } else asm += "proc_" + Id + "_end_" + Occurrence + "\n";
+                } else asm += "proc_" + Id + "_end_" + occurrence + "\n";
                 return asm;
             }
             throw new NotImplementedException();
@@ -64,7 +63,16 @@ namespace IonS {
 
             if(contract.GetElementsLeft() != Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
 
-            for(int i = 0; i < Rets.Length; i++) if(contract.Peek(Rets.Length-1-i) != Rets[i]) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
+            /* if(Rets.Length == 1 && contract.GetElementsLeft() == 1) {
+                if(!EDataType.IsImplicitlyCastable(Rets[0], contract.Peek())) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
+                else return null;
+            } */
+
+            for(int i = 0; i < Rets.Length; i++) if(!EDataType.IsImplicitlyCastable(contract.Peek(Rets.Length-1-i), Rets[i])) {
+                Console.WriteLine("HERE" + this);
+                Console.WriteLine(Rets.Length + " " + contract.GetElementsLeft());
+                return new InvalidReturnDataError(contract.Stack.ToArray(), this);
+            }
 
             return null;
         }

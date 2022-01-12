@@ -106,7 +106,7 @@ proc isAlnum ( uint8 -- bool ) {
     ||
 }
 
-proc str-startswith ( uint64 ptr uint64 ptr -- ) {
+proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap 2rot
     2dup > if {
         2drop 2drop
@@ -116,7 +116,7 @@ proc str-startswith ( uint64 ptr uint64 ptr -- ) {
     streq
 }
 
-proc str-endswith ( uint64 ptr uint64 ptr -- ) {
+proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap 2rot
     2dup > if {
         2drop 2drop
@@ -127,7 +127,7 @@ proc str-endswith ( uint64 ptr uint64 ptr -- ) {
     streq
 }
 
-proc try-parse-uint64 ( uint64 ptr ptr -- ) { // TODO: fix it not going over the maximum uint64 value
+proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going over the maximum uint64 value
     // len str ptr
     2rot swap
     // ptr str len

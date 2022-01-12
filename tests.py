@@ -50,7 +50,7 @@ def runFile(file, assembler="Fasm"):
         return RESULT_SKIPPED
     with open("tests/" + file[:-5] + ".txt", 'r') as f:
         lines = f.readlines()
-        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file, "--assembler", assembler.lower()], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file, "--assembler", assembler.lower()], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if(transcriptionProcess.returncode != 0):
             transcriptionOutput = transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
             if(not lines[0][4:].startswith("Transcription")):
@@ -70,7 +70,7 @@ def runFile(file, assembler="Fasm"):
             print("  Failed:\n")
             diff(expectation, transcriptionOutput)
             return RESULT_FAILED
-        compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest" + assembler], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest" + assembler], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if(compilationProcess.returncode != 0):
             compilationOutput = compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n')
             if(not lines[0][4:].startswith("Compilation")):
@@ -90,7 +90,7 @@ def runFile(file, assembler="Fasm"):
             print("  Failed:\n")
             diff(expectation, compilationOutput)
             return RESULT_FAILED
-        executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if(executionProcess.returncode != int(lines[0][23:-1])):
             print("  Failed: Execution finished with incorrect exitcode")
             return RESULT_FAILED
@@ -130,19 +130,19 @@ def generateFile(file, assembler="Nasm", force=False):
         print("  Expectation found\n")
         return RESULT_KEPT
     with open("tests/" + file[:-5] + ".txt", 'w') as out:
-        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file, "--assembler", assembler.lower()], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        transcriptionProcess = subprocess.run(["dotnet", executablePath, "compile", "--file", "tests/" + file, "--assembler", assembler.lower()], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if(transcriptionProcess.returncode != 0):
             out.write("--->Transcription:exitcode=" + str(transcriptionProcess.returncode) + "\n")
             out.write(transcriptionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
             print("  Generated expectation\n")
             return RESULT_GENERATED
-        compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest" + assembler], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        compilationProcess = subprocess.run(["wsl", "--exec", "/shared/compIonsTest" + assembler], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if(compilationProcess.returncode != 0):
             out.write("--->Compilation:exitcode=" + str(compilationProcess.returncode) + "\n")
             out.write(compilationProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
             print("  Generated expectation\n")
             return RESULT_GENERATED
-        executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         out.write("--->Execution:exitcode=" + str(executionProcess.returncode) + "\n")
         out.write(executionProcess.stdout.decode('utf-8').replace("\r\n", '\n'))
         print("  Generated expectation\n")

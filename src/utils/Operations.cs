@@ -787,9 +787,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
-            
-            throw new NotImplementedException();
+            return contract.RequireAndProvide(required, DataType.uint64, this);
         }
     }
 
@@ -808,9 +808,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
-            
-            throw new NotImplementedException();
+            return contract.RequireAndProvide(required, DataType.uint64, this);
         }
     }
 
@@ -1092,7 +1092,7 @@ namespace IonS {
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    jmp proc_{Id}_end_{Occurrence}
-                if(Proc.IsInlined) return "    jmp proc_" + Proc.Id + "_end_" + Proc.Occurrence + "\n";
+                if(Proc.IsInlined) throw new NotImplementedException();
                 //    jmp proc_{Id}_end
                 return "    jmp proc_" + Proc.Id + "_end\n";
             }
@@ -1102,7 +1102,7 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContract contract) { // TODO: make this better and somehow check if all of the subtrees have returned
             if(contract.GetElementsLeft() != Proc.Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
 
-            for(int i = 0; i < Proc.Rets.Length; i++) if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
+            for(int i = 0; i < Proc.Rets.Length; i++) if(EDataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
 
             return null;
         }

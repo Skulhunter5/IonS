@@ -1,3 +1,5 @@
+    using System; // TEMPORARY
+
 namespace IonS {
 
     enum DataType {
@@ -14,6 +16,7 @@ namespace IonS {
         }
 
         public static bool IsImplicitlyCastable(DataType from, DataType to) { // TODO: see how I can improve this (maybe Dictionary and save every possible combination as a string or whatever)
+            if(from == to) return true;
             if(to == DataType.boolean) return from == DataType.uint8 || from == DataType.uint16 || from == DataType.uint32 || from == DataType.uint64 || from == DataType.boolean;
             else if(to == DataType.uint8) return from == DataType.uint8 || from == DataType.uint16 || from == DataType.uint32 || from == DataType.uint64 || from == DataType.boolean;
             else if(to == DataType.uint16) return from == DataType.uint8 || from == DataType.uint16 || from == DataType.uint32 || from == DataType.uint64 || from == DataType.boolean;
