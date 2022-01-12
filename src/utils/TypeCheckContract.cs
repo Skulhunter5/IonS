@@ -91,6 +91,17 @@ namespace IonS {
             return Provide(provided, operation);
         }
 
+        public override bool Equals(object obj) {
+            if(typeof(TypeCheckContract) != obj.GetType()) return false;
+            TypeCheckContract other = (TypeCheckContract) obj;
+            if(other.Stack.Count != this.Stack.Count) return false;
+            for(int i = 0; i < this.Stack.Count; i++) if(this.Stack[i] != other.Stack[i]) return false;
+            return true;
+        }
+        public override int GetHashCode() {
+            return HashCode.Combine(Stack.GetHashCode());
+        }
+
         public TypeCheckContract Copy() {
             TypeCheckContract clone = new TypeCheckContract();
             clone.SetStackFrom(Stack);

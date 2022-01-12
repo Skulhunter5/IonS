@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace IonS {
 
@@ -592,6 +593,38 @@ namespace IonS {
 
         public override string ToString() {
             return base.ToString() + "Unexpected DataType on stack: expected [" + String.Join(", ", Procedure.Rets) + "] but got [" + String.Join(", ", GotTypes) + "] during " + Procedure;
+        }
+    }
+
+    sealed class NonMatchingSignaturesError : TypeCheckerError {
+        public NonMatchingSignaturesError(List<TypeCheckContract> contracts, Block block) {
+            Contracts = contracts;
+            Block = block;
+        }
+
+        public List<TypeCheckContract> Contracts { get; }
+        public Block Block { get; }
+
+        public override string ToString() { // TODO: make this error message easier to read
+            string[] strs = new string[Contracts.Count];
+            for(int i = 0; i < strs.Length; i++) strs[i] = "[" + String.Join(", ", Contracts[i].Stack) + "]";
+            return base.ToString() + "Not all code paths have the same signature: " + Block + "\n- " + String.Join("\n- ", strs) + "\n";
+        }
+    }
+
+    sealed class SignatureMustBeNoneError : TypeCheckerError {
+        public SignatureMustBeNoneError(TypeCheckContract reference, TypeCheckContract actual, CodeBlock block) {
+            Reference = reference;
+            Actual = actual;
+            Block = block;
+        }
+
+        public TypeCheckContract Reference { get; }
+        public TypeCheckContract Actual { get; }
+        public CodeBlock Block { get; }
+
+        public override string ToString() { // TODO: make this error message easier to read
+            return base.ToString() + "Signature of CodeBlock must be none: expected [" + String.Join(", ", Reference.Stack) + "] but got [" + String.Join(", ", Actual.Stack) + "] after " + Block;
         }
     }
 

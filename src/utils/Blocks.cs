@@ -67,6 +67,13 @@ namespace IonS {
         public List<CodeBlock> Conditionals { get; }
         public CodeBlock BlockElse { get; set; }
 
+        public override string ToString() {
+            List<string> strs = new List<string>();
+            if(Conditions.Count > 0) strs.Add("elseifs=" + Conditions.Count);
+            if(BlockElse != null) strs.Add("else");
+            return "If-statement" + (strs.Count > 0 ? "{" + String.Join(", ", strs) + "}" : "") + " at " + Position;
+        }
+
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 string asm = "";
@@ -94,8 +101,42 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
+            List<TypeCheckContract> contracts = new List<TypeCheckContract>();
+
+            Error error = contract.Require(DataType.boolean, this);
+            if(error != null) return error;
+
+            TypeCheckContract reference = contract.Copy();
             
-            throw new NotImplementedException();
+            error = BlockIf.TypeCheck(contract);
+            if(error != null) return error;
+            contracts.Add(contract);
+
+            for(int i = 0; i < Conditionals.Count; i++) {
+                TypeCheckContract contract1 = reference.Copy();
+                Conditions[i].TypeCheck(contract1);
+
+                error = contract1.Require(DataType.boolean, this); // TODO: put something better here (maybe even save the Positions of every elseif and else)
+                if(error != null) return error;
+                if(!reference.Equals(contract1)) return new SignatureMustBeNoneError(reference, contract1, Conditions[i]);
+
+                error = Conditionals[i].TypeCheck(contract1);
+                if(error != null) return error;
+
+                contracts.Add(contract1);
+            }
+
+            if(BlockElse != null) {
+                TypeCheckContract contract1 = reference.Copy();
+                error = BlockElse.TypeCheck(contract1);
+                if(error != null) return error;
+
+                contracts.Add(contract1);
+            }
+
+            for(int i = 0; i < contracts.Count; i++) if(!contracts[i].Equals(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
+
+            return null;
         }
     }
 

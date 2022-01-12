@@ -51,7 +51,7 @@ namespace IonS {
                 else asm += "segment readable executable\n";
 
                 // Dump function
-                asm += File.ReadAllText("res/asm snippets/dump.asm");
+                asm += File.ReadAllText("src/asm snippets/dump.asm");
 
                 // Procedures (only used ones for now)
                 foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += proc.GenerateAssembly(Assembler.fasm_linux_x86_64);
