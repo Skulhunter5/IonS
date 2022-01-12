@@ -349,7 +349,7 @@ namespace IonS {
                 return ParseProcedure(operations, scope, breakableBlock, currentProcedure, true);
             } else if(Current.Text == "return") {
                 if(currentProcedure == null) return new ReturnOutsideProcedureError(Current.Position);
-                operations.Add(new ReturnOperation(currentProcedure.Id, Current.Position));
+                operations.Add(new ReturnOperation(currentProcedure, Current.Position));
             } else {
                 if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value, Current.Position));
                 else {

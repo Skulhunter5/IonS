@@ -118,7 +118,7 @@ namespace IonS {
 
                 error = contract1.Require(DataType.boolean, this); // TODO: put something better here (maybe even save the Positions of every elseif and else)
                 if(error != null) return error;
-                if(!reference.Equals(contract1)) return new SignatureMustBeNoneError(reference, contract1, Conditions[i]);
+                if(!reference.IsCompatible(contract1)) return new SignatureMustBeNoneError(reference, contract1, Conditions[i]);
 
                 error = Conditionals[i].TypeCheck(contract1);
                 if(error != null) return error;
@@ -134,7 +134,9 @@ namespace IonS {
                 contracts.Add(contract1);
             }
 
-            for(int i = 0; i < contracts.Count; i++) if(!contracts[i].Equals(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
+            
+
+            for(int i = 0; i < contracts.Count; i++) if(!contracts[i].IsCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
 
             return null;
         }

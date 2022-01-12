@@ -896,8 +896,6 @@ namespace IonS {
             if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
             Error error = contract.Require(DataType.uint8, this);
             if(error != null) return error;
-            /* DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this); */
             if(!contract.IsEmpty()) Console.WriteLine("[TypeChecker] Warning: excess data on the stack after exit: [" + String.Join(", ", contract.Stack) + "]");  // Error-Warning-System
             return null;
         }
@@ -1085,23 +1083,28 @@ namespace IonS {
     // Procedure call operation
 
     sealed class ReturnOperation : Operation { // --
-        public ReturnOperation(int id, Position position) : base(OperationType.Return, position) {
-            Id = id;
+        public ReturnOperation(Procedure procedure, Position position) : base(OperationType.Return, position) {
+            Proc = procedure;
         }
 
-        public int Id { get; }
+        public Procedure Proc { get; }
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    jmp proc_{Id}_end_{Occurrence}
+                if(Proc.IsInlined) return "    jmp proc_" + Proc.Id + "_end_" + Proc.Occurrence + "\n";
                 //    jmp proc_{Id}_end
-                return "    jmp proc_" + Id + "_end\n";
+                return "    jmp proc_" + Proc.Id + "_end\n";
             }
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) {
-            
-            throw new NotImplementedException();
+        public override Error TypeCheck(TypeCheckContract contract) { // TODO: make this better and somehow check if all of the subtrees have returned
+            if(contract.GetElementsLeft() != Proc.Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
+
+            for(int i = 0; i < Proc.Rets.Length; i++) if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
+
+            return null;
         }
     }
 

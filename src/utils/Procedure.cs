@@ -7,6 +7,9 @@ namespace IonS {
         private static int nextProcedureId = 0;
         private static int ProcedureId() { return nextProcedureId++; }
 
+        private int nextOccurrenceId = 0;
+        private int OccurrenceId() { return nextOccurrenceId++; }
+
         public Procedure(Word name, DataType[] args, DataType[] rets, CodeBlock body, bool isInlined) {
             Id = ProcedureId();
             Name = name;
@@ -17,6 +20,7 @@ namespace IonS {
             IsUsed = false;
             UsedProcedures = new List<Procedure>();
             IsInlined = isInlined;
+            if(IsInlined) Occurrence = OccurrenceId();
         }
 
         public int Id { get; }
@@ -27,7 +31,8 @@ namespace IonS {
         public List<Variable> Variables { get; }
         public bool IsUsed { get; set; }
         public List<Procedure> UsedProcedures { get; }
-        public bool IsInlined { get; set; }
+        public bool IsInlined { get; }
+        public int Occurrence { get; }
 
         public override string ToString() {
             return Name + (Args != null ? "(" + String.Join(" ", Args) + " -- " + String.Join(" ", Rets) + ")" : "");
@@ -39,13 +44,13 @@ namespace IonS {
                 if(!IsInlined) {
                     asm += "proc_" + Id + ":\n";
                     for(int i = Args.Length-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
-                }
+                } else asm += "proc_" + Id + "_" + Occurrence + ":\n";
                 asm += Body.GenerateAssembly(assembler);
                 if(!IsInlined) {
                     asm += "proc_" + Id + "_end:\n";
                     for(int i = 0; i < Rets.Length; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
                     asm += "    ret\n";
-                }
+                } else asm += "proc_" + Id + "_end_" + Occurrence + "\n";
                 return asm;
             }
             throw new NotImplementedException();

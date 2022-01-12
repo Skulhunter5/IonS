@@ -582,17 +582,23 @@ namespace IonS {
         }
     }
 
-    sealed class InvalidReturnDataError : TypeCheckerError {
+    sealed class InvalidReturnDataError : TypeCheckerError { // TODO: Fix it not showing if this happens at a ReturnOperation
         public InvalidReturnDataError(DataType[] gotTypes, Procedure procedure) {
             GotTypes = gotTypes;
             Procedure = procedure;
         }
+        public InvalidReturnDataError(DataType[] gotTypes, Procedure procedure, ReturnOperation operation) {
+            GotTypes = gotTypes;
+            Procedure = procedure;
+            Operation = operation;
+        }
 
         public DataType[] GotTypes { get; }
         public Procedure Procedure { get; }
+        public ReturnOperation Operation { get; }
 
         public override string ToString() {
-            return base.ToString() + "Unexpected DataType on stack: expected [" + String.Join(", ", Procedure.Rets) + "] but got [" + String.Join(", ", GotTypes) + "] during " + Procedure;
+            return base.ToString() + "Invalid return arguments: expected [" + String.Join(", ", Procedure.Rets) + "] but got [" + String.Join(", ", GotTypes) + "] "  + (Operation != null ? "for return at " + Operation.Position + " in " : "at the end of ") + Procedure;
         }
     }
 

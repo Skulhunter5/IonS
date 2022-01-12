@@ -91,7 +91,7 @@ namespace IonS {
             return Provide(provided, operation);
         }
 
-        public override bool Equals(object obj) {
+        public bool IsCompatible(object obj) {
             if(typeof(TypeCheckContract) != obj.GetType()) return false;
             TypeCheckContract other = (TypeCheckContract) obj;
             if(other.Stack.Count != this.Stack.Count) return false;
