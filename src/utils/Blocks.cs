@@ -134,8 +134,6 @@ namespace IonS {
                 contracts.Add(contract1);
             }
 
-
-
             for(int i = 0; i < contracts.Count; i++) if(!contracts[i].IsCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
 
             return null;
@@ -241,18 +239,18 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            TypeCheckContract reference = contract.Copy();
+            Reference = contract.Copy();
 
             Error error = Block.TypeCheck(contract);
             if(error != null) return error;
-            if(!contract.IsCompatible(reference)) return new SignatureMustBeNoneError(reference, contract, Block);
+            if(!contract.IsCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Block);
 
             error = Condition.TypeCheck(contract);
             if(error != null) return error;
 
             error = contract.Require(DataType.boolean, this);
             if(error != null) return error;
-            if(!contract.IsCompatible(reference)) return new SignatureMustBeNoneError(reference, contract, Condition);
+            if(!contract.IsCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
 
 
             return null;
@@ -304,6 +302,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
+            Console.WriteLine("'" + Block.Reference + "'");
             if(!contract.IsCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
 
             return null;

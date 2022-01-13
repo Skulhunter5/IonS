@@ -55,10 +55,7 @@ namespace IonS {
 
             for(int i = required.Length-1; i >= 0; i--) {
                 DataType dataType = Pop();
-                if(!EDataType.IsImplicitlyCastable(dataType, required[i])) {
-                    Console.WriteLine("HERE");
-                    return new UnexpectedDataTypeError(dataType, required[i], operation);
-                }
+                if(!EDataType.IsImplicitlyCastable(dataType, required[i])) return new UnexpectedDataTypeError(dataType, required[i], operation);
                 if(dataType != required[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.String(dataType) + " to " + required[i] + " during " + operation); // Error-Warning-System
             }
             return null;
@@ -92,6 +89,7 @@ namespace IonS {
         }
 
         public bool IsCompatible(object obj) {
+            if(obj == null) return false;
             if(typeof(TypeCheckContract) != obj.GetType()) return false;
             TypeCheckContract other = (TypeCheckContract) obj;
             if(other.Stack.Count != this.Stack.Count) return false;

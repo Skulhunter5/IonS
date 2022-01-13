@@ -1102,7 +1102,10 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContract contract) { // TODO: make this better and somehow check if all of the subtrees have returned
             if(contract.GetElementsLeft() != Proc.Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
 
-            for(int i = 0; i < Proc.Rets.Length; i++) if(EDataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
+            for(int i = 0; i < Proc.Rets.Length; i++) if(EDataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) {
+                if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.String(contract.Peek(Proc.Rets.Length-1-i)) + " to " + Proc.Rets[i] + " while returning from " + Proc + " at " + this); // Error-Warning-System
+                return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
+            }
 
             return null;
         }
