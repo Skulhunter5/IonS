@@ -634,4 +634,26 @@ namespace IonS {
         }
     }
 
+    sealed class SignatureMustBeNoneBeforeBreakActionError : TypeCheckerError {
+        public SignatureMustBeNoneBeforeBreakActionError(TypeCheckContract reference, TypeCheckContract actual, BreakOperation breakOperation) {
+            Reference = reference;
+            Actual = actual;
+            BreakOperation = breakOperation;
+        }
+        public SignatureMustBeNoneBeforeBreakActionError(TypeCheckContract reference, TypeCheckContract actual, ContinueOperation continueOperation) {
+            Reference = reference;
+            Actual = actual;
+            ContinueOperation = continueOperation;
+        }
+
+        public TypeCheckContract Reference { get; }
+        public TypeCheckContract Actual { get; }
+        public BreakOperation BreakOperation { get; }
+        public ContinueOperation ContinueOperation { get; }
+
+        public override string ToString() { // TODO: make this error message easier to read
+            return base.ToString() + "Signature before break action must be none: expected [" + String.Join(", ", Reference.Stack) + "] but got [" + String.Join(", ", Actual.Stack) + "] before " + (BreakOperation != null ? BreakOperation : ContinueOperation);
+        }
+    }
+
 }

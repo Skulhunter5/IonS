@@ -183,18 +183,18 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            TypeCheckContract reference = contract.Copy();
+            Reference = contract.Copy();
 
             Error error = Condition.TypeCheck(contract);
             if(error != null) return error;
 
             error = contract.Require(DataType.boolean, this);
             if(error != null) return error;
-            if(!contract.IsCompatible(reference)) return new SignatureMustBeNoneError(reference, contract, Condition);
+            if(!contract.IsCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
 
             error = Block.TypeCheck(contract);
             if(error != null) return error;
-            if(!contract.IsCompatible(reference)) return new SignatureMustBeNoneError(reference, contract, Block);
+            if(!contract.IsCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Block);
 
             return null;
         }
@@ -261,6 +261,9 @@ namespace IonS {
 
     abstract class BreakableBlock : Block {
         public BreakableBlock(BlockType blockType, Position position) : base(blockType, position) {}
+
+        public TypeCheckContract Reference { get; set; }
+
         public abstract string continue___assembly(Assembler assembler);
         public abstract string break___assembly(Assembler assembler);
     }
@@ -280,8 +283,9 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            
-            throw new NotImplementedException();
+            if(!contract.IsCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
+
+            return null;
         }
     }
 
@@ -300,8 +304,9 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            
-            throw new NotImplementedException();
+            if(!contract.IsCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
+
+            return null;
         }
     }
 

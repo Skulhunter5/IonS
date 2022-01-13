@@ -146,7 +146,7 @@ namespace IonS {
             NextWord();
 
             if(Current == null) return new IncompleteProcedureError(procWord, name);
-            if(Current.Text != "(" && Current.GetType() != typeof(StringWord)) return new InvalidProcedureParametersError(name, Current);
+            if(Current.Text != "(" || Current.GetType() == typeof(StringWord) || Current.GetType() == typeof(CharWord)) return new InvalidProcedureParametersError(name, Current);
             NextWord();
             bool dir = false;
             List<DataType> Args = new List<DataType>();
