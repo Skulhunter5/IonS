@@ -27,5 +27,3 @@ include "./../std/std.ions"
 "abc"c "abcd"c cstreq .
 
 .
-
-0 exit

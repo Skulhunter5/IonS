@@ -27,4 +27,4 @@ false .
 
 .
 
-0 exit
+0 cast(uint8) exit

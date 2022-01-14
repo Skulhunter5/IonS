@@ -15,5 +15,3 @@
 } while { dup } drop
 
 .
-
-0 exit

@@ -1,5 +1,7 @@
 include "./../std/std.ions"
 
+12345
+
 1 2 min .
 2 1 min .
 1 1 min .
@@ -11,4 +13,4 @@ include "./../std/std.ions"
 3 1 4 clamp .
 5 2 4 clamp .
 
-0 exit
+.

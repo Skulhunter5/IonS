@@ -5,5 +5,3 @@ include "./../std/std.ions"
 "Hello, world!\n" puts
 
 .
-
-0 exit

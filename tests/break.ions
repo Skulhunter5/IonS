@@ -11,5 +11,3 @@
     dup 9 - if break
     12345 .
 }
-
-0 exit
