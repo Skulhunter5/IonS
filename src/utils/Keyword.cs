@@ -29,6 +29,7 @@ namespace IonS {
             if(word.StartsWith("@") || word.StartsWith("!")) return true;
             if(word.StartsWith("syscall")) return true;
             if(word.StartsWith("ctt")) return true;
+            if(word.StartsWith("cast(")) return true;
             foreach(string keyword in keywords) if(keyword == word) return true;
             return false;
         }

@@ -26,6 +26,8 @@ namespace IonS {
         Break, Continue,
 
         ProcedureCall, Return,
+
+        Cast,
     }
 
     enum Direction2 {
@@ -1108,6 +1110,24 @@ namespace IonS {
             }
 
             return null;
+        }
+    }
+
+    // Cast operation
+
+    sealed class CastOperation : Operation {
+        public CastOperation(DataType dataType, Position position) : base(OperationType.Cast, position) {
+            DataType = dataType;
+        }
+
+        public DataType DataType { get; }
+
+        public override string GenerateAssembly(Assembler assembler) { return ""; }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
+            contract.Pop();
+            return contract.Provide(DataType, this);
         }
     }
 

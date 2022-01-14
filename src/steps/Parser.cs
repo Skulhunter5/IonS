@@ -348,6 +348,10 @@ namespace IonS {
             } else if(Current.Text == "return") {
                 if(currentProcedure == null) return new ReturnOutsideProcedureError(Current.Position);
                 operations.Add(new ReturnOperation(currentProcedure, Current.Position));
+            } else if(Current.Text.StartsWith("cast(") && Current.Text.EndsWith(")")) {
+                string dataTypeStr = Current.Text.Substring(5, Current.Text.Length-6);
+                if(!EDataType.TryParse(dataTypeStr, out DataType dataType)) return new InvalidDataTypeError(new Word(new Position(Current.Position.File, Current.Position.Line, Current.Position.Column+5), dataTypeStr));
+                operations.Add(new CastOperation(dataType, Current.Position));
             } else {
                 if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value, Current.Position));
                 else {
