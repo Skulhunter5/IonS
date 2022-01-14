@@ -302,7 +302,6 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            Console.WriteLine("'" + Block.Reference + "'");
             if(!contract.IsCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
 
             return null;

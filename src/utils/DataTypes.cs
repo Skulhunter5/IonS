@@ -1,5 +1,3 @@
-    using System; // TEMPORARY
-
 namespace IonS {
 
     enum DataType {
