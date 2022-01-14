@@ -49,7 +49,7 @@ namespace IonS {
                     asm += "proc_" + Id + "_end:\n";
                     for(int i = 0; i < Rets.Length; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
                     asm += "    ret\n";
-                } else asm += "proc_" + Id + "_end_" + occurrence + "\n";
+                } else asm += "proc_" + Id + "_end_" + occurrence + ":\n";
                 return asm;
             }
             throw new NotImplementedException();
