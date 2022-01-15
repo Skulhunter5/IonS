@@ -92,7 +92,7 @@ def runFile(file, assembler="Fasm"):
             return RESULT_FAILED
         executionProcess = subprocess.run(["wsl", "--exec", "/shared/testIons"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if(executionProcess.returncode != int(lines[0][23:-1])):
-            print("  Failed: Execution finished with incorrect exitcode")
+            print("  Failed: Execution finished with incorrect exitcode: " + str(executionProcess.returncode) + " (expected " + lines[0][23:-1] + ")")
             return RESULT_FAILED
         executionOutput = executionProcess.stdout.decode('utf-8').replace("\r\n", '\n')
         expectation = ""
