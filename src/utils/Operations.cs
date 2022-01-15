@@ -1140,6 +1140,11 @@ namespace IonS {
                 //    pop rax
                 //    cmp rax, 0
                 //    jne assert_{Id}
+                //    mov rax, 1
+                //    mov rdi, 1
+                //    mov rsi, str_{Id}
+                //    mov rdx, {len}
+                //    syscall
                 //    ... Response ...
                 //    mov rax, 60
                 //    pop rdi
@@ -1148,11 +1153,6 @@ namespace IonS {
                 string asm = "";
                 asm += Condition.GenerateAssembly(assembler);
                 asm += "    pop rax\n    cmp rax, 0\n    jne assert_" + Id + "\n";
-                //    mov rax, 1
-                //    mov rdi, 1
-                //    mov rsi, str_{Id}
-                //    mov rdx, {len}
-                //    syscall
                 asm += "    mov rax, 1\n    mov rdi, 1\n    mov rsi, str_" + StringId + "\n    mov rdx, " + StringLength + "\n    syscall\n";
                 asm += Response.GenerateAssembly(assembler);
                 asm += "    mov rax, 60\n    mov rdi, 1\n    syscall\nassert_" + Id + ":\n";
