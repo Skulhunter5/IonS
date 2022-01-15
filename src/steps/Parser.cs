@@ -352,6 +352,25 @@ namespace IonS {
                 string dataTypeStr = Current.Text.Substring(5, Current.Text.Length-6);
                 if(!EDataType.TryParse(dataTypeStr, out DataType dataType)) return new InvalidDataTypeError(new Word(new Position(Current.Position.File, Current.Position.Line, Current.Position.Column+5), dataTypeStr));
                 operations.Add(new CastOperation(dataType, Current.Position));
+            } else if(Current.Text == "assert") {
+                Position assertPosition = Current.Position;
+
+                NextWord();
+                if(Current == null) return new IncompleteAssertError(assertPosition);
+                ParseBlockResult result = ParseBlock(scope, breakableBlock, currentProcedure);
+                if(result.Error != null) return result.Error;
+                CodeBlock condition = result.Block;
+
+                if(Current == null) return new IncompleteAssertError(assertPosition);
+                result = ParseBlock(scope, breakableBlock, currentProcedure);
+                if(result.Error != null) return result.Error;
+                CodeBlock response = result.Block;
+                
+                string text = assertPosition.ToString() + ": Error: Static assertion failed: ";
+                operations.Add(new AssertOperation(condition, response, text.Length, _strings.Count, assertPosition));
+                _strings.Add(text);
+
+                return null;
             } else {
                 if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value, Current.Position));
                 else {

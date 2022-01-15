@@ -27,6 +27,8 @@ namespace IonS {
 
         ProcedureCall, Return,
 
+        Assert,
+
         Cast,
     }
 
@@ -1108,6 +1110,70 @@ namespace IonS {
                 if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.String(contract.Peek(Proc.Rets.Length-1-i)) + " to " + Proc.Rets[i] + " while returning from " + Proc + " at " + this); // Error-Warning-System
                 return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
             }
+
+            return null;
+        }
+    }
+
+    // Assert operation
+
+    sealed class AssertOperation : Operation {
+        private static int nextAssertId = 0;
+        private static int AssertId() { return nextAssertId++; }
+
+        public AssertOperation(CodeBlock condition, CodeBlock response, int stringLength, int stringId, Position position) : base(OperationType.Assert, position) {
+            Condition = condition;
+            Response = response;
+            StringLength = stringLength;
+            StringId = stringId;
+        }
+
+        public int Id { get; }
+        public CodeBlock Condition { get; }
+        public CodeBlock Response { get; }
+        public int StringLength { get; }
+        public int StringId { get; }
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    ... Condition ...
+                //    pop rax
+                //    cmp rax, 0
+                //    jne assert_{Id}
+                //    ... Response ...
+                //    mov rax, 60
+                //    pop rdi
+                //    syscall
+                //assert_{Id}:
+                string asm = "";
+                asm += Condition.GenerateAssembly(assembler);
+                asm += "    pop rax\n    cmp rax, 0\n    jne assert_" + Id + "\n";
+                //    mov rax, 1
+                //    mov rdi, 1
+                //    mov rsi, str_{Id}
+                //    mov rdx, {len}
+                //    syscall
+                asm += "    mov rax, 1\n    mov rdi, 1\n    mov rsi, str_" + StringId + "\n    mov rdx, " + StringLength + "\n    syscall\n";
+                asm += Response.GenerateAssembly(assembler);
+                asm += "    mov rax, 60\n    mov rdi, 1\n    syscall\nassert_" + Id + ":\n";
+                return asm;
+            }
+            throw new NotImplementedException();
+            
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            TypeCheckContract reference = contract.Copy();
+            Error error = Condition.TypeCheck(contract);
+            if(error != null) return error;
+
+            error = contract.Require(DataType.boolean, this);
+            if(error != null) return error;
+            
+            if(!contract.IsCompatible(reference)) return new SignatureMustBeNoneError(reference, contract, Condition);
+
+            error = Response.TypeCheck(contract);
+            if(error != null) return error;
 
             return null;
         }

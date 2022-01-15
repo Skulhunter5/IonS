@@ -252,6 +252,20 @@ namespace IonS {
         }
     }
 
+    // - Incomplete assert error
+
+    sealed class IncompleteAssertError : ParserError {
+        public IncompleteAssertError(Position position) {
+            Position = position;
+        }
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Incomplete assert: at " + Position;
+        }
+    }
+
     // - Block errors
 
     sealed class MissingIfError : ParserError {
