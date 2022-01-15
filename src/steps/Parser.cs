@@ -309,7 +309,7 @@ namespace IonS {
                     Error error = RegisterVariable(scope, new Variable(identifier, bytesize));
                     if(error != null) return error;
                 } else new InvalidVariableBytesizeError(Current);
-            } else if(Current.Text.StartsWith("!")) {
+            } else if(Utils.writeBytesRegex.IsMatch(Current.Text)) {
                 string amountStr = Current.Text.Substring(1);
                 bool isByte = byte.TryParse(amountStr, out byte amount);
                 if(!isByte) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
@@ -317,7 +317,7 @@ namespace IonS {
                 if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
 
                 operations.Add(new MemWriteOperation(amount, Current.Position));
-            } else if(Current.Text.StartsWith("@")) {
+            } else if(Utils.readBytesRegex.IsMatch(Current.Text)) {
                 string amountStr = Current.Text.Substring(1);
                 bool isByte = byte.TryParse(amountStr, out byte amount);
                 if(!isByte) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));

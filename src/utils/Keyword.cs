@@ -1,6 +1,9 @@
+using System.Text.RegularExpressions;
+
 namespace IonS {
     
     class Keyword {
+
         // Remember: Whenever new keyword is added: put it here
         private static readonly string[] keywords = new string[] {
             "exit",
@@ -27,20 +30,21 @@ namespace IonS {
             "proc", "return", "inline",
             "assert",
         };
+
         public static bool isValidIdenfitier(string word) {
-            if(word.StartsWith("@") || word.StartsWith("!")) return false;
+            if(Utils.readBytesRegex.IsMatch(word) || Utils.writeBytesRegex.IsMatch(word)) return false;
+
             if(word.StartsWith("syscall")) return false;
             if(word.StartsWith("ctt")) return false;
             if(word.StartsWith("cast(")) return false;
 
-            if(Utils.binaryRegex.IsMatch(word)) return false;
-            if(Utils.octalRegex.IsMatch(word)) return false;
-            if(Utils.decimalRegex.IsMatch(word)) return false;
-            if(Utils.hexadecimalRegex.IsMatch(word)) return false;
+            if(Utils.binaryRegex.IsMatch(word) || Utils.octalRegex.IsMatch(word) || Utils.decimalRegex.IsMatch(word) || Utils.hexadecimalRegex.IsMatch(word)) return false;
 
             foreach(string keyword in keywords) if(keyword == word) return false;
+
             return true;
         }
+
     }
 
 }

@@ -28,6 +28,9 @@ namespace IonS {
         public static readonly string[] FreeUseRegisters = new string[] {"rax", "rbx", "rcx", "rdx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
         public static readonly string[] SyscallRegisters = new string[] {"rdi", "rsi", "rdx", "r10", "r8", "r9"};
 
+        public static readonly Regex readBytesRegex = new Regex("^@[0-9]+$", RegexOptions.Compiled);
+        public static readonly Regex writeBytesRegex = new Regex("^![0-9]+$", RegexOptions.Compiled);
+
         public static readonly Regex binaryRegex = new Regex("^0b[01]+$", RegexOptions.Compiled);
         public static readonly Regex octalRegex = new Regex("^0[0-7]+$", RegexOptions.Compiled);
         public static readonly Regex decimalRegex = new Regex("^[0-9]+$", RegexOptions.Compiled);
