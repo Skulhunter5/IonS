@@ -25,6 +25,9 @@ namespace IonS {
     }
 
     class Parser {
+
+        private readonly bool _unsafeFlag;
+
         private readonly string _text, _source;
         private Word[] _words;
         private int _position;
@@ -37,6 +40,13 @@ namespace IonS {
         {
             _text = text;
             _source = source;
+            _unsafeFlag = false;
+        }
+        public Parser(string text, string source, bool unsafeFlag)
+        {
+            _text = text;
+            _source = source;
+            _unsafeFlag = unsafeFlag;
         }
 
         private Word Peek(int offset) {
@@ -419,8 +429,10 @@ namespace IonS {
             ParseBlockResult parseResult = ParseBlock(null, null, null);
             if(parseResult.Error != null) return new ParseResult(null, null, null, null, parseResult.Error);
 
-            Error error = new TypeChecker(parseResult.Block, _procs).run();
-            if(error != null) return new ParseResult(null, null, null, null, error);
+            if(!_unsafeFlag) {
+                Error error = new TypeChecker(parseResult.Block, _procs).run();
+                if(error != null) return new ParseResult(null, null, null, null, error);
+            }
 
             List<string> toRemove = new List<string>();
             foreach(string proc in _procs.Keys) if(_procs[proc].IsInlined) toRemove.Add(proc);

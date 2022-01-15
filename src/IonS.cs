@@ -17,6 +17,7 @@ namespace IonS
             Action action = Action.Compile;
             Assembler assembler = Assembler.nasm_linux_x86_64;
             string filename = null;
+            bool unsafeFlag = false;
             // parsing the parameters
             int i = 0;
             while(i < args.Length) {
@@ -30,6 +31,11 @@ namespace IonS
                         return;
                     }
                     i++;
+                    continue;
+                }
+                if(args[i] == "-u" || args[i] == "--unsafe") {
+                    i++;
+                    unsafeFlag = true;
                     continue;
                 }
                 if(action == Action.Compile || action == Action.Simulate) {
@@ -69,7 +75,7 @@ namespace IonS
             }
             if(action == Action.Compile) {
                 if(filename == null) filename = "res/test.ions";
-                Compile(filename, assembler);
+                Compile(filename, assembler, unsafeFlag);
             } else if(action == Action.Simulate) {
                 Console.WriteLine("Feature is currently disabled.");
                 Environment.ExitCode = 2;
@@ -89,14 +95,14 @@ namespace IonS
             for(int i = 0; i < text.Length; i++) if(text[i] == '\n') count++;
             return count;
         }
-        private static void Compile(string filename, Assembler assembler) {
+        private static void Compile(string filename, Assembler assembler, bool unsafeFlag) {
             if(!File.Exists(filename)) {
                 Console.WriteLine("Error: File not found: '" + filename + "'");
                 Environment.ExitCode = 1;
                 return;
             }
             string path = Path.GetFullPath(filename);
-            var asmTscr = new AssemblyTranscriber(File.ReadAllText(path).Replace("\r\n", "\n"), path);
+            var asmTscr = new AssemblyTranscriber(File.ReadAllText(path).Replace("\r\n", "\n"), path, unsafeFlag);
             AssemblyTranscriptionResult result = asmTscr.run(assembler);
             if(result.Error != null) {
                 Console.WriteLine(result.Error);
