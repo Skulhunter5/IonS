@@ -36,6 +36,13 @@ namespace IonS {
         private Dictionary<string, Procedure> _procs;
         private List<string> _strings;
 
+        private ulong nextIota = 0;
+        private ulong Iota(bool reset) {
+            ulong val = nextIota++;
+            if(reset) nextIota = 0;
+            return val;
+        }
+
         public Parser(string text, string source)
         {
             _text = text;
@@ -383,6 +390,8 @@ namespace IonS {
                 _strings.Add(text);
 
                 return null;
+            } else if(Current.Text == "iota" || Current.Text == "reset") {
+                operations.Add(new Push_uint64_Operation(Iota(Current.Text == "reset"), Current.Position));
             } else {
                 // TODO: add overflow protection for binary and hexadecimal numbers
                 if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 2), Current.Position));

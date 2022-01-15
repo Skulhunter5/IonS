@@ -29,6 +29,7 @@ namespace IonS {
             "{", "}",
             "proc", "return", "inline",
             "assert",
+            "iota", "reset",
         };
 
         public static bool isValidIdenfitier(string word) {

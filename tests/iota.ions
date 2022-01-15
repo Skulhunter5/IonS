@@ -1,0 +1,18 @@
+macro a iota
+macro b iota
+macro c iota
+macro d iota
+macro count reset
+
+macro e iota
+macro f iota
+macro count2 reset
+
+a .
+b .
+c .
+d .
+count .
+e .
+f .
+count2 .
