@@ -47,7 +47,11 @@ namespace IonS {
                 string text = File.ReadAllText(path).Replace("\r\n", "\n");
                 var lexingResult = new Lexer(text, path).run();
                 if(lexingResult.Error != null) return new PreprocessorResult(null, lexingResult.Error);
-                var incPreprocResult = new IncludePreprocessor(path, lexingResult.Words).run();
+
+                var commentResult = new CommentPreprocessor(lexingResult.Words).run();
+                if(commentResult.Error != null) return new PreprocessorResult(null, commentResult.Error);
+
+                var incPreprocResult = new IncludePreprocessor(path, commentResult.Words).run();
                 if(incPreprocResult.Error != null) return new PreprocessorResult(null, incPreprocResult.Error);
                 foreach(Word word in incPreprocResult.Words) {
                     Word includedFrom = _words[includes[i]+1];
