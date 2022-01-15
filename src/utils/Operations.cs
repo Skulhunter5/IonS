@@ -1114,9 +1114,9 @@ namespace IonS {
         }
     }
 
-    // Procedure call operation
+    // Return operation
 
-    sealed class ReturnOperation : Operation { // --
+    sealed class ReturnOperation : Operation {
         public ReturnOperation(Procedure procedure, Position position) : base(OperationType.Return, position) {
             Proc = procedure;
         }
