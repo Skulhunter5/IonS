@@ -1,5 +1,6 @@
-using System.Collections.Generic;
+using System;
 using System.Text;
+using System.Collections.Generic;
 
 namespace IonS {
 
@@ -375,14 +376,19 @@ namespace IonS {
             } else {
                 if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value, Current.Position));
                 else {
-                    Variable var = scope.GetVariable(Current.Text);
-                    if(var != null) operations.Add(new VariableAccessOperation(var.Id, Current.Position));
+                    // TODO: add overflow protection for binary and hexadecimal numbers
+                    if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 2), Current.Position));
+                    else if(Utils.hexadecimalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 16), Current.Position));
                     else {
-                        Procedure proc = GetProcedure(Current.Text, true);
-                        if(proc != null) {
-                            operations.Add(new ProcedureCallOperation(proc, Current.Position));
-                            UseProcedure(currentProcedure, proc);
-                        } else return new UnexpectedWordError(Current);
+                        Variable var = scope.GetVariable(Current.Text);
+                        if(var != null) operations.Add(new VariableAccessOperation(var.Id, Current.Position));
+                        else {
+                            Procedure proc = GetProcedure(Current.Text, true);
+                            if(proc != null) {
+                                operations.Add(new ProcedureCallOperation(proc, Current.Position));
+                                UseProcedure(currentProcedure, proc);
+                            } else return new UnexpectedWordError(Current);
+                        }
                     }
                 }
             }

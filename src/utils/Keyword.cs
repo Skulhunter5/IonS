@@ -32,6 +32,7 @@ namespace IonS {
             if(word.StartsWith("syscall")) return true;
             if(word.StartsWith("ctt")) return true;
             if(word.StartsWith("cast(")) return true;
+            if(Utils.binaryRegex.IsMatch(word) || Utils.hexadecimalRegex.IsMatch(word)) return false;
             foreach(string keyword in keywords) if(keyword == word) return true;
             return false;
         }
