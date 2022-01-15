@@ -1,0 +1,8 @@
+include "./../std/std.ions"
+
+3
+assert { dup 3 == } { "Invalid result\n" puts }
+
+"Hello, world!\n" puts
+
+drop
