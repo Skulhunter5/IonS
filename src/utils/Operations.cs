@@ -3,7 +3,7 @@ using System;
 namespace IonS {
 
     enum OperationType {
-        Push_bool, Push_uint8, Push_uint64,
+        Push_bool, Push_uint8, Push_uint64, Push_ptr,
         Increment, Decrement,
         Add, Subtract, Multiply, Divide, Modulo, DivMod,
         Min, Max,
@@ -115,6 +115,26 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.Provide(DataType.uint64, this);
+        }
+    }
+
+    sealed class Push_ptr_Operation : Operation { // -- n
+        public Push_ptr_Operation(ulong value, Position position) : base(OperationType.Push_ptr, position) {
+            Value = value;
+        }
+
+        public ulong Value { get; }
+        
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    push {uint64}
+                return "    push " + Value + "\n";
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(DataType.Pointer, this);
         }
     }
 

@@ -226,6 +226,7 @@ namespace IonS {
             else if(Current.Text == ".") operations.Add(new DumpOperation(Current.Position));
             else if(Current.Text == "true") operations.Add(new Push_uint64_Operation(1, Current.Position));
             else if(Current.Text == "false") operations.Add(new Push_uint64_Operation(0, Current.Position));
+            else if(Current.Text == "null") operations.Add(new Push_ptr_Operation(0, Current.Position));
             else if(Current.Text.StartsWith("ctt")) {
                 if(!int.TryParse(Current.Text.Substring(3, Current.Text.Length - 3), out int n) || n < 1) return new InvalidCTTIndexError(Current);
                 operations.Add(new CTTOperation(n, Current.Position));

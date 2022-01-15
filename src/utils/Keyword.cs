@@ -16,6 +16,7 @@ namespace IonS {
             "==", "!=", "<", ">", "<=", ">=",
             ".",
             "true", "false",
+            "null",
             "if", "else", "while", "do",
             "continue", "break",
             "macro",
