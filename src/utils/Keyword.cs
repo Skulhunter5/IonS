@@ -27,14 +27,19 @@ namespace IonS {
             "proc", "return", "inline",
             "assert",
         };
-        public static bool isReserved(string word) {
-            if(word.StartsWith("@") || word.StartsWith("!")) return true;
-            if(word.StartsWith("syscall")) return true;
-            if(word.StartsWith("ctt")) return true;
-            if(word.StartsWith("cast(")) return true;
-            if(Utils.binaryRegex.IsMatch(word) || Utils.hexadecimalRegex.IsMatch(word)) return false;
-            foreach(string keyword in keywords) if(keyword == word) return true;
-            return false;
+        public static bool isValidIdenfitier(string word) {
+            if(word.StartsWith("@") || word.StartsWith("!")) return false;
+            if(word.StartsWith("syscall")) return false;
+            if(word.StartsWith("ctt")) return false;
+            if(word.StartsWith("cast(")) return false;
+
+            if(Utils.binaryRegex.IsMatch(word)) return false;
+            if(Utils.octalRegex.IsMatch(word)) return false;
+            if(Utils.decimalRegex.IsMatch(word)) return false;
+            if(Utils.hexadecimalRegex.IsMatch(word)) return false;
+
+            foreach(string keyword in keywords) if(keyword == word) return false;
+            return true;
         }
     }
 

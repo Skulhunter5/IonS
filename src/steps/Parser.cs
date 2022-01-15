@@ -141,7 +141,7 @@ namespace IonS {
             if(Current == null) return new IncompleteProcedureError(procWord, null);
             Word name = Current;
             // TODO: Check that the name is valid for nasm aswell
-            if(Keyword.isReserved(name.Text) || long.TryParse(name.Text, out long _)) return new InvalidProcedureNameError(name);
+            if(!Keyword.isValidIdenfitier(name.Text)) return new InvalidProcedureNameError(name);
             NextWord();
 
             if(Current == null) return new IncompleteProcedureError(procWord, name);
@@ -300,7 +300,7 @@ namespace IonS {
 
                 Word identifier = Current;
                 // TODO: Check that the identifier is valid for nasm aswell
-                if(Keyword.isReserved(identifier.Text) || long.TryParse(identifier.Text, out long _)) return new InvalidVariableIdentifierError(identifier);
+                if(!Keyword.isValidIdenfitier(identifier.Text)) return new InvalidVariableIdentifierError(identifier);
                 
                 NextWord();
                 if(Current.Text == null) return new IncompleteVariableDeclarationError(varWord, identifier);
@@ -374,21 +374,20 @@ namespace IonS {
 
                 return null;
             } else {
-                if(ulong.TryParse(Current.Text, out ulong value)) operations.Add(new Push_uint64_Operation(value, Current.Position));
+                // TODO: add overflow protection for binary and hexadecimal numbers
+                if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 2), Current.Position));
+                else if(Utils.octalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(1, Current.Text.Length-1), 8), Current.Position));
+                else if(Utils.decimalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text, 10), Current.Position));
+                else if(Utils.hexadecimalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 16), Current.Position));
                 else {
-                    // TODO: add overflow protection for binary and hexadecimal numbers
-                    if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 2), Current.Position));
-                    else if(Utils.hexadecimalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 16), Current.Position));
+                    Variable var = scope.GetVariable(Current.Text);
+                    if(var != null) operations.Add(new VariableAccessOperation(var.Id, Current.Position));
                     else {
-                        Variable var = scope.GetVariable(Current.Text);
-                        if(var != null) operations.Add(new VariableAccessOperation(var.Id, Current.Position));
-                        else {
-                            Procedure proc = GetProcedure(Current.Text, true);
-                            if(proc != null) {
-                                operations.Add(new ProcedureCallOperation(proc, Current.Position));
-                                UseProcedure(currentProcedure, proc);
-                            } else return new UnexpectedWordError(Current);
-                        }
+                        Procedure proc = GetProcedure(Current.Text, true);
+                        if(proc != null) {
+                            operations.Add(new ProcedureCallOperation(proc, Current.Position));
+                            UseProcedure(currentProcedure, proc);
+                        } else return new UnexpectedWordError(Current);
                     }
                 }
             }

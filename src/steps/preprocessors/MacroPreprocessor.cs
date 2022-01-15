@@ -50,7 +50,7 @@ namespace IonS {
                     if(i++ == _words.Length-1) return new IncompleteMacroDefinitionError(word, null);
                     Word key = _words[i];
 
-                    if(Keyword.isReserved(key.Text) || long.TryParse(key.Text, out long _)) return new InvalidMacroKeyError(key);
+                    if(!Keyword.isValidIdenfitier(key.Text)) return new InvalidMacroKeyError(key);
 
                     if(i++ == _words.Length-2) return new IncompleteMacroDefinitionError(word, key);
 
