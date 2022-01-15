@@ -107,8 +107,14 @@ namespace IonS {
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                //    push {uint64}
-                return "    push " + Value + "\n";
+                if(Value > ((ulong) int.MaxValue)) {
+                    //    mov rax, {uint64}
+                    //    push rax
+                    return "    mov rax, " + Value + "\n    push rax\n";
+                } else {
+                    //    push {uint64}
+                    return "    push " + Value + "\n";
+                }
             }
             throw new NotImplementedException();
         }
