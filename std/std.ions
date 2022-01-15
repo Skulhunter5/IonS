@@ -59,27 +59,27 @@ proc streq ( uint64 ptr uint64 ptr -- bool ) {
 	swap 2swap 2rot dup rot
 	!= if {
 		2drop drop
-		0 return
+		false return
 	}
     dup 0 == if {
         2drop drop
-        1 return
+        true return
     }
     0 while { 2dup > } do {
         2swap 2rot 2dup + @8
         2swap 2dup + @8
         2swap 2rot != if {
             2drop 2drop
-            0 return
+            false return
         }
         rot 2swap
         ++
     }
     dup 0 > if {
         2drop 2drop
-        1 return
+        true return
     }
-    0
+    false
 }
 
 proc cstreq ( ptr ptr -- bool ) {
@@ -110,7 +110,7 @@ proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap 2rot
     2dup > if {
         2drop 2drop
-        0 return
+        false return
     }
     drop dup rot 2swap swap
     streq
@@ -120,7 +120,7 @@ proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap 2rot
     2dup > if {
         2drop 2drop
-        0 return
+        false return
     }
     over - rot +
     over swap 2swap swap
@@ -133,7 +133,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
     // ptr str len
     dup 20 > if {
         2drop drop
-        0 return
+        false return
     }
     // ptr str len
     rot 0 over !64
@@ -151,7 +151,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
         dup isDigit not if {
             // ptr len i str str[i]
             2drop 2drop drop
-            0 return
+            false return
         }
         // ptr len i str str[i]
         48 - rot5 dup @64 rot + over !64
@@ -162,7 +162,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
     }
     // ptr str len i
     2drop 2drop
-    1 return
+    true return
 }
 
 proc memcpy ( ptr ptr uint64 -- ) {
