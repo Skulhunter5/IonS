@@ -2,7 +2,6 @@ bin/**
 obj/**
 
 res/*
-!res/asm snippets
 
 tests/*.txt
 
