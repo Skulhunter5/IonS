@@ -1,24 +1,59 @@
 macro SYS_read 0
 macro SYS_write 1
+macro SYS_openat 257
 
 macro STDIN 0
 macro STDOUT 1
 
-inline proc fputs ( uint64 ptr uint64 -- ) {
+macro O_RDONLY 0
+macro O_WRONLY 1
+macro O_RDWR 2
+macro O_CREAT 0100
+macro O_EXCL 0200
+macro O_NOCTTY 0400
+macro O_TRUNC 01000
+macro O_APPEND 02000
+
+macro MAP_PRIVATE 0x02
+macro MAP_ANONYMOUS 0x20
+
+macro PROT_READ 0x1
+macro PROT_WRITE 0x2
+macro PROT_EXEC 0x4
+
+inline proc fputs ( uint64 ptr uint64 -- uint64 ) {
     SYS_write syscall3
 }
 
 inline proc puts ( uint64 ptr -- ) {
-    STDOUT fputs
+    STDOUT fputs drop
 }
 
 inline proc putc ( ptr -- ) {
     1 swap puts
 }
 
+inline proc openat ( uint64 ptr uint64 uint64 -- uint64 ) {
+    SYS_openat syscall4
+}
+
+proc !Str ( uint64 ptr ptr -- ) {
+    rot over !64
+    cast(uint64) 8 + cast(ptr)
+    swap cast(uint64) swap !64
+}
+proc @Str ( ptr -- uint64 ptr ) {
+    dup @64
+    swap
+    cast(uint64) 8 + cast(ptr) @64
+}
+
 proc cstrlen ( ptr -- uint64 ) {
+    cast(uint64)
 	dup
-	while { dup @8 } do ++
+	while { dup cast(ptr) @8 cast(bool) } do {
+        ++
+    }
 	swap -
 }
 
@@ -57,15 +92,15 @@ inline proc dec64 ( ptr -- ) {
 
 proc streq ( uint64 ptr uint64 ptr -- bool ) {
 	swap 2swap 2rot dup rot
-	!= if {
+	!= cast(bool) if {
 		2drop drop
 		false return
 	}
-    dup 0 == if {
+    dup 0 == cast(bool) if {
         2drop drop
         true return
     }
-    0 while { 2dup > } do {
+    0 while { 2dup > cast(bool) } do {
         2swap 2rot 2dup + @8
         2swap 2dup + @8
         2swap 2rot != if {
@@ -75,7 +110,7 @@ proc streq ( uint64 ptr uint64 ptr -- bool ) {
         rot 2swap
         ++
     }
-    dup 0 > if {
+    dup 0 > cast(bool) if {
         2drop 2drop
         true return
     }
@@ -87,6 +122,7 @@ proc cstreq ( ptr ptr -- bool ) {
 }
 
 proc isAlpha ( uint8 -- bool ) {
+    cast(uint64)
     dup 65 < swap
     dup 122 > rot || swap
     dup 90 > swap
@@ -95,6 +131,7 @@ proc isAlpha ( uint8 -- bool ) {
 }
 
 proc isDigit ( uint8 -- bool ) {
+    cast(uint64)
     dup 48 < swap
     57 >
     || not
@@ -108,7 +145,7 @@ proc isAlnum ( uint8 -- bool ) {
 
 proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap 2rot
-    2dup > if {
+    2dup > cast(bool) if {
         2drop 2drop
         false return
     }
@@ -118,7 +155,7 @@ proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
 
 proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap 2rot
-    2dup > if {
+    2dup > cast(bool) if {
         2drop 2drop
         false return
     }
@@ -131,7 +168,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
     // len str ptr
     2rot swap
     // ptr str len
-    dup 20 > if {
+    dup 20 > cast(bool) if {
         2drop drop
         false return
     }
@@ -140,7 +177,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
     // str len ptr
     2rot
     // ptr str len
-    0 while { 2dup > } do {
+    0 while { 2dup > cast(bool) } do {
         // ptr str len i
         2swap swap dup @64 10 * over !64
         // len i str ptr
@@ -148,7 +185,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
         // ptr str len i
         rot 2dup + @8
         // ptr len i str str[i]
-        dup isDigit not if {
+        dup isDigit cast(bool) not if {
             // ptr len i str str[i]
             2drop 2drop drop
             false return
@@ -167,9 +204,9 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
 
 proc memcpy ( ptr ptr uint64 -- ) {
     0 while { 2dup > } do {
-        rot 2dup +
-        rot rot5 2dup + @8
-        2swap 2rot !8
+        rot 2dup cast(uint64) +
+        rot rot5 2dup cast(uint64) + cast(ptr) @8
+        2swap 2rot cast(ptr) !8
         2swap 2rot swap
         ++
     }
@@ -178,6 +215,6 @@ proc memcpy ( ptr ptr uint64 -- ) {
 
 proc strcat ( uint64 ptr uint64 ptr ptr -- uint64 ptr ) {
     ctt4 over ctt7 memcpy
-    2dup ctt7 + ctt5 memcpy
+    2dup cast(uint64) ctt7 + cast(ptr) ctt5 memcpy
     2rot5 drop swap drop + swap
 }

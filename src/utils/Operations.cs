@@ -741,7 +741,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            Error error = contract.Require(new DataType[] {DataType.uint64, DataType.uint64}, this);
+            Error error = contract.Require(new DataType[] {DataType.boolean, DataType.boolean}, this);
             if(error != null) return error;
             return contract.Provide(DataType.boolean, this);
         }
@@ -768,7 +768,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            Error error = contract.Require(new DataType[] {DataType.uint64, DataType.uint64}, this);
+            Error error = contract.Require(new DataType[] {DataType.boolean, DataType.boolean}, this);
             if(error != null) return error;
             return contract.Provide(DataType.boolean, this);
         }
@@ -790,7 +790,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) { // TODONOW: do it right and for all sizes
-            return contract.CheckFor(DataType.uint64, this);
+            return contract.CheckFor(DataType.boolean, this);
         }
     }
 
@@ -878,7 +878,7 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContract contract) { // TODONOW: do it right and for all sizes
             Error error = contract.Require(new DataType[] {DataType.uint64, DataType.uint64}, this);
             if(error != null) return error;
-            return contract.Provide(DataType.uint64, this);
+            return contract.Provide(DataType.boolean, this);
         }
     }
 
