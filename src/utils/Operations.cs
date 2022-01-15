@@ -1060,9 +1060,13 @@ namespace IonS {
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    pop rax
+                //    ... push other arguments ...
+                //    syscall
+                //    push rax
                 string asm = "    pop rax\n";
                 for(int i = 0; i < Argc; i++) asm += "    pop " + Utils.SyscallRegisters[i] + "\n";
-                return asm + "    syscall\n";
+                return asm + "    syscall\n    push rax\n";
             }
             throw new NotImplementedException();
         }
@@ -1070,7 +1074,7 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() <= Argc) return new StackUnderflowError(this);
             for(int i = -1; i < Argc; i++) contract.Pop();
-            return null;
+            return contract.Provide(DataType.uint64, this);
         }
     }
 
