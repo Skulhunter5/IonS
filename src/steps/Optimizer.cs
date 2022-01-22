@@ -25,8 +25,9 @@ namespace IonS {
         }
 
         public CodeBlock run() {
-            OptimizeBlock(_root);
+            // TODO: optimize Inline Procedures even more by inlining them before optimization so it can optimize them where they are (maybe even: optimize inline procs, inline them, optimize code)
             foreach(Procedure proc in _procs.Values) OptimizeBlock(proc.Body);
+            OptimizeBlock(_root);
             return _root;
         }
 
