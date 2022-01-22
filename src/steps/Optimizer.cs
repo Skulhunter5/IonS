@@ -19,6 +19,7 @@ namespace IonS {
                     operations.Add(new DropOperation(n, null));
                 } else operations.Add(block.Operations[i]);
             }
+            block.Operations = operations;
         }
 
         public CodeBlock run() {
