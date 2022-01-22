@@ -447,7 +447,7 @@ namespace IonS {
             foreach(string proc in _procs.Keys) if(_procs[proc].IsInlined) toRemove.Add(proc);
             foreach(string proc in toRemove) _procs.Remove(proc);
             
-            new Optimizer(parseResult.Block).run();
+            new Optimizer(parseResult.Block, _procs).run();
 
             return new ParseResult(parseResult.Block, _strings, _vars, _procs, null);
         }

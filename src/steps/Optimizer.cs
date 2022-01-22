@@ -5,9 +5,11 @@ namespace IonS {
     class Optimizer {
 
         private readonly CodeBlock _root;
+        private readonly Dictionary<string, Procedure> _procs;
 
-        public Optimizer(CodeBlock root) {
+        public Optimizer(CodeBlock root, Dictionary<string, Procedure> procs) {
             _root = root;
+            _procs = procs;
         }
 
         private void OptimizeBlock(CodeBlock block) {
@@ -24,6 +26,7 @@ namespace IonS {
 
         public CodeBlock run() {
             OptimizeBlock(_root);
+            foreach(Procedure proc in _procs.Values) OptimizeBlock(proc.Body);
             return _root;
         }
 
