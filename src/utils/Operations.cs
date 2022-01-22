@@ -11,7 +11,7 @@ namespace IonS {
         And, Or,
         Comparison,
         Dump,
-        Drop, Drop2,
+        Drop,
         Dup, Dup2,
         Over, Over2,
         Swap, Swap2, Rotate, Rotate2, Rotate5, Rotate52,
@@ -147,37 +147,21 @@ namespace IonS {
     // Stack manipulation operations
 
     sealed class DropOperation : Operation { // a --
-        public DropOperation(Position position) : base(OperationType.Drop, position) {}
+        public DropOperation(int n, Position position) : base(OperationType.Drop, position) {
+            N = n;
+        }
         
+        public int N { get; }
+
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-               return "    add rsp, 8\n"; 
+               return "    add rsp, " + (8 * N) + "\n"; 
             }
             throw new NotImplementedException();
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
-            contract.Pop();
-            return null;
-        }
-    }
-
-    sealed class Drop2Operation : Operation { // a b --
-        public Drop2Operation(Position position) : base(OperationType.Drop2, position) {}
-        
-        public override string GenerateAssembly(Assembler assembler) {
-            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-               return "    add rsp, 16\n";
-            }
-            throw new NotImplementedException();
-        }
-
-        public override Error TypeCheck(TypeCheckContract contract) {
-            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
-            contract.Pop();
-            contract.Pop();
-            return null;
+            return contract.RemoveElements(N, this);
         }
     }
 

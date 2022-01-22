@@ -204,8 +204,8 @@ namespace IonS {
                 else return new InternalParserError("Forgot to add a new StringType in Parser.ParseOperation");
             } else if(Current.GetType() == typeof(CharWord)) operations.Add(new Push_uint8_Operation(Encoding.ASCII.GetBytes(""+Current.Text)[0], Current.Position));
             else if(Current.Text == "exit") operations.Add(new ExitOperation(Current.Position));
-            else if(Current.Text == "drop") operations.Add(new DropOperation(Current.Position));
-            else if(Current.Text == "2drop") operations.Add(new Drop2Operation(Current.Position));
+            else if(Current.Text == "drop") operations.Add(new DropOperation(1, Current.Position));
+            else if(Current.Text == "2drop") operations.Add(new DropOperation(2, Current.Position));
             else if(Current.Text == "dup") operations.Add(new DupOperation(Current.Position));
             else if(Current.Text == "2dup") operations.Add(new Dup2Operation(Current.Position));
             else if(Current.Text == "over") operations.Add(new OverOperation(Current.Position));
@@ -446,6 +446,8 @@ namespace IonS {
             List<string> toRemove = new List<string>();
             foreach(string proc in _procs.Keys) if(_procs[proc].IsInlined) toRemove.Add(proc);
             foreach(string proc in toRemove) _procs.Remove(proc);
+            
+            new Optimizer(parseResult.Block).run();
 
             return new ParseResult(parseResult.Block, _strings, _vars, _procs, null);
         }

@@ -23,6 +23,11 @@ namespace IonS {
             Stack.RemoveAt(Stack.Count-1);
             return dataType;
         }
+        public Error RemoveElements(int n, Operation operation) {
+            if(Stack.Count < n) return new StackUnderflowError(operation);
+            for(int i = 0; i < n; i++) Pop();
+            return null;
+        }
         public DataType Peek(int offset=0) {
             return Stack[Stack.Count-1 - offset];
         }

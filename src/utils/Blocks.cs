@@ -31,7 +31,7 @@ namespace IonS {
             End = null;
         }
 
-        public List<Operation> Operations { get; }
+        public List<Operation> Operations { get; set; }
         public Scope Scope { get; }
         public Position Start { get; set; }
         public Position End { get; set; }
