@@ -14,12 +14,21 @@ macro O_NOCTTY 0400
 macro O_TRUNC 01000
 macro O_APPEND 02000
 
+macro AT_FDCWD { 0 100 - }
+
 macro MAP_PRIVATE 0x02
 macro MAP_ANONYMOUS 0x20
 
 macro PROT_READ 0x1
 macro PROT_WRITE 0x2
 macro PROT_EXEC 0x4
+
+macro sizeof(bool) 1
+macro sizeof(uint8) 1
+macro sizeof(uint16) 2
+macro sizeof(uint32) 4
+macro sizeof(uint64) 8
+macro sizeof(ptr) 8
 
 inline proc fputs ( uint64 ptr uint64 -- uint64 ) {
     SYS_write syscall3
@@ -37,6 +46,7 @@ inline proc openat ( uint64 ptr uint64 uint64 -- uint64 ) {
     SYS_openat syscall4
 }
 
+macro sizeof(Str) 16
 proc !Str ( uint64 ptr ptr -- ) {
     rot over !64
     cast(uint64) 8 + cast(ptr)
@@ -92,15 +102,15 @@ inline proc dec64 ( ptr -- ) {
 
 proc streq ( uint64 ptr uint64 ptr -- bool ) {
 	swap 2swap 2rot dup rot
-	!= cast(bool) if {
+	!= if {
 		2drop drop
 		false return
 	}
-    dup 0 == cast(bool) if {
+    dup 0 == if {
         2drop drop
         true return
     }
-    0 while { 2dup > cast(bool) } do {
+    0 while { 2dup > } do {
         2swap 2rot 2dup + @8
         2swap 2dup + @8
         2swap 2rot != if {
@@ -110,7 +120,7 @@ proc streq ( uint64 ptr uint64 ptr -- bool ) {
         rot 2swap
         ++
     }
-    dup 0 > cast(bool) if {
+    dup 0 > if {
         2drop 2drop
         true return
     }
@@ -145,7 +155,7 @@ proc isAlnum ( uint8 -- bool ) {
 
 proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap 2rot
-    2dup > cast(bool) if {
+    2dup > if {
         2drop 2drop
         false return
     }
@@ -155,7 +165,7 @@ proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
 
 proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap 2rot
-    2dup > cast(bool) if {
+    2dup > if {
         2drop 2drop
         false return
     }
@@ -168,7 +178,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
     // len str ptr
     2rot swap
     // ptr str len
-    dup 20 > cast(bool) if {
+    dup 20 > if {
         2drop drop
         false return
     }
@@ -177,7 +187,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
     // str len ptr
     2rot
     // ptr str len
-    0 while { 2dup > cast(bool) } do {
+    0 while { 2dup > } do {
         // ptr str len i
         2swap swap dup @64 10 * over !64
         // len i str ptr
@@ -185,7 +195,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
         // ptr str len i
         rot 2dup + @8
         // ptr len i str str[i]
-        dup isDigit cast(bool) not if {
+        dup isDigit not if {
             // ptr len i str str[i]
             2drop 2drop drop
             false return
