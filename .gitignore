@@ -1,6 +1,8 @@
 bin/**
 obj/**
 
+.vscode/**
+
 res/*
 
 tests/*.txt
