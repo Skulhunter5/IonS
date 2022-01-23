@@ -24,9 +24,7 @@ macro PROT_WRITE 0x2
 macro PROT_EXEC 0x4
 
 macro sizeof(bool) 1
-macro sizeof(uint8) 1
-macro sizeof(uint16) 2
-macro sizeof(uint32) 4
+macro sizeof(uint) 8
 macro sizeof(uint64) 8
 macro sizeof(ptr) 8
 
@@ -131,8 +129,7 @@ proc cstreq ( ptr ptr -- bool ) {
 	dup cstrlen swap rot dup cstrlen swap streq
 }
 
-proc isAlpha ( uint8 -- bool ) {
-    cast(uint64)
+proc isAlpha ( uint64 -- bool ) {
     dup 65 < swap
     dup 122 > rot || swap
     dup 90 > swap
@@ -140,14 +137,13 @@ proc isAlpha ( uint8 -- bool ) {
     && || not
 }
 
-proc isDigit ( uint8 -- bool ) {
-    cast(uint64)
+proc isDigit ( uint64 -- bool ) {
     dup 48 < swap
     57 >
     || not
 }
 
-proc isAlnum ( uint8 -- bool ) {
+proc isAlnum ( uint64 -- bool ) {
     dup isAlpha swap
     isDigit
     ||

@@ -3,7 +3,7 @@ using System;
 namespace IonS {
 
     enum OperationType {
-        Push_bool, Push_uint8, Push_uint64, Push_ptr,
+        Push_bool, Push_uint64, Push_ptr,
         Increment, Decrement,
         Add, Subtract, Multiply, Divide, Modulo, DivMod,
         Min, Max,
@@ -77,26 +77,6 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.Provide(DataType.boolean, this);
-        }
-    }
-
-    sealed class Push_uint8_Operation : Operation { // -- n
-        public Push_uint8_Operation(byte value, Position position) : base(OperationType.Push_uint8, position) {
-            Value = value;
-        }
-
-        public byte Value { get; }
-        
-        public override string GenerateAssembly(Assembler assembler) {
-            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                //    push {uint8}
-                return "    push " + Value + "\n";
-            }
-            throw new NotImplementedException();
-        }
-
-        public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.uint8, this);
         }
     }
 
@@ -597,9 +577,9 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
             return contract.Provide(dataType, this);
         }
     }
@@ -910,7 +890,7 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
-            Error error = contract.Require(DataType.uint8, this);
+            Error error = contract.Require(DataType.uint64, this);
             if(error != null) return error;
             if(!contract.IsEmpty()) Console.WriteLine("[TypeChecker] Warning: excess data on the stack after exit: [" + String.Join(", ", contract.Stack) + "]");  // Error-Warning-System
             return null;
