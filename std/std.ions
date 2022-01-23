@@ -32,11 +32,11 @@ inline proc fputs ( uint64 ptr uint64 -- uint64 ) {
     SYS_write syscall3
 }
 
-inline proc puts ( uint64 ptr -- ) {
+inline proc puts ( uint64 ptr ) {
     STDOUT fputs drop
 }
 
-inline proc putc ( ptr -- ) {
+inline proc putc ( ptr ) {
     1 swap puts
 }
 
@@ -45,7 +45,7 @@ inline proc openat ( uint64 ptr uint64 uint64 -- uint64 ) {
 }
 
 macro sizeof(Str) 16
-proc !Str ( uint64 ptr ptr -- ) {
+proc !Str ( uint64 ptr ptr ) {
     rot over !64
     cast(uint64) 8 + cast(ptr)
     swap cast(uint64) swap !64
@@ -65,7 +65,7 @@ proc cstrlen ( ptr -- uint64 ) {
 	swap -
 }
 
-inline proc cputs ( ptr -- ) {
+inline proc cputs ( ptr ) {
 	dup cstrlen swap puts
 }
 
@@ -73,28 +73,28 @@ inline proc clamp ( uint64 uint64 uint64 -- uint64 ) {
     rot min max
 }
 
-inline proc inc8 ( ptr -- ) {
+inline proc inc8 ( ptr ) {
 	dup @8 ++ swap !8
 }
-inline proc dec8 ( ptr -- ) {
+inline proc dec8 ( ptr ) {
 	dup @8 -- swap !8
 }
-inline proc inc16 ( ptr -- ) {
+inline proc inc16 ( ptr ) {
 	dup @16 ++ swap !16
 }
-inline proc dec16 ( ptr -- ) {
+inline proc dec16 ( ptr ) {
 	dup @16 -- swap !16
 }
-inline proc inc32 ( ptr -- ) {
+inline proc inc32 ( ptr ) {
 	dup @32 ++ swap !32
 }
-inline proc dec32 ( ptr -- ) {
+inline proc dec32 ( ptr ) {
 	dup @32 -- swap !32
 }
-inline proc inc64 ( ptr -- ) {
+inline proc inc64 ( ptr ) {
 	dup @64 ++ swap !64
 }
-inline proc dec64 ( ptr -- ) {
+inline proc dec64 ( ptr ) {
 	dup @64 -- swap !64
 }
 
@@ -208,7 +208,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
     true return
 }
 
-proc memcpy ( ptr ptr uint64 -- ) {
+proc memcpy ( ptr ptr uint64 ) {
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
         rot rot5 2dup cast(uint64) + cast(ptr) @8

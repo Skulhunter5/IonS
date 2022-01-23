@@ -162,25 +162,28 @@ namespace IonS {
             NextWord();
 
             if(Current == null) return new IncompleteProcedureError(procWord, name);
-            if(Current.Text != "(" || Current.GetType() == typeof(StringWord) || Current.GetType() == typeof(CharWord)) return new InvalidProcedureParametersError(name, Current);
-            NextWord();
+            if(Current.GetType() == typeof(StringWord) || Current.GetType() == typeof(CharWord)) return new InvalidProcedureParametersError(name, Current);
             bool dir = false;
             List<DataType> Args = new List<DataType>();
             List<DataType> Rets = new List<DataType>();
-            while(Current.Text != ")" && Current.GetType() != typeof(StringWord) && Current != null) {
-                if(Current.Text == "--") {
-                    if(dir) return new InvalidProcedureParametersError(name, Current);
-                    else dir = true;
-                } else {
-                    if(!EDataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
-                    if(dir) Rets.Add(dataType);
-                    else Args.Add(dataType);
-                }
+            if(Current.Text == "()") NextWord();
+            else if(Current.Text == "(") {
                 NextWord();
-            }
-            if(Current == null) return new EOFInProcedureParametersError(name);
-            if(Current.Text != ")" || Current.GetType() == typeof(StringWord)) return new InvalidProcedureParametersError(name, Current);
-            NextWord();
+                while(Current.Text != ")" && Current.GetType() != typeof(StringWord) && Current != null) {
+                    if(Current.Text == "--") {
+                        if(dir) return new InvalidProcedureParametersError(name, Current);
+                        else dir = true;
+                    } else {
+                        if(!EDataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+                        if(dir) Rets.Add(dataType);
+                        else Args.Add(dataType);
+                    }
+                    NextWord();
+                }
+                if(Current == null) return new EOFInProcedureParametersError(name);
+                if(Current.Text != ")" || Current.GetType() == typeof(StringWord)) return new InvalidProcedureParametersError(name, Current);
+                NextWord();
+            } else return new InvalidProcedureParametersError(name, Current);
 
             Procedure proc = new Procedure(name, Args.ToArray(), Rets.ToArray(), null, isInlined);
             Error error = RegisterProcedure(proc);
