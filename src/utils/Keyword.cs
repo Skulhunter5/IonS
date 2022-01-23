@@ -24,7 +24,7 @@ namespace IonS {
             "continue", "break",
             "macro",
             "var",
-            "include",
+            "#include",
             "here", "chere",
             "{", "}",
             "proc", "return", "inline",

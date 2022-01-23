@@ -1,4 +1,4 @@
-include "./../std/std.ions"
+#include "./../std/std.ions"
 
 3
 assert { dup 3 == } { "Invalid result\n" puts }
