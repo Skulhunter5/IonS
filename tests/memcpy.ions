@@ -2,30 +2,32 @@
 
 12345
 
-var test1 32
-var test2 32
+macro N 100
 
-32 0 while { 2dup > } do {
-    // size i
+var test1 N
+var test2 N
+
+N 0 while { 2dup > } do {
+    // N i
     dup dup test1 + !8
     ++
 } 2drop
 
-test1 test2 32 memcpy
+test2 test1 N memcpy
 
-32 0 while { 2dup > } do {
-    // 32 i
+N 0 while { 2dup > } do {
+    // N i
     dup test1 + @8 .
-    // 32 i
+    // N i
     ++
 } 2drop
 
 "-----\n" puts
 
-32 0 while { 2dup > } do {
-    // 32 i
+N 0 while { 2dup > } do {
+    // N i
     dup test2 + @8 .
-    // 32 i
+    // N i
     ++
 } 2drop
 

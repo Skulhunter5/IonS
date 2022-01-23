@@ -208,7 +208,8 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
     true return
 }
 
-proc memcpy ( ptr ptr uint64 ) {
+proc memcpy8 ( ptr ptr uint64 ) {
+    2rot swap rot
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
         rot rot5 2dup cast(uint64) + cast(ptr) @8
@@ -217,6 +218,60 @@ proc memcpy ( ptr ptr uint64 ) {
         ++
     }
     2drop 2drop
+}
+
+proc memcpy16 ( ptr ptr uint64 ) {
+    2rot swap rot
+    0 while { 2dup > } do {
+        rot 2dup cast(uint64) +
+        rot rot5 2dup cast(uint64) + cast(ptr) @16
+        2swap 2rot cast(ptr) !16
+        2swap 2rot swap
+        2 +
+    }
+    2drop 2drop
+}
+
+proc memcpy32 ( ptr ptr uint64 ) {
+    2rot swap rot
+    0 while { 2dup > } do {
+        rot 2dup cast(uint64) +
+        rot rot5 2dup cast(uint64) + cast(ptr) @32
+        2swap 2rot cast(ptr) !32
+        2swap 2rot swap
+        4 +
+    }
+    2drop 2drop
+}
+
+proc memcpy64 ( ptr ptr uint64 ) {
+    2rot swap rot
+    0 while { 2dup > } do {
+        rot 2dup cast(uint64) +
+        rot rot5 2dup cast(uint64) + cast(ptr) @64
+        2swap 2rot cast(ptr) !64
+        2swap 2rot swap
+        8 +
+    }
+    2drop 2drop
+}
+
+proc memcpy ( ptr ptr uint64 ) {
+    // dest src n
+    8 /% swap 8 *
+    // dest src n%8 n//8*8
+    swap over
+    // dest src n//8*8 n%8 n//8*8
+    ctt5 ctt5
+    // dest src n//8*8 n%8 n//8*8 dest src
+    2rot over +
+    // dest src n//8*8 n%8 src n//8*8 ndest
+    2rot +
+    // dest src n//8*8 n%8 ndest nsrc
+    rot memcpy8
+    // dest src n//8*8
+    memcpy64
+    // 
 }
 
 proc strcat ( uint64 ptr uint64 ptr ptr -- uint64 ptr ) {
