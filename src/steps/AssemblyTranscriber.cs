@@ -35,8 +35,14 @@ namespace IonS {
                 var root = result.Root;
 
                 // Begin data segment
-                if(assembler == Assembler.nasm_linux_x86_64 && result.Variables.Count > 0) asm += "segment .bss\n";
-                else if(assembler == Assembler.fasm_linux_x86_64 && (result.Variables.Count > 0 || result.Strings.Count > 0)) asm += "segment readable writeable\n";
+                if(assembler == Assembler.nasm_linux_x86_64) {
+                    asm += "segment .bss\n";
+                    asm += "    argc: resq 1\n    args_ptr: resq 1\n";
+                }
+                else {
+                    asm += "segment readable writeable\n";
+                    asm += "    argc: rq 1\n    args_ptr: rq 1\n";
+                }
 
                 foreach(Variable var in result.Variables) asm += var.GenerateAssembly(assembler);
                 foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += var.GenerateAssembly(assembler);
@@ -61,6 +67,11 @@ namespace IonS {
 
                 if(assembler == Assembler.nasm_linux_x86_64) asm += "global _start\n_start:\n";
                 else asm += "entry _start\n_start:\n";
+
+                asm += "    mov rax, [rsp]\n";
+                asm += "    mov [argc], rax\n";
+                asm += "    mov [args_ptr], rsp\n";
+                asm += "    add QWORD [args_ptr], 8\n";
 
                 // Actual code
                 asm += root.GenerateAssembly(Assembler.fasm_linux_x86_64);

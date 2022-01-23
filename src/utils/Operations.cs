@@ -30,6 +30,8 @@ namespace IonS {
         Assert,
 
         Cast,
+
+        Argc, Argv,
     }
 
     enum Direction2 {
@@ -1208,6 +1210,40 @@ namespace IonS {
             if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
             contract.Pop();
             return contract.Provide(DataType, this);
+        }
+    }
+
+    // Argument operations
+
+    sealed class ArgcOperation : Operation {
+        public ArgcOperation(Position position) : base(OperationType.Argc, position) {}
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    push [argc]
+                return "    push QWORD[argc]\n";
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(DataType.uint64, this);
+        }
+    }
+
+    sealed class ArgvOperation : Operation {
+        public ArgvOperation(Position position) : base(OperationType.Argv, position) {}
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    push [args_ptr]
+                return "    push QWORD[args_ptr]\n";
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(DataType.Pointer, this);
         }
     }
 
