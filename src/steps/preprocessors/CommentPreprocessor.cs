@@ -10,7 +10,7 @@ namespace IonS {
             _words = words;
         }
 
-        public PreprocessorResult run() {
+        public PreprocessorResult run() { // TODO: Implement nested block comments
             List<Word> words = new List<Word>();
             for(int i = 0; i < _words.Length; i++) {
                 Word word = _words[i];
