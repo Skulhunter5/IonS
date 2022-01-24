@@ -215,10 +215,10 @@ namespace IonS {
             else if(Current.Text == "2over") operations.Add(new Over2Operation(Current.Position));
             else if(Current.Text == "swap") operations.Add(new SwapOperation(Current.Position));
             else if(Current.Text == "2swap") operations.Add(new Swap2Operation(Current.Position));
-            else if(Current.Text == "rot") operations.Add(new RotateOperation(Current.Position));
-            else if(Current.Text == "2rot") operations.Add(new Rotate2Operation(Current.Position));
-            else if(Current.Text == "rot5") operations.Add(new Rotate5Operation(Current.Position));
-            else if(Current.Text == "2rot5") operations.Add(new Rotate52Operation(Current.Position));
+            else if(Current.Text == "rot") operations.Add(new RotOperation(Current.Position));
+            else if(Current.Text == "rrot") operations.Add(new RRotOperation(Current.Position));
+            else if(Current.Text == "rot5") operations.Add(new Rot5Operation(Current.Position));
+            else if(Current.Text == "rrot5") operations.Add(new RRot5Operation(Current.Position));
             else if(Current.Text == "++") operations.Add(new IncrementOperation(Current.Position));
             else if(Current.Text == "--") operations.Add(new DecrementOperation(Current.Position));
             else if(Current.Text == "+") operations.Add(new AddOperation(Current.Position));

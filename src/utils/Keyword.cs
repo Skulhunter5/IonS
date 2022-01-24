@@ -11,7 +11,7 @@ namespace IonS {
             "dup", "2dup",
             "over", "2over",
             "swap", "2swap",
-            "rot", "2rot", "rot5", "2rot5",
+            "rot", "rrot", "rot5", "rrot5",
             "+", "-", "*", "/", "%", "/%",
             "<<", ">>", "&", "|", "^", "inv",
             "&&", "||", "not",

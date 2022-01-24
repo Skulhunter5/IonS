@@ -14,7 +14,7 @@ namespace IonS {
         Drop,
         Dup, Dup2,
         Over, Over2,
-        Swap, Swap2, Rotate, Rotate2, Rotate5, Rotate52,
+        Swap, Swap2, Rot, RRot, Rot5, RRot5,
         CTT,
         Exit,
         VariableAccess,
@@ -272,8 +272,8 @@ namespace IonS {
         }
     }
 
-    sealed class RotateOperation : Operation { // a b c -- b c a
-        public RotateOperation(Position position) : base(OperationType.Rotate, position) {}
+    sealed class RotOperation : Operation { // a b c -- b c a
+        public RotOperation(Position position) : base(OperationType.Rot, position) {}
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
@@ -297,8 +297,8 @@ namespace IonS {
         }
     }
 
-    sealed class Rotate2Operation : Operation { // a b c -- c a b
-        public Rotate2Operation(Position position) : base(OperationType.Rotate2, position) {}
+    sealed class RRotOperation : Operation { // a b c -- c a b
+        public RRotOperation(Position position) : base(OperationType.RRot, position) {}
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
@@ -322,8 +322,8 @@ namespace IonS {
         }
     }
 
-    sealed class Rotate5Operation : Operation { // a b c d e -- b c d e a
-        public Rotate5Operation(Position position) : base(OperationType.Rotate5, position) {}
+    sealed class Rot5Operation : Operation { // a b c d e -- b c d e a
+        public Rot5Operation(Position position) : base(OperationType.Rot5, position) {}
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
@@ -353,8 +353,8 @@ namespace IonS {
         }
     }
 
-    sealed class Rotate52Operation : Operation { // a b c d e -- e a b c d
-        public Rotate52Operation(Position position) : base(OperationType.Rotate52, position) {}
+    sealed class RRot5Operation : Operation { // a b c d e -- e a b c d
+        public RRot5Operation(Position position) : base(OperationType.RRot5, position) {}
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {

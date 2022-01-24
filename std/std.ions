@@ -99,7 +99,7 @@ inline proc dec64 ( ptr ) {
 }
 
 proc streq ( uint64 ptr uint64 ptr -- bool ) {
-	swap 2swap 2rot dup rot
+	swap 2swap rrot dup rot
 	!= if {
 		2drop drop
 		false return
@@ -109,9 +109,9 @@ proc streq ( uint64 ptr uint64 ptr -- bool ) {
         true return
     }
     0 while { 2dup > } do {
-        2swap 2rot 2dup + @8
+        2swap rrot 2dup + @8
         2swap 2dup + @8
-        2swap 2rot != if {
+        2swap rrot != if {
             2drop 2drop
             false return
         }
@@ -150,7 +150,7 @@ proc isAlnum ( uint64 -- bool ) {
 }
 
 proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
-    swap 2swap 2rot
+    swap 2swap rrot
     2dup > if {
         2drop 2drop
         false return
@@ -160,7 +160,7 @@ proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
 }
 
 proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
-    swap 2swap 2rot
+    swap 2swap rrot
     2dup > if {
         2drop 2drop
         false return
@@ -172,7 +172,7 @@ proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
 
 proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going over the maximum uint64 value
     // len str ptr
-    2rot swap
+    rrot swap
     // ptr str len
     dup 20 > if {
         2drop drop
@@ -181,7 +181,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
     // ptr str len
     rot 0 over !64
     // str len ptr
-    2rot
+    rrot
     // ptr str len
     0 while { 2dup > } do {
         // ptr str len i
@@ -209,48 +209,48 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going ove
 }
 
 proc memcpy8 ( ptr ptr uint64 ) {
-    2rot swap rot
+    rrot swap rot
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
         rot rot5 2dup cast(uint64) + cast(ptr) @8
-        2swap 2rot cast(ptr) !8
-        2swap 2rot swap
+        2swap rrot cast(ptr) !8
+        2swap rrot swap
         ++
     }
     2drop 2drop
 }
 
 proc memcpy16 ( ptr ptr uint64 ) {
-    2rot swap rot
+    rrot swap rot
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
         rot rot5 2dup cast(uint64) + cast(ptr) @16
-        2swap 2rot cast(ptr) !16
-        2swap 2rot swap
+        2swap rrot cast(ptr) !16
+        2swap rrot swap
         2 +
     }
     2drop 2drop
 }
 
 proc memcpy32 ( ptr ptr uint64 ) {
-    2rot swap rot
+    rrot swap rot
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
         rot rot5 2dup cast(uint64) + cast(ptr) @32
-        2swap 2rot cast(ptr) !32
-        2swap 2rot swap
+        2swap rrot cast(ptr) !32
+        2swap rrot swap
         4 +
     }
     2drop 2drop
 }
 
 proc memcpy64 ( ptr ptr uint64 ) {
-    2rot swap rot
+    rrot swap rot
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
         rot rot5 2dup cast(uint64) + cast(ptr) @64
-        2swap 2rot cast(ptr) !64
-        2swap 2rot swap
+        2swap rrot cast(ptr) !64
+        2swap rrot swap
         8 +
     }
     2drop 2drop
@@ -264,9 +264,9 @@ proc memcpy ( ptr ptr uint64 ) {
     // dest src n//8*8 n%8 n//8*8
     ctt5 ctt5
     // dest src n//8*8 n%8 n//8*8 dest src
-    2rot over +
+    rrot over +
     // dest src n//8*8 n%8 src n//8*8 ndest
-    2rot +
+    rrot +
     // dest src n//8*8 n%8 ndest nsrc
     rot memcpy8
     // dest src n//8*8
@@ -277,5 +277,5 @@ proc memcpy ( ptr ptr uint64 ) {
 proc strcat ( uint64 ptr uint64 ptr ptr -- uint64 ptr ) {
     ctt4 over ctt7 memcpy
     2dup cast(uint64) ctt7 + cast(ptr) ctt5 memcpy
-    2rot5 drop swap drop + swap
+    rrot5 drop swap drop + swap
 }
