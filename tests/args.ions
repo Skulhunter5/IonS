@@ -1,0 +1,7 @@
+#include "./../std/std.ions"
+
+argc .
+argc 0 while { 2dup > } do {
+    dup 8 * argv cast(uint64) + cast(ptr) @64 cast(ptr) cputs "\n" puts
+    ++
+} 2drop
