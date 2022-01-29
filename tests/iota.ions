@@ -1,12 +1,12 @@
-macro a iota
-macro b iota
-macro c iota
-macro d iota
-macro count reset
+#macro a iota
+#macro b iota
+#macro c iota
+#macro d iota
+#macro count reset
 
-macro e iota
-macro f iota
-macro count2 reset
+#macro e iota
+#macro f iota
+#macro count2 reset
 
 a .
 b .

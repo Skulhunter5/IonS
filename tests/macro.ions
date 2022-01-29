@@ -1,5 +1,5 @@
-macro test1 2
-macro test2 {
+#macro test1 2
+#macro test2 {
     1 2 + dup .
 }
 1 .

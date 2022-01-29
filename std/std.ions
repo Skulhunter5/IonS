@@ -1,32 +1,32 @@
-macro SYS_read 0
-macro SYS_write 1
-macro SYS_openat 257
+#macro SYS_read 0
+#macro SYS_write 1
+#macro SYS_openat 257
 
-macro STDIN 0
-macro STDOUT 1
+#macro STDIN 0
+#macro STDOUT 1
 
-macro O_RDONLY 0
-macro O_WRONLY 1
-macro O_RDWR 2
-macro O_CREAT 0100
-macro O_EXCL 0200
-macro O_NOCTTY 0400
-macro O_TRUNC 01000
-macro O_APPEND 02000
+#macro O_RDONLY 0
+#macro O_WRONLY 1
+#macro O_RDWR 2
+#macro O_CREAT 0100
+#macro O_EXCL 0200
+#macro O_NOCTTY 0400
+#macro O_TRUNC 01000
+#macro O_APPEND 02000
 
-macro AT_FDCWD { 0 100 - }
+#macro AT_FDCWD { 0 100 - }
 
-macro MAP_PRIVATE 0x02
-macro MAP_ANONYMOUS 0x20
+#macro MAP_PRIVATE 0x02
+#macro MAP_ANONYMOUS 0x20
 
-macro PROT_READ 0x1
-macro PROT_WRITE 0x2
-macro PROT_EXEC 0x4
+#macro PROT_READ 0x1
+#macro PROT_WRITE 0x2
+#macro PROT_EXEC 0x4
 
-macro sizeof(bool) 1
-macro sizeof(uint) 8
-macro sizeof(uint64) 8
-macro sizeof(ptr) 8
+#macro sizeof(bool) 1
+#macro sizeof(uint) 8
+#macro sizeof(uint64) 8
+#macro sizeof(ptr) 8
 
 inline proc fputs ( uint64 ptr uint64 -- uint64 ) {
     SYS_write syscall3
@@ -44,7 +44,7 @@ inline proc openat ( uint64 ptr uint64 uint64 -- uint64 ) {
     SYS_openat syscall4
 }
 
-macro sizeof(Str) 16
+#macro sizeof(Str) 16
 proc !Str ( uint64 ptr ptr ) {
     rot over !64
     cast(uint64) 8 + cast(ptr)

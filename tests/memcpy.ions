@@ -2,7 +2,7 @@
 
 12345
 
-macro N 100
+#macro N 100
 
 var test1 N
 var test2 N
