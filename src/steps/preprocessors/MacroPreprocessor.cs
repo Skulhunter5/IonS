@@ -46,7 +46,7 @@ namespace IonS {
             _macros = new Dictionary<string, Macro>();
             for(int i = 0; i < _words.Length; i++) {
                 Word word = _words[i];
-                if(word.Text == "macro") {
+                if(word.Text == "#macro") {
                     if(i++ == _words.Length-1) return new IncompleteMacroDefinitionError(word, null);
                     Word key = _words[i];
 

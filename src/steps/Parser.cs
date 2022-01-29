@@ -422,19 +422,10 @@ namespace IonS {
         public ParseResult Parse() {
             var lexingResult = new Lexer(_text, _source).run();
             if(lexingResult.Error != null) return new ParseResult(null, null, null, null, lexingResult.Error);
-            _words = lexingResult.Words;
-
-            var commentResult = new CommentPreprocessor(_words).run();
-            if(commentResult.Error != null) return new ParseResult(null, null, null, null, commentResult.Error);
-            _words = commentResult.Words;
-
-            var includeResult = new IncludePreprocessor(_source, _words).run();
-            if(includeResult.Error != null) return new ParseResult(null, null, null, null, includeResult.Error);
-            _words = includeResult.Words;
-
-            var macroResult = new MacroPreprocessor(_words).run();
-            if(macroResult.Error != null) return new ParseResult(null, null, null, null, macroResult.Error);
-            _words = macroResult.Words;
+            
+            var preprocessorResult = new Preprocessor(_source, lexingResult.Words).run();
+            if(preprocessorResult.Error != null) return new ParseResult(null, null, null, null, preprocessorResult.Error);
+            _words = preprocessorResult.Words;
 
             _vars = new List<Variable>();
             _procs = new Dictionary<string, Procedure>();
