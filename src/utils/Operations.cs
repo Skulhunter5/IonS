@@ -50,7 +50,7 @@ namespace IonS {
         public OperationType Type { get; }
         public Position Position { get; }
 
-        public override string ToString() { // TODO: add ToString() for all Operations
+        public override string ToString() {
             return "Operation:" + Type.ToString() + " at " + Position;
         }
 
@@ -761,7 +761,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) { // TODONOW: do it right and for all sizes
+        public override Error TypeCheck(TypeCheckContract contract) {
             return contract.CheckFor(DataType.boolean, this);
         }
     }
@@ -944,7 +944,7 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContract contract) {
             Error error = contract.Require(DataType.Pointer, this);
             if(error != null) return error;
-            return contract.Provide(DataType.uint64, this); // TODONOW: change to work for all amounts
+            return contract.Provide(DataType.uint64, this);
         }
     }
 
@@ -971,7 +971,7 @@ namespace IonS {
 
         private static DataType[] required = new DataType[] {DataType.uint64, DataType.Pointer};
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Require(required, this); // TODONOW: change to work for all amounts
+            return contract.Require(required, this);
         }
     }
 
@@ -1073,7 +1073,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) { // TODONOW: see if this works
+        public override Error TypeCheck(TypeCheckContract contract) {
             Error error = contract.Require(Proc.Args, this);
             if(error != null) return error;
             return contract.Provide(Proc.Rets, this);

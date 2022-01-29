@@ -28,7 +28,7 @@ namespace IonS {
             return temp;
         }
 
-        public PreprocessorResult run() { // TODO: add something like #pragma once or generally only include a file once
+        public PreprocessorResult run() {
             List<Word> words = new List<Word>();
             List<int> includes = new List<int>();
             for(int j = 0; j < _words.Length; j++) if(_words[j].Text == "#include") includes.Add(j);

@@ -170,7 +170,7 @@ proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
     streq
 }
 
-proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it not going over the maximum uint64 value
+proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it going over the maximum uint64 value
     // len str ptr
     rrot swap
     // ptr str len

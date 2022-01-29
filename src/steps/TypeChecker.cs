@@ -14,7 +14,7 @@ namespace IonS {
             _procs = procs;
         }
 
-        public Error run() { // TODO: TypeCheck Procedures
+        public Error run() {
             Error error;
 
             foreach(Procedure procedure in _procs.Values) {
