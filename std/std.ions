@@ -101,7 +101,7 @@ inline proc dec64 ( ptr ) {
 	dup @64 -- swap !64
 }
 
-proc streq ( uint64 ptr uint64 ptr -- bool ) {
+proc streq ( uint64 ptr uint64 ptr -- bool ) { // TODO: maybe add up all individual char differences (has to be unsigned/absolute value) and check if this is zero
 	swap 2swap rrot dup rot
 	!= if {
 		2drop drop
