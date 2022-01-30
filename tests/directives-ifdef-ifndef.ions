@@ -1,0 +1,31 @@
+0 .
+
+#define TEST
+
+1 .
+
+#ifdef TEST
+2 .
+#endif
+
+#ifndef TEST
+3 .
+#endif
+
+4 .
+
+5 .
+
+#define TEST3
+
+6 .
+
+#ifdef TEST2
+7 .
+#endif
+
+#ifndef TEST2
+8 .
+#endif
+
+9 .

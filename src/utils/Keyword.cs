@@ -34,6 +34,8 @@ namespace IonS {
         };
 
         public static bool isValidIdenfitier(string word) {
+            if(word.StartsWith("#")) return false;
+
             if(Utils.readBytesRegex.IsMatch(word) || Utils.writeBytesRegex.IsMatch(word)) return false;
 
             if(word.StartsWith("syscall")) return false;

@@ -1,3 +1,6 @@
+#ifndef STD_LIB
+#define STD_LIB
+
 #macro SYS_read 0
 #macro SYS_write 1
 #macro SYS_openat 257
@@ -279,3 +282,5 @@ proc strcat ( uint64 ptr uint64 ptr ptr -- uint64 ptr ) {
     2dup cast(uint64) ctt7 + cast(ptr) ctt5 memcpy
     rrot5 drop swap drop + swap
 }
+
+#endif

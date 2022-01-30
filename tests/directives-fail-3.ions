@@ -1,0 +1,5 @@
+#define TEST
+
+#ifdef TEST
+1 . 
+"Hello, world!\n" cast(uint64) . .

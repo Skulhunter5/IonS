@@ -102,11 +102,6 @@ namespace IonS {
                 if(index == -1) return new SingleWordResult(null, new EOFInStringLiteralError(position));
             }
 
-            if(c == '/' && GetChar(1) == '/') {
-                index = Find('\n');
-                if(index == -1) return null;
-                return NextWord();
-            }
             index = FindWhiteSpace();
             if(index == -1) return new SingleWordResult(new Word(position, _text.Substring(start, _text.Length - start)), null);
 

@@ -17,6 +17,12 @@ namespace IonS {
         }
     }
 
+    abstract class PreprocessorError : Error {
+        public override string ToString() {
+            return "[PreprocessorError]: ";
+        }
+    }
+
     abstract class CommentPreprocessorError : Error {
         public override string ToString() {
             return "[CommentPreprocessorError]: ";
@@ -119,6 +125,97 @@ namespace IonS {
         
         public override string ToString() {
             return base.ToString() + "Invalid char: " + Word;
+        }
+    }
+
+    // Preprocessor errors
+    // - Unknown preprocessor directive error
+
+    sealed class UnknownPreprocessorDirectiveError : PreprocessorError {
+        public UnknownPreprocessorDirectiveError(Word word) {
+            Word = word;
+        }
+        
+        public Word Word { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Unknown preprocessor directive: " + Word;
+        }
+    }
+
+    // - Unexpected preprocessor directive error
+
+    sealed class UnexpectedPreprocessorDirectiveError : PreprocessorError {
+        public UnexpectedPreprocessorDirectiveError(Word word) {
+            Word = word;
+        }
+        
+        public Word Word { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Unexpected preprocessor directive: " + Word;
+        }
+    }
+
+    // - Incomplete preprocessor directive error
+
+    sealed class IncompletePreprocessorDirectiveError : PreprocessorError {
+        public IncompletePreprocessorDirectiveError(Word word) {
+            Word = word;
+        }
+        
+        public Word Word { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Incomplete preprocessor directive: " + Word;
+        }
+    }
+
+    // - Missing preprocessor directive error
+
+    sealed class MissingPreprocessorDirectiveError : PreprocessorError {
+        public MissingPreprocessorDirectiveError(string missing, Word word) {
+            Missing = missing;
+            Word = word;
+        }
+        
+        public string Missing { get; }
+        public Word Word { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Missing preprocessor directive: '" + Missing + "' for " + Word;
+        }
+    }
+    
+    // - Symbol redefinition error
+
+    sealed class PreprocessorSymbolRedefinitionError : PreprocessorError {
+        public PreprocessorSymbolRedefinitionError(Word word, Position originalPosition) {
+            Word = word;
+            OriginalPosition = originalPosition;
+        }
+        
+        public Word Word { get; }
+        public Position OriginalPosition { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Trying to redefine preprocessor symbol: '" + Word.Text + "' (" + OriginalPosition + ") at " + Word.Position;
+        }
+    }
+    
+    // - Symbol redefinition error
+
+    sealed class UnclosedPreprocessorDirectivesError : PreprocessorError {
+        public UnclosedPreprocessorDirectivesError(Stack<Word> openDirectives) {
+            OpenDirectives = openDirectives;
+        }
+        
+        public Stack<Word> OpenDirectives { get; }
+        
+        public override string ToString() {
+            string msg = "";
+            foreach(Word directive in OpenDirectives) msg += "\n- " + directive + "";
+            return base.ToString() + "Unclosed preprocessor directives:" + msg;
         }
     }
 
