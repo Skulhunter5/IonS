@@ -36,6 +36,8 @@ namespace IonS {
         public static readonly Regex decimalRegex = new Regex("^[0-9]+$", RegexOptions.Compiled);
         public static readonly Regex hexadecimalRegex = new Regex("^0x[0-9a-fA-F]+$", RegexOptions.Compiled);
 
+        public static readonly Regex symbolRegex = new Regex("[a-zA-Z_][0-9a-zA-Z_]*", RegexOptions.Compiled);
+
         public static string StringLiteralToByteString(string literal) {
             return String.Join(',', Encoding.ASCII.GetBytes(literal));
         }

@@ -171,6 +171,8 @@ namespace IonS {
                         if(i+1 == words.Count) return new PreprocessorResult(null, new IncompletePreprocessorDirectiveError(words[i]));
 
                         Word symbolWord = words[i+1];
+                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord));
+                        
                         if(_symbols.ContainsKey(symbolWord.Text)) return new PreprocessorResult(null, new PreprocessorSymbolRedefinitionError(symbolWord, _symbols.GetValueOrDefault(symbolWord.Text, null)));
 
                         _symbols.Add(symbolWord.Text, symbolWord.Position);
@@ -181,6 +183,8 @@ namespace IonS {
                         if(i+1 == words.Count) return new PreprocessorResult(null, new IncompletePreprocessorDirectiveError(words[i]));
 
                         Word symbolWord = words[i+1];
+                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord));
+                        
                         if(_symbols.ContainsKey(symbolWord.Text)) {
                             openDirectives.Push(words[i]);
                             words.RemoveRange(i, 2);
@@ -196,6 +200,8 @@ namespace IonS {
                         if(i+1 == words.Count) return new PreprocessorResult(null, new IncompletePreprocessorDirectiveError(words[i]));
 
                         Word symbolWord = words[i+1];
+                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord));
+
                         if(_symbols.ContainsKey(symbolWord.Text)) {
                             int start = i++;
                             while(words[i++].Text != "#endif") if(i >= words.Count) return new PreprocessorResult(null, new MissingPreprocessorDirectiveError("#endif", words[start]));

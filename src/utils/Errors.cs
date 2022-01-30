@@ -218,6 +218,20 @@ namespace IonS {
             return base.ToString() + "Unclosed preprocessor directives:" + msg;
         }
     }
+    
+    // - Invalid symbol error
+
+    sealed class InvalidSymbolError : PreprocessorError {
+        public InvalidSymbolError(Word symbol) {
+            Symbol = symbol;
+        }
+        
+        public Word Symbol { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Invalid Symbol: " + Symbol;
+        }
+    }
 
     // CommentPreprocessor errors
     // - EOF in block comment error
