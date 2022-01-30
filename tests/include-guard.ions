@@ -1,0 +1,4 @@
+#include "./../std/std.ions"
+#include "./../std/std.ions"
+
+"Hello, world!\n" puts
