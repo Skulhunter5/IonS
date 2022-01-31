@@ -127,7 +127,7 @@ namespace IonS {
 
         // RUN
 
-        public PreprocessorResult run3() {
+        public PreprocessorResult run() {
             words = new List<Word>();
             words.AddRange(_words);
 

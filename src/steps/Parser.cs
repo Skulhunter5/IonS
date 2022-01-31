@@ -423,7 +423,7 @@ namespace IonS {
             var lexingResult = new Lexer(_text, _source).run();
             if(lexingResult.Error != null) return new ParseResult(null, null, null, null, lexingResult.Error);
             
-            var preprocessorResult = new Preprocessor(_source, lexingResult.Words).run3(); // CWD
+            var preprocessorResult = new Preprocessor(_source, lexingResult.Words).run(); // CWD
             if(preprocessorResult.Error != null) return new ParseResult(null, null, null, null, preprocessorResult.Error);
             _words = preprocessorResult.Words;
 
