@@ -12,6 +12,16 @@ namespace IonS {
         public Word[] Words { get; }
     }
 
+    class Macro {
+        public Macro(Word key, List<Word> words) {
+            Key = key;
+            Words = words;
+        }
+
+        public Word Key { get; }
+        public List<Word> Words { get; }
+    }
+
     class Preprocessor {
 
         private readonly string _source;
@@ -26,18 +36,6 @@ namespace IonS {
         public Preprocessor(string source, Word[] words) {
             _source = source;
             _words = words;
-        }
-
-        // Macros
-
-        class Macro {
-            public Macro(Word key, List<Word> words) {
-                Key = key;
-                Words = words;
-            }
-
-            public Word Key { get; }
-            public List<Word> Words { get; }
         }
 
         private Macro GetMacro(string key) {
