@@ -171,7 +171,7 @@ namespace IonS {
 
                 error = contract1.Require(DataType.boolean, this); // TODO: put something better here (maybe even save the Positions of every elseif and else)
                 if(error != null) return error;
-                if(!reference.IsCompatible(contract1)) return new SignatureMustBeNoneError(reference, contract1, Conditions[i]);
+                if(!reference.IsStackCompatible(contract1)) return new SignatureMustBeNoneError(reference, contract1, Conditions[i]);
 
                 error = Conditionals[i].TypeCheck(contract1);
                 if(error != null) return error;
@@ -187,7 +187,7 @@ namespace IonS {
                 contracts.Add(contract1);
             }
 
-            for(int i = 0; i < contracts.Count; i++) if(!contracts[i].IsCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
+            for(int i = 0; i < contracts.Count; i++) if(!contracts[i].IsStackCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
 
             return null;
         }
@@ -241,11 +241,11 @@ namespace IonS {
 
             error = contract.Require(DataType.boolean, this);
             if(error != null) return error;
-            if(!contract.IsCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
+            if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
 
             error = Block.TypeCheck(contract);
             if(error != null) return error;
-            if(!contract.IsCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Block);
+            if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Block);
 
             return null;
         }
@@ -296,14 +296,14 @@ namespace IonS {
 
             Error error = Block.TypeCheck(contract);
             if(error != null) return error;
-            if(!contract.IsCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Block);
+            if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Block);
 
             error = Condition.TypeCheck(contract);
             if(error != null) return error;
 
             error = contract.Require(DataType.boolean, this);
             if(error != null) return error;
-            if(!contract.IsCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
+            if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
 
 
             return null;
@@ -334,7 +334,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            if(!contract.IsCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
+            if(!contract.IsStackCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
 
             return null;
         }
@@ -355,7 +355,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            if(!contract.IsCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
+            if(!contract.IsStackCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
 
             return null;
         }

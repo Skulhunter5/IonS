@@ -105,7 +105,7 @@ namespace IonS {
             return Provide(provided, operation);
         }
 
-        public bool IsCompatible(object obj) {
+        public bool IsStackCompatible(object obj) {
             if(obj == null) return false;
             if(typeof(TypeCheckContract) != obj.GetType()) return false;
             TypeCheckContract other = (TypeCheckContract) obj;

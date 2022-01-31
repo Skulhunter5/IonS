@@ -1142,6 +1142,8 @@ namespace IonS {
                 return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
             }
 
+            contract.HasReturned = true;
+
             return null;
         }
     }
@@ -1201,7 +1203,7 @@ namespace IonS {
             error = contract.Require(DataType.boolean, this);
             if(error != null) return error;
             
-            if(!contract.IsCompatible(reference)) return new SignatureMustBeNoneError(reference, contract, Condition);
+            if(!contract.IsStackCompatible(reference)) return new SignatureMustBeNoneError(reference, contract, Condition);
 
             error = Response.TypeCheck(contract);
             if(error != null) return error;
