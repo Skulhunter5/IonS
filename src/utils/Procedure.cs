@@ -75,6 +75,7 @@ namespace IonS {
             if(contract.GetElementsLeft() != Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
 
             for(int i = 0; i < Rets.Length; i++) if(!EDataType.IsImplicitlyCastable(contract.Peek(Rets.Length-1-i), Rets[i])) {
+                Console.WriteLine(contract.Peek(Rets.Length-1-i) + " " + Rets[i]);
                 if(contract.Peek(Rets.Length-1-i) != Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(contract.Peek(Rets.Length-1-i)) + " to " + Rets[i] + " while returning from " + this); // Error-Warning-System
                 return new InvalidReturnDataError(contract.Stack.ToArray(), this);
             }

@@ -1,12 +1,35 @@
 namespace IonS {
 
+    enum WordType {
+        Word,
+        String,
+        Char,
+    }
+
     class Word {
+
         public Word(Position position, string text) {
+            Type = WordType.Word;
+
             Position = position;
             Text = text;
             ExpandedFrom = null;
             IncludedFrom = null;
         }
+        public Word(WordType type, Position position, string text) {
+            Type = type;
+
+            Position = position;
+            Text = text;
+            ExpandedFrom = null;
+            IncludedFrom = null;
+        }
+
+        public WordType Type { get; }
+        public Position Position { get; }
+        public string Text { get; }
+        public Word ExpandedFrom { get; set; }
+        public Position[] IncludedFrom { get; set; }
 
         public override string ToString()
         {
@@ -15,16 +38,14 @@ namespace IonS {
             return "'" + Text + "' at " + Position;
         }
 
-        public Position Position { get; }
-        public string Text { get; }
-        public Word ExpandedFrom { get; set; }
-        public Position[] IncludedFrom { get; set; }
     }
 
     class StringWord : Word {
-        public StringWord(Position position, string text, string stringType) : base(position, text) {
+        public StringWord(Position position, string text, string stringType) : base(WordType.String, position, text) {
             StringType = stringType;
         }
+
+        public string StringType { get; }
 
         public override string ToString()
         {
@@ -33,11 +54,10 @@ namespace IonS {
             return "'\"" + Text + "\"' at " + Position;
         }
 
-        public string StringType { get; }
     }
 
     class CharWord : Word {
-        public CharWord(Position position, string text) : base(position, text) {}
+        public CharWord(Position position, string text) : base(WordType.Char, position, text) {}
 
         public override string ToString()
         {

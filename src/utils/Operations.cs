@@ -126,6 +126,34 @@ namespace IonS {
         }
     }
 
+    // Bind access operation
+    
+    sealed class PushBindingOperation : Operation { // -- a
+        public PushBindingOperation(Binding binding, Position position) : base(OperationType.VariableAccess, position) {
+            Binding = binding;
+        }
+
+        public Binding Binding { get; }
+        
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    mov rax, [ret_stack_rsp]
+                //    add rax, {Offset * 8}
+                //    push QWORD [rax]
+                string asm = "";
+                asm += "    mov rax, [ret_stack_rsp]\n";
+                if(Binding.Offset > 0) asm += "    add rax, " + Binding.Offset + "\n";
+                asm += "    push QWORD [rax]\n";
+                return asm;
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.Provide(Binding.DataType, this);
+        }
+    }
+
     // Stack manipulation operations
 
     sealed class DropOperation : Operation { // a --
@@ -897,7 +925,7 @@ namespace IonS {
         }
     }
 
-    // Variable operations
+    // Variable access operation
     
     sealed class VariableAccessOperation : Operation { // -- ptr
         public VariableAccessOperation(int id, Position position) : base(OperationType.VariableAccess, position) {
@@ -1109,7 +1137,7 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContract contract) { // TODO: make this better and somehow check if all of the subtrees have returned
             if(contract.GetElementsLeft() != Proc.Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
 
-            for(int i = 0; i < Proc.Rets.Length; i++) if(EDataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) {
+            for(int i = 0; i < Proc.Rets.Length; i++) if(!EDataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) {
                 if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(contract.Peek(Proc.Rets.Length-1-i)) + " to " + Proc.Rets[i] + " while returning from " + Proc + " at " + this); // Error-Warning-System
                 return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
             }

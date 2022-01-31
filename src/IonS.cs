@@ -1,8 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace IonS
-{
+namespace IonS {
 
     enum Action {
         Compile,
@@ -10,14 +9,13 @@ namespace IonS
         Simulate,
     }
 
-    class IonS
-    {
+    class IonS {
+
         static void Main(string[] args) {
             // parameters
             Action action = Action.Compile;
             Assembler assembler = Assembler.nasm_linux_x86_64;
             string filename = null;
-            bool unsafeFlag = false;
             // parsing the parameters
             int i = 0;
             while(i < args.Length) {
@@ -31,11 +29,6 @@ namespace IonS
                         return;
                     }
                     i++;
-                    continue;
-                }
-                if(args[i] == "-u" || args[i] == "--unsafe") {
-                    i++;
-                    unsafeFlag = true;
                     continue;
                 }
                 if(action == Action.Compile || action == Action.Simulate) {
@@ -75,7 +68,7 @@ namespace IonS
             }
             if(action == Action.Compile) {
                 if(filename == null) filename = "res/test.ions";
-                Compile(filename, assembler, unsafeFlag);
+                Compile(filename, assembler);
             } else if(action == Action.Simulate) {
                 Console.WriteLine("Feature is currently disabled.");
                 Environment.ExitCode = 2;
@@ -95,14 +88,15 @@ namespace IonS
             for(int i = 0; i < text.Length; i++) if(text[i] == '\n') count++;
             return count;
         }
-        private static void Compile(string filename, Assembler assembler, bool unsafeFlag) {
+
+        private static void Compile(string filename, Assembler assembler) {
             if(!File.Exists(filename)) {
                 Console.WriteLine("Error: File not found: '" + filename + "'");
                 Environment.ExitCode = 1;
                 return;
             }
             string path = Path.GetFullPath(filename);
-            var asmTscr = new AssemblyTranscriber(File.ReadAllText(path).Replace("\r\n", "\n"), path, unsafeFlag);
+            var asmTscr = new AssemblyTranscriber(File.ReadAllText(path).Replace("\r\n", "\n"), path);
             AssemblyTranscriptionResult result = asmTscr.run(assembler);
             if(result.Error != null) {
                 Console.WriteLine(result.Error);
@@ -118,36 +112,6 @@ namespace IonS
             Console.WriteLine("Generated assembly with " + CountLines(result.Asm) + " lines.");
         }
 
-        /*
-        private static void Interpret() {
-            var simulator = new Simulator(100000);
-            while(true) {
-                Console.Write("> ");
-                var line = Console.ReadLine();
-                if(string.IsNullOrWhiteSpace(line)) {
-                    string msg = "[";
-                    foreach(int i in simulator.stack) {
-                        msg += i + ", ";
-                    }
-                    if(simulator.stack.Count > 0) msg = msg.Substring(0, msg.Length-2);
-                    msg += "]";
-                    Console.WriteLine(msg);
-                }
-                SimulationResult result = simulator.run(line, "<stdin>");
-                if(result.Error != null) Console.WriteLine(result.Error);
-                if(result.Exitcode != 0) Console.WriteLine("Exited with code " + result.Exitcode + ".");
-            }
-        }
-
-        private static void Simulate() {
-            SimulationResult result = new Simulator(100000).run(File.ReadAllText("res/test.ions"), "res/test.ions");
-            if(result.Error != null) {
-                Console.WriteLine(result.Error);
-                return;
-            }
-            Console.WriteLine("Exited with code " + result.Exitcode + ".");
-        }
-        */
     }
 
 }

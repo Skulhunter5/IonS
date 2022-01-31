@@ -14,14 +14,11 @@ namespace IonS {
 
         private static readonly int X86_64_RET_STACK_CAP = 1024 * 64; // 512KB 8-bit segments // TODO: look into customization option for this
 
-        private readonly bool _unsafeFlag = false;
-
         private readonly string _text, _source;
 
-        public AssemblyTranscriber(string text, string source, bool unsafeFlag) {
+        public AssemblyTranscriber(string text, string source) {
             _text = text;
             _source = source;
-            _unsafeFlag = unsafeFlag;
         }
 
         public AssemblyTranscriptionResult run(Assembler assembler) {
@@ -31,7 +28,7 @@ namespace IonS {
                 if(assembler == Assembler.nasm_linux_x86_64) asm += "BITS 64\n";
                 else asm += "format ELF64 executable 3\n";
 
-                var parser = new Parser(_text, _source, _unsafeFlag, assembler);
+                var parser = new Parser(_text, _source, assembler);
                 var result = parser.Parse();
                 if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
                 var root = result.Root;

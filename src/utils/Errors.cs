@@ -564,14 +564,14 @@ namespace IonS {
     }
 
     sealed class EOFInProcedureParametersError : ParserError {
-        public EOFInProcedureParametersError(Word args) {
-            Args = args;
+        public EOFInProcedureParametersError(Word nameWord) {
+            NameWord = nameWord;
         }
         
-        public Word Args { get; }
+        public Word NameWord { get; }
         
         public override string ToString() {
-            return base.ToString() + "Invalid parameters for procedure: " + Args;
+            return base.ToString() + "EOF while parsing parameters for procedure: " + NameWord;
         }
     }
 
@@ -598,6 +598,62 @@ namespace IonS {
         
         public override string ToString() {
             return base.ToString() + "Return ouside of a procedure: at " + Position;
+        }
+    }
+
+    // - Incomplete binding error
+
+    sealed class IncompleteBindingError : ParserError {
+        public IncompleteBindingError(Word bindWord) {
+            BindWord = bindWord;
+        }
+        
+        public Word BindWord { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Incomplete binding: " + BindWord;
+        }
+    }
+
+    // - Incomplete binding error
+
+    sealed class InvalidBindingError : ParserError {
+        public InvalidBindingError(Word bind) {
+            Bind = bind;
+        }
+        
+        public Word Bind { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Invalid binding: " + Bind;
+        }
+    }
+
+    // - Invalid binding list error
+
+    sealed class InvalidBindingListError : ParserError {
+        public InvalidBindingListError(Word bindWord) {
+            BindWord = bindWord;
+        }
+        
+        public Word BindWord { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Invalid binding list for binding: " + BindWord;
+        }
+    }
+
+    // - EOF in binding list error
+
+    sealed class EOFInBindingListError : ParserError {
+        public EOFInBindingListError(Word bindWord) {
+            BindWord = bindWord;
+        }
+        
+        public Word BindWord { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "EOF while parsing bindings list: " + BindWord;
         }
     }
 
@@ -726,7 +782,11 @@ namespace IonS {
         public ReturnOperation Operation { get; }
 
         public override string ToString() {
-            return base.ToString() + "Invalid return arguments: expected [" + String.Join(", ", Procedure.Rets) + "] but got [" + String.Join(", ", GotTypes) + "] "  + (Operation != null ? "for return at " + Operation.Position + " in " : "at the end of ") + Procedure;
+            string msg = "";
+            for(int i = 0; i < Procedure.Rets.Length; i++) msg += EDataType.StringOf(Procedure.Rets[i]) + (i < Procedure.Rets.Length - 1 ? ", " : "");
+            msg += "] but got [";
+            for(int i = 0; i < GotTypes.Length; i++) msg += EDataType.StringOf(GotTypes[i]) + (i < GotTypes.Length - 1 ? ", " : "");
+            return base.ToString() + "Invalid return arguments: expected [" + msg + "] "  + (Operation != null ? "for return at " + Operation.Position + " in " : "at the end of ") + Procedure;
         }
     }
 

@@ -17,16 +17,14 @@ namespace IonS {
         public Dictionary<string, Procedure> Procedures { get; }
     }
 
-    class ParseBlockResult : Result {
-        public ParseBlockResult(CodeBlock block, Error error) : base(error) {
+    class ParseCodeBlockResult : Result {
+        public ParseCodeBlockResult(CodeBlock block, Error error) : base(error) {
             Block = block;
         }
         public CodeBlock Block { get; }
     }
 
     class Parser {
-
-        private readonly bool _unsafeFlag;
 
         private readonly string _text, _source;
         private Word[] _words;
@@ -49,14 +47,6 @@ namespace IonS {
         {
             _text = text;
             _source = source;
-            _unsafeFlag = false;
-            _assembler = assembler;
-        }
-        public Parser(string text, string source, bool unsafeFlag, Assembler assembler)
-        {
-            _text = text;
-            _source = source;
-            _unsafeFlag = unsafeFlag;
             _assembler = assembler;
         }
 
@@ -118,19 +108,19 @@ namespace IonS {
         }
 
         private bool IsBraceOpen() {
-            return Current.Text == "{" && Current.GetType() != typeof(StringWord) && Current.GetType() != typeof(CharWord);
+            return Current.Text == "{" && Current.Type == WordType.Word;
         }
 
         private bool IsBraceClose() {
-            return Current.Text == "}" && Current.GetType() != typeof(StringWord) && Current.GetType() != typeof(CharWord);
+            return Current.Text == "}" && Current.Type == WordType.Word;
         }
 
-        private ParseBlockResult ParseBlock(Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
-            bool root = scope == null;
-            CodeBlock block = new CodeBlock(scope, currentProcedure, Current != null ? Current.Position : null);
+        private ParseCodeBlockResult ParseCodeBlock(Scope parentScope, Scope newScope, BreakableBlock breakableBlock, Procedure currentProcedure) {
+            bool root = parentScope == null;
+            CodeBlock block = new CodeBlock(newScope, Current != null ? Current.Position : null);
             if(Current == null) {
-                if(root) return new ParseBlockResult(block, null);
-                return new ParseBlockResult(null, new MissingCodeBlockError());
+                if(root) return new ParseCodeBlockResult(block, null);
+                return new ParseCodeBlockResult(null, new MissingCodeBlockError());
             }
             block.Start = Current.Position;
             if(IsBraceOpen() || root) {
@@ -139,19 +129,20 @@ namespace IonS {
                 while(Current != null && (!IsBraceClose() || root)) {
                     if(IsBraceClose()) break;
                     var error = ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
-                    if(error != null) return new ParseBlockResult(null, error);
+                    if(error != null) return new ParseCodeBlockResult(null, error);
                 }
                 if(!root) {
-                    if(!IsBraceClose()) return new ParseBlockResult(null, new EOFInCodeBlockError(openBracePosition));
+                    if(Current == null) return new ParseCodeBlockResult(null, new EOFInCodeBlockError(openBracePosition));
+                    if(!IsBraceClose()) return new ParseCodeBlockResult(null, new EOFInCodeBlockError(openBracePosition));
                     block.End = Current.Position;
                     NextWord();
                 }
             } else {
                 block.End = Current.Position;
                 var error = ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
-                if(error != null) return new ParseBlockResult(null, error);
+                if(error != null) return new ParseCodeBlockResult(null, error);
             }
-            return new ParseBlockResult(block, null);
+            return new ParseCodeBlockResult(block, null);
         }
 
         private Error ParseProcedure(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure, bool isInlined) {
@@ -166,26 +157,26 @@ namespace IonS {
             NextWord();
 
             if(Current == null) return new IncompleteProcedureError(procWord, name);
-            if(Current.GetType() == typeof(StringWord) || Current.GetType() == typeof(CharWord)) return new InvalidProcedureParametersError(name, Current);
+            if(Current.Type != WordType.Word) return new InvalidProcedureParametersError(name, Current);
             bool dir = false;
             List<DataType> Args = new List<DataType>();
             List<DataType> Rets = new List<DataType>();
             if(Current.Text == "()") NextWord();
             else if(Current.Text == "(") {
                 NextWord();
-                while(Current.Text != ")" && Current.GetType() != typeof(StringWord) && Current != null) {
+                while(Current.Text != ")" && Current.Type == WordType.Word && Current != null) {
                     if(Current.Text == "--") {
                         if(dir) return new InvalidProcedureParametersError(name, Current);
                         else dir = true;
                     } else {
-                        if(!EDataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+                        if(Current.Type != WordType.Word || !EDataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
                         if(dir) Rets.Add(dataType);
                         else Args.Add(dataType);
                     }
                     NextWord();
                 }
                 if(Current == null) return new EOFInProcedureParametersError(name);
-                if(Current.Text != ")" || Current.GetType() == typeof(StringWord)) return new InvalidProcedureParametersError(name, Current);
+                if(Current.Text != ")" || Current.Type != WordType.Word) return new InvalidProcedureParametersError(name, Current);
                 NextWord();
             } else return new InvalidProcedureParametersError(name, Current);
 
@@ -195,7 +186,7 @@ namespace IonS {
 
             if(Current == null) return new IncompleteProcedureError(procWord, name);
 
-            ParseBlockResult result = ParseBlock(scope, null, proc);
+            ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, proc), null, proc);
             if(result.Error != null) return result.Error;
             proc.Body = result.Block;
 
@@ -204,12 +195,12 @@ namespace IonS {
 
         private Error ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             
-            if(Current.GetType() == typeof(StringWord)) {
+            if(Current.Type == WordType.String) {
                 StringWord stringWord = (StringWord) Current;
                 if(stringWord.StringType == "") operations.Add(RegisterString(Current.Text));
                 else if(stringWord.StringType == "c") operations.Add(RegisterCStyleString(Current.Text));
                 else return new InternalParserError("Forgot to add a new StringType in Parser.ParseOperation");
-            } else if(Current.GetType() == typeof(CharWord)) operations.Add(new Push_uint64_Operation(Encoding.ASCII.GetBytes(""+Current.Text)[0], Current.Position));
+            } else if(Current.Type == WordType.Char) operations.Add(new Push_uint64_Operation(Encoding.ASCII.GetBytes(""+Current.Text)[0], Current.Position));
             else if(Current.Text == "exit") operations.Add(new ExitOperation(Current.Position));
             else if(Current.Text == "drop") operations.Add(new DropOperation(1, Current.Position));
             else if(Current.Text == "2drop") operations.Add(new DropOperation(2, Current.Position));
@@ -260,18 +251,18 @@ namespace IonS {
             } else if(Current.Text == "if") {
                 Position position = Current.Position;
                 NextWord();
-                ParseBlockResult result = ParseBlock(scope, breakableBlock, currentProcedure);
+                ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 CodeBlock blockIf = result.Block;
                 IfBlock ifBlock = new IfBlock(blockIf, null, position);
                 while(Current.Text == "else*") {
                     NextWord();
-                    result = ParseBlock(scope, breakableBlock, currentProcedure);
+                    result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                     if(result.Error != null) return result.Error;
                     CodeBlock Condition = result.Block;
                     if(Current.Text != "if") return new MissingIfError(Current.Position);
                     NextWord();
-                    result = ParseBlock(scope, breakableBlock, currentProcedure);
+                    result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                     if(result.Error != null) return result.Error;
                     CodeBlock Conditional = result.Block;
                     ifBlock.Conditions.Add(Condition);
@@ -279,7 +270,7 @@ namespace IonS {
                 }
                 if(Current.Text == "else") {
                     NextWord();
-                    result = ParseBlock(scope, breakableBlock, currentProcedure);
+                    result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                     if(result.Error != null) return result.Error;
                     ifBlock.BlockElse = result.Block;
                 }
@@ -289,12 +280,12 @@ namespace IonS {
                 Position position = Current.Position;
                 NextWord();
                 WhileBlock whileBlock = new WhileBlock(null, null, position);
-                ParseBlockResult result = ParseBlock(scope, breakableBlock, currentProcedure);
+                ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 whileBlock.Condition = result.Block;
                 if(Current.Text != "do") return new MissingDoError(Current.Position);
                 NextWord();
-                result = ParseBlock(scope, whileBlock, currentProcedure);
+                result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), whileBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 whileBlock.Block = result.Block;
                 operations.Add(whileBlock);
@@ -303,12 +294,12 @@ namespace IonS {
                 Position position = Current.Position;
                 NextWord();
                 DoWhileBlock doWhileBlock = new DoWhileBlock(null, null, position);
-                ParseBlockResult result = ParseBlock(scope, doWhileBlock, currentProcedure);
+                ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), doWhileBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 doWhileBlock.Block = result.Block;
                 if(Current.Text != "while") return new MissingWhileError(Current.Position);
                 NextWord();
-                result = ParseBlock(scope, breakableBlock, currentProcedure);
+                result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 doWhileBlock.Condition = result.Block;
                 operations.Add(doWhileBlock);
@@ -364,7 +355,7 @@ namespace IonS {
                 if(argc >= 0 && argc <= 6) operations.Add(new SyscallOperation(argc, Current.Position));
                 else return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
             } else if(IsBraceOpen()) {
-                var result = ParseBlock(scope, breakableBlock, currentProcedure);
+                var result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 operations.Add(result.Block);
                 return null;
@@ -385,12 +376,12 @@ namespace IonS {
 
                 NextWord();
                 if(Current == null) return new IncompleteAssertError(assertPosition);
-                ParseBlockResult result = ParseBlock(scope, breakableBlock, currentProcedure);
+                ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 CodeBlock condition = result.Block;
 
                 if(Current == null) return new IncompleteAssertError(assertPosition);
-                result = ParseBlock(scope, breakableBlock, currentProcedure);
+                result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 CodeBlock response = result.Block;
                 
@@ -401,6 +392,43 @@ namespace IonS {
                 return null;
             } else if(Current.Text == "iota" || Current.Text == "reset") {
                 operations.Add(new Push_uint64_Operation(Iota(Current.Text == "reset"), Current.Position));
+            } else if(Current.Text == "let") {
+                Word letWord = Current;
+                NextWord();
+
+                if(Current == null) return new IncompleteBindingError(letWord);
+                if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidBindingError(Current);
+                List<Binding> bindings = new List<Binding>();
+                if(Current.Text == "(") {
+                    NextWord();
+                    while(Current.Text != ")" && Current.Type == WordType.Word && Current != null) {
+                        if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidBindingError(Current);
+
+                        if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
+                        else if(!Keyword.isValidIdenfitier(Current.Text)) return new InvalidBindingError(Current);
+                        else bindings.Add(new Binding(Current));
+
+                        NextWord();
+                    }
+                    if(Current == null) return new EOFInBindingListError(letWord);
+                    if(Current.Text != ")" || Current.Type != WordType.Word) return new InvalidBindingListError(letWord);
+                    NextWord();
+                } else {
+                    if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
+                    else if(!Keyword.isValidIdenfitier(Current.Text)) return new InvalidBindingError(Current);
+                    else bindings.Add(new Binding(Current));
+
+                    NextWord();
+                }
+
+                BindingScope bindingScope = new BindingScope(scope, currentProcedure, bindings);
+                ParseCodeBlockResult result = ParseCodeBlock(scope, bindingScope, breakableBlock, currentProcedure);
+                if(result.Error != null) return result.Error;
+                LetBindingBlock letBindingBlock = new LetBindingBlock(bindingScope, letWord.Position, result.Block);
+
+                operations.Add(letBindingBlock);
+
+                return null;
             } else {
                 // TODO: add overflow protection for binary and hexadecimal numbers
                 if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 2), Current.Position));
@@ -409,8 +437,10 @@ namespace IonS {
                 else if(Utils.hexadecimalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 16), Current.Position));
                 else {
                     Variable var = scope.GetVariable(Current.Text);
-                    if(var != null) operations.Add(new VariableAccessOperation(var.Id, Current.Position));
-                    else {
+                    if(var != null) {
+                        if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, Current.Position));
+                        else operations.Add(new VariableAccessOperation(var.Id, Current.Position));
+                    } else {
                         Procedure proc = GetProcedure(Current.Text, true);
                         if(proc != null) {
                             operations.Add(new ProcedureCallOperation(proc, Current.Position));
@@ -435,13 +465,11 @@ namespace IonS {
             _procs = new Dictionary<string, Procedure>();
             _strings = new List<string>();
 
-            ParseBlockResult parseResult = ParseBlock(null, null, null);
+            ParseCodeBlockResult parseResult = ParseCodeBlock(null, new Scope(null, null), null, null);
             if(parseResult.Error != null) return new ParseResult(null, null, null, null, parseResult.Error);
 
-            if(!_unsafeFlag) {
-                Error error = new TypeChecker(parseResult.Block, _procs).run();
-                if(error != null) return new ParseResult(null, null, null, null, error);
-            }
+            Error error = new TypeChecker(parseResult.Block, _procs).run();
+            if(error != null) return new ParseResult(null, null, null, null, error);
 
             List<string> toRemove = new List<string>();
             foreach(string proc in _procs.Keys) if(_procs[proc].IsInlined) toRemove.Add(proc);

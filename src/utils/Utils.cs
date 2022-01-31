@@ -25,8 +25,11 @@ namespace IonS {
 
     class Utils {
         
-        public static readonly string[] FreeUseRegisters = new string[] {"rax", "rbx", "rcx", "rdx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
         public static readonly string[] SyscallRegisters = new string[] {"rdi", "rsi", "rdx", "r10", "r8", "r9"};
+
+        public static readonly Regex symbolRegex = new Regex("^[a-zA-Z_][0-9a-zA-Z_]*$", RegexOptions.Compiled);
+
+        public static readonly Regex wildcardRegex = new Regex("^_+$", RegexOptions.Compiled);
 
         public static readonly Regex readBytesRegex = new Regex("^@[0-9]+$", RegexOptions.Compiled);
         public static readonly Regex writeBytesRegex = new Regex("^![0-9]+$", RegexOptions.Compiled);
@@ -36,7 +39,6 @@ namespace IonS {
         public static readonly Regex decimalRegex = new Regex("^[0-9]+$", RegexOptions.Compiled);
         public static readonly Regex hexadecimalRegex = new Regex("^0x[0-9a-fA-F]+$", RegexOptions.Compiled);
 
-        public static readonly Regex symbolRegex = new Regex("[a-zA-Z_][0-9a-zA-Z_]*", RegexOptions.Compiled);
 
         public static string StringLiteralToByteString(string literal) {
             return String.Join(',', Encoding.ASCII.GetBytes(literal));

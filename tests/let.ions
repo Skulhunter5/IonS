@@ -1,0 +1,26 @@
+12345
+
+proc test ( uint64 uint64 uint64 ) {
+    69 69
+    rrot5 rrot5
+    let ( c d e ) {
+        c .
+        e .
+        let ( c d ) {
+            c .
+            d .
+        }
+        d .
+    }
+}
+
+1 2 3 test
+
+1 2 3 4 5
+
+let ( _ a _ b _ ) {
+    a .
+    b .
+}
+
+.

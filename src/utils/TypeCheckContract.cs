@@ -9,6 +9,7 @@ namespace IonS {
         }
 
         public List<DataType> Stack  { get; }
+        public bool HasReturned { get; set; }
 
         private void SetStackFrom(List<DataType> other) {
             Stack.Clear();
@@ -18,11 +19,13 @@ namespace IonS {
         public void Push(DataType type) {
             Stack.Add(type);
         }
+
         public DataType Pop() {
             DataType dataType = Stack[Stack.Count-1];
             Stack.RemoveAt(Stack.Count-1);
             return dataType;
         }
+
         public Error RemoveElements(int n, Operation operation) {
             if(Stack.Count < n) return new StackUnderflowError(operation);
             for(int i = 0; i < n; i++) Pop();
@@ -31,9 +34,11 @@ namespace IonS {
         public DataType Peek(int offset=0) {
             return Stack[Stack.Count-1 - offset];
         }
+
         public bool IsEmpty() {
             return Stack.Count == 0;
         }
+
         public int GetElementsLeft() {
             return Stack.Count;
         }
@@ -47,6 +52,7 @@ namespace IonS {
             }
             return null;
         }
+
         public Error CheckFor(DataType required, Operation operation) {
             if(Stack.Count < 1) return new StackUnderflowError(operation);
 
@@ -55,6 +61,7 @@ namespace IonS {
 
             return null;
         }
+
         public Error Require(DataType[] required, Operation operation) {
             if(Stack.Count < required.Length) return new StackUnderflowError(operation);
 
@@ -65,6 +72,7 @@ namespace IonS {
             }
             return null;
         }
+
         public Error Require(DataType required, Operation operation) {
             if(Stack.Count < 1) return new StackUnderflowError(operation);
 
@@ -74,19 +82,23 @@ namespace IonS {
 
             return null;
         }
+
         public Error Provide(DataType[] provided, Operation operation) {
             for(int i = 0; i < provided.Length; i++) Push(provided[i]);
             return null;
         }
+
         public Error Provide(DataType provided, Operation operation) {
             Push(provided);
             return null;
         }
+
         public Error RequireAndProvide(DataType[] required, DataType[] provided, Operation operation) {
             Error error = Require(required, operation);
             if(error != null) return error;
             return Provide(provided, operation);
         }
+
         public Error RequireAndProvide(DataType[] required, DataType provided, Operation operation) {
             Error error = Require(required, operation);
             if(error != null) return error;
@@ -101,15 +113,18 @@ namespace IonS {
             for(int i = 0; i < this.Stack.Count; i++) if(this.Stack[i] != other.Stack[i]) return false;
             return true;
         }
+        
         public override int GetHashCode() {
-            return HashCode.Combine(Stack.GetHashCode());
+            return HashCode.Combine(Stack.GetHashCode(), HasReturned.GetHashCode());
         }
 
         public TypeCheckContract Copy() {
             TypeCheckContract clone = new TypeCheckContract();
             clone.SetStackFrom(Stack);
+            clone.HasReturned = HasReturned;
             return clone;
         }
+        
     }
 
 }

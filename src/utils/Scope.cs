@@ -4,7 +4,7 @@ namespace IonS {
 
     class Scope {
 
-        private static int nextScopeId = 0;
+        private static int nextScopeId = 0; // FIXME: remove
         private static int ScopeId() { return nextScopeId++; }
 
         public Scope(Scope parent, Procedure procedure) {
@@ -19,20 +19,53 @@ namespace IonS {
         public Procedure Procedure { get; }
         public Dictionary<string, Variable> Variables { get; }
 
-        public Error RegisterVariable(Variable var) {
-            Variable ownVar = GetOwnVariable(var.Identifier.Text);
+        public virtual Error RegisterVariable(Variable var) {
+            Variables.TryGetValue(var.Identifier.Text, out Variable ownVar);
             if(ownVar != null) return new VariableRedeclarationError(ownVar.Identifier, var.Identifier);
-            Variables.Add(Id + "_" + var.Identifier.Text, var);
+            Variables.Add(var.Identifier.Text, var);
             return null;
         }
-        private Variable GetOwnVariable(string identifier) {
-            Variables.TryGetValue(Id + "_" + identifier, out Variable variable);
-            return variable;
-        }
+
         public Variable GetVariable(string identifier) {
-            Variable ownVar = GetOwnVariable(identifier);
+            return GetVariable(identifier, true);
+        }
+        public virtual Variable GetVariable(string identifier, bool direct) {
+            Variables.TryGetValue(identifier, out Variable ownVar);
             if(ownVar != null) return ownVar;
-            if(Parent != null) return Parent.GetVariable(identifier);
+            if(Parent != null) return Parent.GetVariable(identifier, false);
+            return null;
+        }
+
+    }
+
+    class BindingScope : Scope {
+
+        public BindingScope(Scope parent, Procedure procedure, List<Binding> bindingsList) : base(parent, procedure) {
+            Bindings = new Dictionary<string, Binding>();
+            BindingsList = bindingsList;
+            for(int i = 0; i < bindingsList.Count; i++) if(bindingsList[i] != null) Bindings.Add(bindingsList[i].Identifier.Text, bindingsList[i]);
+        }
+
+        public Dictionary<string, Binding> Bindings { get; }
+        public List<Binding> BindingsList { get; }
+
+        public override Error RegisterVariable(Variable var) {
+            Variables.TryGetValue(var.Identifier.Text, out Variable ownVar);
+            if(ownVar != null) return new VariableRedeclarationError(ownVar.Identifier, var.Identifier);
+            Bindings.TryGetValue(var.Identifier.Text, out Binding offset);
+            if(offset != null) return new VariableRedeclarationError(ownVar.Identifier, var.Identifier);
+            Variables.Add(var.Identifier.Text, var);
+            return null;
+        }
+
+        public override Variable GetVariable(string identifier, bool direct) {
+            Variables.TryGetValue(identifier, out Variable var);
+            if(var != null) return var;
+            if(direct) {
+                Bindings.TryGetValue(identifier, out Binding binding);
+                if(binding != null) return binding;
+            }
+            if(Parent != null) return Parent.GetVariable(identifier, false);
             return null;
         }
 
