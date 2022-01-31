@@ -1274,7 +1274,7 @@ namespace IonS {
 
             List<DataType> wildcardTypes = new List<DataType>();
             for(int i = DataTypes.Length-1; i >= 0; i--) {
-                if(DataTypes[DataTypes.Length - i - 1] == DataType.None) wildcardTypes.Add(contract.Pop());
+                if(DataTypes[i] == DataType.None) wildcardTypes.Add(contract.Pop());
                 else contract.Pop();
             }
 
