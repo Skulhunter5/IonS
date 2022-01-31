@@ -367,10 +367,12 @@ namespace IonS {
             } else if(Current.Text == "return") {
                 if(currentProcedure == null) return new ReturnOutsideProcedureError(Current.Position);
                 operations.Add(new ReturnOperation(currentProcedure, scope, Current.Position));
+            } else if(Current.Text == "cast") {
+                
             } else if(Current.Text.StartsWith("cast(") && Current.Text.EndsWith(")")) {
                 string dataTypeStr = Current.Text.Substring(5, Current.Text.Length-6);
                 if(!EDataType.TryParse(dataTypeStr, out DataType dataType)) return new InvalidDataTypeError(new Word(new Position(Current.Position.File, Current.Position.Line, Current.Position.Column+5), dataTypeStr));
-                operations.Add(new CastOperation(dataType, Current.Position));
+                operations.Add(new SingleCastOperation(dataType, Current.Position));
             } else if(Current.Text == "assert") {
                 Position assertPosition = Current.Position;
 

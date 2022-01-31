@@ -76,7 +76,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.boolean, this);
+            return contract.Provide(DataType.boolean);
         }
     }
 
@@ -102,7 +102,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.uint64, this);
+            return contract.Provide(DataType.uint64);
         }
     }
 
@@ -122,7 +122,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.pointer, this);
+            return contract.Provide(DataType.pointer);
         }
     }
 
@@ -150,7 +150,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(Binding.DataType, this);
+            return contract.Provide(Binding.DataType);
         }
     }
 
@@ -189,7 +189,8 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
-            return contract.Provide(contract.Peek(), this);
+
+            return contract.Provide(contract.Peek());
         }
     }
 
@@ -209,7 +210,8 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
-            return contract.Provide(new DataType[] {contract.Peek(1), contract.Peek()}, this);
+
+            return contract.Provide(new DataType[] {contract.Peek(1), contract.Peek()});
         }
     }
 
@@ -227,7 +229,8 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
-            return contract.Provide(contract.Peek(1), this);
+
+            return contract.Provide(contract.Peek(1));
         }
     }
 
@@ -247,7 +250,8 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 4) return new StackUnderflowError(this);
-            return contract.Provide(new DataType[] {contract.Peek(3), contract.Peek(2)}, this);
+
+            return contract.Provide(new DataType[] {contract.Peek(3), contract.Peek(2)});
         }
     }
 
@@ -267,8 +271,9 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+
             DataType[] provided = new DataType[] {contract.Pop(), contract.Pop()};
-            return contract.Provide(provided, this);
+            return contract.Provide(provided);
         }
     }
 
@@ -291,12 +296,14 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            if(contract.GetElementsLeft() < 4) return new StackUnderflowError(this);
+
             DataType d = contract.Pop();
             DataType c = contract.Pop();
             DataType b = contract.Pop();
             DataType a = contract.Pop();
-            return contract.Provide(new DataType[] {c, d, a, b}, this);
+
+            return contract.Provide(new DataType[] {c, d, a, b});
         }
     }
 
@@ -318,10 +325,12 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 3) return new StackUnderflowError(this);
+
             DataType c = contract.Pop();
             DataType b = contract.Pop();
             DataType a = contract.Pop();
-            return contract.Provide(new DataType[] {b, c, a}, this);
+
+            return contract.Provide(new DataType[] {b, c, a});
         }
     }
 
@@ -343,10 +352,12 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 3) return new StackUnderflowError(this);
+
             DataType c = contract.Pop();
             DataType b = contract.Pop();
             DataType a = contract.Pop();
-            return contract.Provide(new DataType[] {c, a, b}, this);
+
+            return contract.Provide(new DataType[] {c, a, b});
         }
     }
 
@@ -372,12 +383,14 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 5) return new StackUnderflowError(this);
+
             DataType e = contract.Pop();
             DataType d = contract.Pop();
             DataType c = contract.Pop();
             DataType b = contract.Pop();
             DataType a = contract.Pop();
-            return contract.Provide(new DataType[] {b, c, d, e, a}, this);
+
+            return contract.Provide(new DataType[] {b, c, d, e, a});
         }
     }
 
@@ -403,16 +416,18 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 5) return new StackUnderflowError(this);
+
             DataType e = contract.Pop();
             DataType d = contract.Pop();
             DataType c = contract.Pop();
             DataType b = contract.Pop();
             DataType a = contract.Pop();
-            return contract.Provide(new DataType[] {e, a, b, c, d}, this);
+
+            return contract.Provide(new DataType[] {e, a, b, c, d});
         }
     }
 
-    sealed class CTTOperation : Operation { // a [] -- a [] a
+    sealed class CTTOperation : Operation { // a [] -- a [] a // TODO: Deprecate
         public CTTOperation(int index, Position position) : base(OperationType.CTT, position) {
             Index = index;
         }
@@ -426,9 +441,10 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) { // DOCHECK
+        public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < Index) return new StackUnderflowError(this);
-            return contract.Provide(contract.Peek(Index-1), this);
+
+            return contract.Provide(contract.Peek(Index-1));
         }
     }
 
@@ -439,8 +455,7 @@ namespace IonS {
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                //    pop rbx
-                //    add [rsp], rbx
+                //    inc QWORD [rsp]
                 return "    inc QWORD [rsp]\n";
             }
             throw new NotImplementedException();
@@ -456,8 +471,7 @@ namespace IonS {
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                //    pop rbx
-                //    add [rsp], rbx
+                //    dec QWORD [rsp]
                 return "    dec QWORD [rsp]\n";
             }
             throw new NotImplementedException();
@@ -480,7 +494,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.RequireAndProvide(required, DataType.uint64, this);
         }
@@ -498,7 +512,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.RequireAndProvide(required, DataType.uint64, this);
         }
@@ -518,7 +532,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.RequireAndProvide(required, DataType.uint64, this);
         }
@@ -539,7 +553,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.RequireAndProvide(required, DataType.uint64, this);
         }
@@ -560,7 +574,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.RequireAndProvide(required, DataType.uint64, this);
         }
@@ -582,7 +596,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.CheckFor(required, this);
         }
@@ -604,11 +618,14 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+
             DataType dataType = contract.Pop();
             if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+
             dataType = contract.Pop();
             if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            return contract.Provide(dataType, this);
+
+            return contract.Provide(dataType);
         }
     }
 
@@ -626,11 +643,14 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
-            return contract.Provide(dataType, this);
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+
+            return contract.Provide(dataType);
         }
     }
 
@@ -648,11 +668,14 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
-            return contract.Provide(dataType, this); // TODONOW: overthink this (do I have to push the bigger or the smaller one or do I have to make them the same size)
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+
+            return contract.Provide(dataType);
         }
     }
 
@@ -670,11 +693,14 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
-            return contract.Provide(dataType, this); // TODONOW: overthink this (do I have to push the bigger or the smaller one or do I have to make them the same size)
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+
+            return contract.Provide(dataType);
         }
     }
 
@@ -692,11 +718,14 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+            
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, "uint8|uint16|uint32|uint64", this);
-            return contract.Provide(dataType, this); // TODONOW: overthink this (do I have to push the bigger or the smaller one or do I have to make them the same size)
+            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            
+            return contract.Provide(dataType);
         }
     }
 
@@ -713,7 +742,9 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
-            if(!EDataType.Is_uint(contract.Peek())) return new UnexpectedDataTypeError(contract.Peek(), "uint8|uint16|uint32|uint64", this);
+
+            if(!EDataType.Is_uint(contract.Peek())) return new UnexpectedDataTypeError(contract.Peek(), DataType.uint64, this);
+
             return null;
         }
     }
@@ -740,10 +771,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
+        private static readonly DataType[] required = new DataType[] {DataType.boolean, DataType.boolean};
         public override Error TypeCheck(TypeCheckContract contract) {
-            Error error = contract.Require(new DataType[] {DataType.boolean, DataType.boolean}, this);
-            if(error != null) return error;
-            return contract.Provide(DataType.boolean, this);
+            return contract.RequireAndProvide(required, DataType.boolean, this);
         }
     }
 
@@ -767,10 +797,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
+        private static readonly DataType[] required = new DataType[] {DataType.boolean, DataType.boolean};
         public override Error TypeCheck(TypeCheckContract contract) {
-            Error error = contract.Require(new DataType[] {DataType.boolean, DataType.boolean}, this);
-            if(error != null) return error;
-            return contract.Provide(DataType.boolean, this);
+            return contract.RequireAndProvide(required, DataType.boolean, this);
         }
     }
 
@@ -811,7 +840,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.RequireAndProvide(required, DataType.uint64, this);
         }
@@ -832,7 +861,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.RequireAndProvide(required, DataType.uint64, this);
         }
@@ -875,10 +904,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) { // TODONOW: do it right and for all sizes
-            Error error = contract.Require(new DataType[] {DataType.uint64, DataType.uint64}, this);
-            if(error != null) return error;
-            return contract.Provide(DataType.boolean, this);
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        public override Error TypeCheck(TypeCheckContract contract) {
+            return contract.RequireAndProvide(required, DataType.boolean, this);
         }
     }
 
@@ -917,10 +945,11 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
             Error error = contract.Require(DataType.uint64, this);
             if(error != null) return error;
+
             if(!contract.IsEmpty()) Console.WriteLine("[TypeChecker] Warning: excess data on the stack after exit: [" + String.Join(", ", contract.Stack) + "]");  // Error-Warning-System
+            
             return null;
         }
     }
@@ -942,7 +971,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.pointer, this);
+            return contract.Provide(DataType.pointer);
         }
     }
 
@@ -970,9 +999,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            Error error = contract.Require(DataType.pointer, this);
-            if(error != null) return error;
-            return contract.Provide(DataType.uint64, this);
+            return contract.RequireAndProvide(DataType.pointer, DataType.uint64, this);
         }
     }
 
@@ -997,7 +1024,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.pointer};
+        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.pointer};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.Require(required, this);
         }
@@ -1023,9 +1050,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] provided = new DataType[] {DataType.uint64, DataType.pointer};
+        private static readonly DataType[] provided = new DataType[] {DataType.uint64, DataType.pointer};
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(provided, this);
+            return contract.Provide(provided);
         }
     }
 
@@ -1045,7 +1072,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.pointer, this);
+            return contract.Provide(DataType.pointer);
         }
     }
 
@@ -1072,9 +1099,10 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            if(contract.GetElementsLeft() <= Argc) return new StackUnderflowError(this);
-            for(int i = -1; i < Argc; i++) contract.Pop();
-            return contract.Provide(DataType.uint64, this);
+            Error error = contract.RemoveElements(Argc+1, this);
+            if(error != null) return error;
+
+            return contract.Provide(DataType.uint64);
         }
     }
 
@@ -1109,9 +1137,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            Error error = contract.Require(Proc.Args, this);
-            if(error != null) return error;
-            return contract.Provide(Proc.Rets, this);
+            return contract.RequireAndProvide(Proc.Args, Proc.Rets, this);
         }
     }
 
@@ -1195,7 +1221,6 @@ namespace IonS {
                 return asm;
             }
             throw new NotImplementedException();
-            
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
@@ -1215,10 +1240,10 @@ namespace IonS {
         }
     }
 
-    // Cast operation
+    // Cast operations
 
-    sealed class CastOperation : Operation {
-        public CastOperation(DataType dataType, Position position) : base(OperationType.Cast, position) {
+    sealed class SingleCastOperation : Operation {
+        public SingleCastOperation(DataType dataType, Position position) : base(OperationType.Cast, position) {
             DataType = dataType;
         }
 
@@ -1229,7 +1254,25 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
             contract.Pop();
-            return contract.Provide(DataType, this);
+            
+            return contract.Provide(DataType);
+        }
+    }
+
+    sealed class MultiCastOperation : Operation {
+        public MultiCastOperation(DataType[] dataTypes, Position position) : base(OperationType.Cast, position) {
+            DataTypes = dataTypes;
+        }
+
+        public DataType[] DataTypes { get; }
+
+        public override string GenerateAssembly(Assembler assembler) { return ""; }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            Error error = contract.RemoveElements(DataTypes.Length, this);
+            if(error != null) return error;
+
+            return contract.Provide(DataTypes);
         }
     }
 
@@ -1248,7 +1291,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.uint64, this);
+            return contract.Provide(DataType.uint64);
         }
     }
 
@@ -1265,7 +1308,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.pointer, this);
+            return contract.Provide(DataType.pointer);
         }
     }
 

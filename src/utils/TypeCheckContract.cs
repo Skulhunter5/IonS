@@ -84,26 +84,32 @@ namespace IonS {
             return null;
         }
 
-        public Error Provide(DataType[] provided, Operation operation) {
+        public Error Provide(DataType[] provided) {
             for(int i = 0; i < provided.Length; i++) Push(provided[i]);
             return null;
         }
 
-        public Error Provide(DataType provided, Operation operation) {
+        public Error Provide(DataType provided) {
             Push(provided);
             return null;
         }
 
-        public Error RequireAndProvide(DataType[] required, DataType[] provided, Operation operation) {
+        public Error RequireAndProvide(DataType required, DataType provided, Operation operation) {
             Error error = Require(required, operation);
             if(error != null) return error;
-            return Provide(provided, operation);
+            return Provide(provided);
         }
 
         public Error RequireAndProvide(DataType[] required, DataType provided, Operation operation) {
             Error error = Require(required, operation);
             if(error != null) return error;
-            return Provide(provided, operation);
+            return Provide(provided);
+        }
+
+        public Error RequireAndProvide(DataType[] required, DataType[] provided, Operation operation) {
+            Error error = Require(required, operation);
+            if(error != null) return error;
+            return Provide(provided);
         }
 
         public bool IsStackCompatible(object obj) {
