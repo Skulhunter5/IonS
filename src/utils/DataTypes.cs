@@ -4,7 +4,7 @@ namespace IonS {
         None,
         boolean,
         uint64,
-        Pointer
+        pointer
     }
 
     class EDataType {
@@ -22,7 +22,7 @@ namespace IonS {
             if(str == "bool") dataType = DataType.boolean;
             else if(str == "uint") dataType = DataType.uint64;
             else if(str == "uint64") dataType = DataType.uint64;
-            else if(str == "ptr") dataType = DataType.Pointer;
+            else if(str == "ptr") dataType = DataType.pointer;
             else {
                 dataType = DataType.None;
                 return false;
@@ -30,9 +30,10 @@ namespace IonS {
             return true;
         }
 
-        public static string String(DataType dataType) {
+        public static string StringOf(DataType dataType) {
             if(dataType == DataType.None) return "NONE";
             if(dataType == DataType.boolean) return "bool";
+            if(dataType == DataType.pointer) return "ptr";
             else return ""+dataType;
         }
 

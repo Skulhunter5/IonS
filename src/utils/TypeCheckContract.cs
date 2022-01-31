@@ -43,7 +43,7 @@ namespace IonS {
 
             for(int i = required.Length-1; i >= 0; i--) {
                 if(!EDataType.IsImplicitlyCastable(Peek(), required[i])) return new UnexpectedDataTypeError(Peek(), required[i], operation);
-                if(Peek() != required[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.String(Peek()) + " to " + required[i] + " during " + operation); // Error-Warning-System
+                if(Peek() != required[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(Peek()) + " to " + required[i] + " during " + operation); // Error-Warning-System
             }
             return null;
         }
@@ -51,7 +51,7 @@ namespace IonS {
             if(Stack.Count < 1) return new StackUnderflowError(operation);
 
             if(!EDataType.IsImplicitlyCastable(Peek(), required)) return new UnexpectedDataTypeError(Peek(), required, operation);
-            if(Peek() != required) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.String(Peek()) + " to " + required + " during " + operation); // Error-Warning-System
+            if(Peek() != required) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(Peek()) + " to " + required + " during " + operation); // Error-Warning-System
 
             return null;
         }
@@ -61,7 +61,7 @@ namespace IonS {
             for(int i = required.Length-1; i >= 0; i--) {
                 DataType dataType = Pop();
                 if(!EDataType.IsImplicitlyCastable(dataType, required[i])) return new UnexpectedDataTypeError(dataType, required[i], operation);
-                if(dataType != required[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.String(dataType) + " to " + required[i] + " during " + operation); // Error-Warning-System
+                if(dataType != required[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + required[i] + " during " + operation); // Error-Warning-System
             }
             return null;
         }
@@ -70,7 +70,7 @@ namespace IonS {
 
             DataType dataType = Pop();
             if(!EDataType.IsImplicitlyCastable(dataType, required)) return new UnexpectedDataTypeError(dataType, required, operation);
-            if(dataType != required) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.String(dataType) + " to " + required + " during " + operation); // Error-Warning-System
+            if(dataType != required) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + required + " during " + operation); // Error-Warning-System
 
             return null;
         }

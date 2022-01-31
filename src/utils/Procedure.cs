@@ -41,15 +41,25 @@ namespace IonS {
                 int occurrence = Occurrence();
                 string asm = "";
                 if(!IsInlined) {
-                    asm += "proc_" + Id + ":\n";
-                    for(int i = Args.Length-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
-                } else asm += "proc_" + Id + "_" + occurrence + ":\n";
+                    //proc_{Id}:
+                    //    mov [ret_stack_rsp], rsp
+                    //    mov rsp, rax
+                    asm += "proc_" + Id + ":\n    mov [ret_stack_rsp], rsp\n    mov rsp, rax\n";
+                } else {
+                    //proc_{Id}_{occurrence}:
+                    asm += "proc_" + Id + "_" + occurrence + ":\n";
+                }
                 asm += Body.GenerateAssembly(assembler);
                 if(!IsInlined) {
-                    asm += "proc_" + Id + "_end:\n";
-                    for(int i = 0; i < Rets.Length; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
-                    asm += "    ret\n";
-                } else asm += "proc_" + Id + "_end_" + occurrence + ":\n";
+                    //proc_{Id}_end:
+                    //    mov rax, rsp
+                    //    mov rsp, [ret_stack_rsp]
+                    //    ret
+                    asm += "proc_" + Id + "_end:\n    mov rax, rsp\n    mov rsp, [ret_stack_rsp]\n    ret\n";
+                } else {
+                    //proc_{Id}_end_{occurrence}:
+                    asm += "proc_" + Id + "_end_" + occurrence + ":\n";
+                }
                 return asm;
             }
             throw new NotImplementedException();
@@ -64,11 +74,25 @@ namespace IonS {
             if(contract.GetElementsLeft() != Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
 
             for(int i = 0; i < Rets.Length; i++) if(!EDataType.IsImplicitlyCastable(contract.Peek(Rets.Length-1-i), Rets[i])) {
-                if(contract.Peek(Rets.Length-1-i) != Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.String(contract.Peek(Rets.Length-1-i)) + " to " + Rets[i] + " while returning from " + this); // Error-Warning-System
+                if(contract.Peek(Rets.Length-1-i) != Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(contract.Peek(Rets.Length-1-i)) + " to " + Rets[i] + " while returning from " + this); // Error-Warning-System
                 return new InvalidReturnDataError(contract.Stack.ToArray(), this);
             }
 
             return null;
+        }
+
+        public string GetArgsSignature() {
+            string sig = "";
+            for(int i = 0; i < Args.Length; i++) sig += EDataType.StringOf(Args[i]) + (i < Args.Length-1 ? "::" : "");
+            return sig;
+        }
+
+        public string GetSignature() {
+            string sig = "";
+            for(int i = 0; i < Args.Length; i++) sig += EDataType.StringOf(Args[i]) + (i < Args.Length-1 ? "::" : "");
+            sig += "--";
+            for(int i = 0; i < Rets.Length; i++) sig += EDataType.StringOf(Rets[i]) + (i < Rets.Length-1 ? "::" : "");
+            return sig;
         }
 
     }

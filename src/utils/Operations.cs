@@ -122,7 +122,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.Pointer, this);
+            return contract.Provide(DataType.pointer, this);
         }
     }
 
@@ -914,7 +914,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.Pointer, this);
+            return contract.Provide(DataType.pointer, this);
         }
     }
 
@@ -942,7 +942,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            Error error = contract.Require(DataType.Pointer, this);
+            Error error = contract.Require(DataType.pointer, this);
             if(error != null) return error;
             return contract.Provide(DataType.uint64, this);
         }
@@ -969,7 +969,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] required = new DataType[] {DataType.uint64, DataType.Pointer};
+        private static DataType[] required = new DataType[] {DataType.uint64, DataType.pointer};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.Require(required, this);
         }
@@ -995,7 +995,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static DataType[] provided = new DataType[] {DataType.uint64, DataType.Pointer};
+        private static DataType[] provided = new DataType[] {DataType.uint64, DataType.pointer};
         public override Error TypeCheck(TypeCheckContract contract) {
             return contract.Provide(provided, this);
         }
@@ -1017,7 +1017,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.Pointer, this);
+            return contract.Provide(DataType.pointer, this);
         }
     }
 
@@ -1063,10 +1063,17 @@ namespace IonS {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 if(Proc.IsInlined) return Proc.GenerateAssembly(assembler);
                 else {
+                    //    mov rax, rsp
+                    //    mov rsp, [ret_stack_rsp]
+                    //    call proc_{Id}
+                    //    mov [ret_stack_rsp], rsp
+                    //    mov rsp, rax
                     string asm = "";
-                    for(int i = 0; i < Proc.Args.Length; i++) asm += "    pop " + Utils.FreeUseRegisters[i] + "\n";
+                    asm += "    mov rax, rsp\n";
+                    asm += "    mov rsp, [ret_stack_rsp]\n";
                     asm += "    call proc_" + Proc.Id + "\n";
-                    for(int i = Proc.Rets.Length-1; i >= 0; i--) asm += "    push " + Utils.FreeUseRegisters[i] + "\n";
+                    asm += "    mov [ret_stack_rsp], rsp\n";
+                    asm += "    mov rsp, rax\n";
                     return asm;
                 }
             }
@@ -1103,7 +1110,7 @@ namespace IonS {
             if(contract.GetElementsLeft() != Proc.Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
 
             for(int i = 0; i < Proc.Rets.Length; i++) if(EDataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) {
-                if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.String(contract.Peek(Proc.Rets.Length-1-i)) + " to " + Proc.Rets[i] + " while returning from " + Proc + " at " + this); // Error-Warning-System
+                if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(contract.Peek(Proc.Rets.Length-1-i)) + " to " + Proc.Rets[i] + " while returning from " + Proc + " at " + this); // Error-Warning-System
                 return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
             }
 
@@ -1200,8 +1207,9 @@ namespace IonS {
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                //    push [argc]
-                return "    push QWORD[argc]\n";
+                //    mov rax, [args_ptr]
+                //    push [rax]
+                return "    mov rax, [args_ptr]\n    push QWORD [rax]\n";
             }
             throw new NotImplementedException();
         }
@@ -1216,14 +1224,15 @@ namespace IonS {
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                //    push [args_ptr]
-                return "    push QWORD[args_ptr]\n";
+                //    push QWORD [args_ptr]
+                //    add [rsp], 8
+                return "    push QWORD [args_ptr]\n    add QWORD [rsp], 8\n";
             }
             throw new NotImplementedException();
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            return contract.Provide(DataType.Pointer, this);
+            return contract.Provide(DataType.pointer, this);
         }
     }
 

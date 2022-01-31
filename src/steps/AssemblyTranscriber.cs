@@ -12,6 +12,8 @@ namespace IonS {
 
     class AssemblyTranscriber {
 
+        private static readonly int X86_64_RET_STACK_CAP = 1024 * 64; // 512KB 8-bit segments // TODO: look into customization option for this
+
         private readonly bool _unsafeFlag = false;
 
         private readonly string _text, _source;
@@ -35,14 +37,13 @@ namespace IonS {
                 var root = result.Root;
 
                 // Begin data segment
-                if(assembler == Assembler.nasm_linux_x86_64) {
-                    asm += "segment .bss\n";
-                    asm += "    argc: resq 1\n    args_ptr: resq 1\n";
-                }
-                else {
-                    asm += "segment readable writeable\n";
-                    asm += "    argc: rq 1\n    args_ptr: rq 1\n";
-                }
+                string rq = assembler == Assembler.nasm_linux_x86_64 ? "resq" : "rq";
+                if(assembler == Assembler.nasm_linux_x86_64) asm += "segment .bss\n";
+                else asm += "segment readable writeable\n";
+                asm += "    args_ptr: " + rq + " 1\n";
+                asm += "    ret_stack_rsp: " + rq + " 1\n"; // TODO: maybe do something against ret_stack overflow
+                asm += "    ret_stack: " + rq + " " + X86_64_RET_STACK_CAP + "\n";
+                asm += "    ret_stack_end:\n";
 
                 foreach(Variable var in result.Variables) asm += var.GenerateAssembly(assembler);
                 foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += var.GenerateAssembly(assembler);
@@ -68,10 +69,11 @@ namespace IonS {
                 if(assembler == Assembler.nasm_linux_x86_64) asm += "global _start\n_start:\n";
                 else asm += "entry _start\n_start:\n";
 
-                asm += "    mov rax, [rsp]\n";
-                asm += "    mov [argc], rax\n";
+                // Prepare args
                 asm += "    mov [args_ptr], rsp\n";
-                asm += "    add QWORD [args_ptr], 8\n";
+                // Prepare ret_stack
+                asm += "    mov rax, ret_stack_end\n";
+                asm += "    mov [ret_stack_rsp], rax\n";
 
                 // Actual code
                 asm += root.GenerateAssembly(Assembler.fasm_linux_x86_64);
