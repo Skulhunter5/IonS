@@ -101,31 +101,26 @@ inline proc dec64 ( ptr ) {
 	dup @64 -- swap !64
 }
 
+inline proc ptr+ ( ptr uint64 -- ptr ) {
+    swap cast(uint64) + cast(ptr)
+}
+
 proc streq ( uint64 ptr uint64 ptr -- bool ) { // TODO: maybe add up all individual char differences (has to be unsigned/absolute value) and check if this is zero
-	swap 2swap rrot dup rot
-	!= if {
-		2drop drop
-		false return
-	}
-    dup 0 == if {
-        2drop drop
-        true return
+    let ( n s1 m s2 ) {
+        n m != if { false return }
+
+        n 0 == if { true return }
+
+        0 while { dup n < } do {
+            s1 cast(uint64) over + cast(ptr) @8
+            swap
+            s2 cast(uint64) over + cast(ptr) @8
+            rot
+            != if { drop false return }
+            ++
+        } drop
     }
-    0 while { 2dup > } do {
-        2swap rrot 2dup + @8
-        2swap 2dup + @8
-        2swap rrot != if {
-            2drop 2drop
-            false return
-        }
-        rot 2swap
-        ++
-    }
-    dup 0 > if {
-        2drop 2drop
-        true return
-    }
-    false
+    true
 }
 
 proc cstreq ( ptr ptr -- bool ) {

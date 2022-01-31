@@ -29,11 +29,17 @@ namespace IonS {
         public Variable GetVariable(string identifier) {
             return GetVariable(identifier, true);
         }
+
         public virtual Variable GetVariable(string identifier, bool direct) {
             Variables.TryGetValue(identifier, out Variable ownVar);
             if(ownVar != null) return ownVar;
-            if(Parent != null) return Parent.GetVariable(identifier, false);
+            if(Parent != null) return Parent.GetVariable(identifier, direct);
             return null;
+        }
+
+        public virtual int GetRetStackOffset() {
+            if(Parent != null) return Parent.GetRetStackOffset();
+            return 0;
         }
 
     }
@@ -67,6 +73,12 @@ namespace IonS {
             }
             if(Parent != null) return Parent.GetVariable(identifier, false);
             return null;
+        }
+
+        public override int GetRetStackOffset() {
+            int offset = BindingsList.Count * 8;
+            if(Parent != null) offset += Parent.GetRetStackOffset();
+            return offset;
         }
 
     }

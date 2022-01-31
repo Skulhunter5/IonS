@@ -366,7 +366,7 @@ namespace IonS {
                 return ParseProcedure(operations, scope, breakableBlock, currentProcedure, true);
             } else if(Current.Text == "return") {
                 if(currentProcedure == null) return new ReturnOutsideProcedureError(Current.Position);
-                operations.Add(new ReturnOperation(currentProcedure, Current.Position));
+                operations.Add(new ReturnOperation(currentProcedure, scope, Current.Position));
             } else if(Current.Text.StartsWith("cast(") && Current.Text.EndsWith(")")) {
                 string dataTypeStr = Current.Text.Substring(5, Current.Text.Length-6);
                 if(!EDataType.TryParse(dataTypeStr, out DataType dataType)) return new InvalidDataTypeError(new Word(new Position(Current.Position.File, Current.Position.Line, Current.Position.Column+5), dataTypeStr));

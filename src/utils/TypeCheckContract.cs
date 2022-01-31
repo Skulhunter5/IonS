@@ -4,6 +4,7 @@ using System.Collections.Generic;
 namespace IonS {
 
     class TypeCheckContract {
+        
         public TypeCheckContract() {
             Stack = new List<DataType>();
         }
@@ -11,7 +12,7 @@ namespace IonS {
         public List<DataType> Stack  { get; }
         public bool HasReturned { get; set; }
 
-        private void SetStackFrom(List<DataType> other) {
+        public void SetStackFrom(List<DataType> other) {
             Stack.Clear();
             foreach(DataType type in other) Stack.Add(type);
         }

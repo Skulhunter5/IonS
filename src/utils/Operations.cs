@@ -1118,23 +1118,26 @@ namespace IonS {
     // Return operation
 
     sealed class ReturnOperation : Operation {
-        public ReturnOperation(Procedure procedure, Position position) : base(OperationType.Return, position) {
+        public ReturnOperation(Procedure procedure, Scope scope, Position position) : base(OperationType.Return, position) {
             Proc = procedure;
+            Scope = scope;
         }
 
         public Procedure Proc { get; }
+        public Scope Scope { get; }
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    jmp proc_{Id}_end_{Occurrence}
                 if(Proc.IsInlined) throw new NotImplementedException();
+                //    add QWORD [ret_stack_rsp], {RetStackOffset}
                 //    jmp proc_{Id}_end
-                return "    jmp proc_" + Proc.Id + "_end\n";
+                return "    add QWORD [ret_stack_rsp], " + Scope.GetRetStackOffset() + "\n    jmp proc_" + Proc.Id + "_end\n";
             }
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) { // TODO: make this better and somehow check if all of the subtrees have returned
+        public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() != Proc.Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
 
             for(int i = 0; i < Proc.Rets.Length; i++) if(!EDataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) {

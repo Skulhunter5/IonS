@@ -9,7 +9,7 @@ namespace IonS {
         While,
         DoWhile,
 
-        LetBinding, PeekBinding,
+        LetBinding,
     }
 
     abstract class Block : Operation {
@@ -51,6 +51,7 @@ namespace IonS {
             foreach(Operation operation in Operations) {
                 Error error = operation.TypeCheck(contract);
                 if(error != null) return error;
+                if(contract.HasReturned) return null;
             }
             return null;
         }
@@ -187,7 +188,14 @@ namespace IonS {
                 contracts.Add(contract1);
             }
 
-            for(int i = 0; i < contracts.Count; i++) if(!contracts[i].IsStackCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
+            bool HasReturned = true;
+            foreach(TypeCheckContract cntr in contracts) if(!cntr.HasReturned) {
+                HasReturned = false;
+                break;
+            }
+            contract.HasReturned = HasReturned;
+
+            if(!HasReturned) for(int i = 0; i < contracts.Count; i++) if(!contracts[i].HasReturned) if(!contracts[i].IsStackCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
 
             return null;
         }
@@ -242,6 +250,9 @@ namespace IonS {
             error = contract.Require(DataType.boolean, this);
             if(error != null) return error;
             if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
+
+            /* Console.WriteLine(String.Join(", ", contract.Stack));
+            Console.WriteLine(String.Join(", ", Reference.Stack)); */
 
             error = Block.TypeCheck(contract);
             if(error != null) return error;
