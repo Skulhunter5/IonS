@@ -222,14 +222,17 @@ namespace IonS {
     // - Invalid symbol error
 
     sealed class InvalidSymbolError : PreprocessorError {
-        public InvalidSymbolError(Word symbol) {
+        public InvalidSymbolError(Word symbol, bool isEnvironmentSymbol) {
             Symbol = symbol;
+            IsEnvironmentSymbol = isEnvironmentSymbol;
         }
         
         public Word Symbol { get; }
+        public bool IsEnvironmentSymbol { get; }
         
         public override string ToString() {
-            return base.ToString() + "Invalid Symbol: " + Symbol;
+            if(IsEnvironmentSymbol) return base.ToString() + "Invalid symbol: environment symbol: " + Symbol.Text;
+            return base.ToString() + "Invalid symbol: " + Symbol;
         }
     }
 

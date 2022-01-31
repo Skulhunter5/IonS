@@ -31,7 +31,7 @@ namespace IonS {
                 if(assembler == Assembler.nasm_linux_x86_64) asm += "BITS 64\n";
                 else asm += "format ELF64 executable 3\n";
 
-                var parser = new Parser(_text, _source, _unsafeFlag);
+                var parser = new Parser(_text, _source, _unsafeFlag, assembler);
                 var result = parser.Parse();
                 if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
                 var root = result.Root;

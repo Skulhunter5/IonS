@@ -36,6 +36,8 @@ namespace IonS {
         private Dictionary<string, Procedure> _procs;
         private List<string> _strings;
 
+        private readonly Assembler _assembler;
+
         private ulong nextIota = 0;
         private ulong Iota(bool reset) {
             ulong val = nextIota++;
@@ -43,17 +45,19 @@ namespace IonS {
             return val;
         }
 
-        public Parser(string text, string source)
+        public Parser(string text, string source, Assembler assembler)
         {
             _text = text;
             _source = source;
             _unsafeFlag = false;
+            _assembler = assembler;
         }
-        public Parser(string text, string source, bool unsafeFlag)
+        public Parser(string text, string source, bool unsafeFlag, Assembler assembler)
         {
             _text = text;
             _source = source;
             _unsafeFlag = unsafeFlag;
+            _assembler = assembler;
         }
 
         private Word Peek(int offset) {
@@ -423,7 +427,7 @@ namespace IonS {
             var lexingResult = new Lexer(_text, _source).run();
             if(lexingResult.Error != null) return new ParseResult(null, null, null, null, lexingResult.Error);
             
-            var preprocessorResult = new Preprocessor(_source, lexingResult.Words).run();
+            var preprocessorResult = new Preprocessor(_source, lexingResult.Words, _assembler).run();
             if(preprocessorResult.Error != null) return new ParseResult(null, null, null, null, preprocessorResult.Error);
             _words = preprocessorResult.Words;
 

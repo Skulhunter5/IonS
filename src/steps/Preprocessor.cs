@@ -27,15 +27,18 @@ namespace IonS {
         private readonly string _source;
         private readonly Word[] _words;
 
+        private readonly Assembler _assembler;
+
         private int i;
         private List<Word> words;
 
         private Dictionary<string, Position> _symbols;
         private Dictionary<string, Macro> _macros;
 
-        public Preprocessor(string source, Word[] words) {
+        public Preprocessor(string source, Word[] words, Assembler assembler) {
             _source = source;
             _words = words;
+            _assembler = assembler;
         }
 
         private Macro GetMacro(string key) {
@@ -123,14 +126,25 @@ namespace IonS {
             return null;
         }
 
+        private static readonly List<string> PredefinedSymbols = new List<string> {
+            "OS_LINUX",
+            "ARCH_X86_64",
+        };
+        private void InitSymbols() {
+            _symbols = new Dictionary<string, Position>();
+            if(_assembler == Assembler.nasm_linux_x86_64 || _assembler == Assembler.fasm_linux_x86_64) {
+                _symbols.Add("OS_LINUX", null);
+                _symbols.Add("ARCH_X86_64", null);
+            } else throw new NotImplementedException();
+        }
+
         // RUN
 
         public PreprocessorResult run() {
             words = new List<Word>();
             words.AddRange(_words);
 
-            // TODO: automatically define ENVIRONMENT symbols (make sure you can't define reserved environment symbols yourself)
-            _symbols = new Dictionary<string, Position>();
+            InitSymbols();
 
             _macros = new Dictionary<string, Macro>();
 
@@ -169,7 +183,8 @@ namespace IonS {
                         if(i+1 == words.Count) return new PreprocessorResult(null, new IncompletePreprocessorDirectiveError(words[i]));
 
                         Word symbolWord = words[i+1];
-                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord));
+                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord, false));
+                        if(PredefinedSymbols.Contains(symbolWord.Text)) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord, true));
                         
                         if(_symbols.ContainsKey(symbolWord.Text)) return new PreprocessorResult(null, new PreprocessorSymbolRedefinitionError(symbolWord, _symbols.GetValueOrDefault(symbolWord.Text, null)));
 
@@ -181,7 +196,7 @@ namespace IonS {
                         if(i+1 == words.Count) return new PreprocessorResult(null, new IncompletePreprocessorDirectiveError(words[i]));
 
                         Word symbolWord = words[i+1];
-                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord));
+                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord, false));
                         
                         if(_symbols.ContainsKey(symbolWord.Text)) {
                             openDirectives.Push(words[i]);
@@ -198,7 +213,7 @@ namespace IonS {
                         if(i+1 == words.Count) return new PreprocessorResult(null, new IncompletePreprocessorDirectiveError(words[i]));
 
                         Word symbolWord = words[i+1];
-                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord));
+                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord, false));
 
                         if(_symbols.ContainsKey(symbolWord.Text)) {
                             int start = i++;
