@@ -56,7 +56,7 @@ namespace IonS {
     // General errors
     // - Invalid DataType error
 
-    sealed class InvalidDataTypeError : LexerError {
+    sealed class InvalidDataTypeError : GeneralError {
         public InvalidDataTypeError(Word dataType) {
             DataType = dataType;
         }
@@ -236,7 +236,6 @@ namespace IonS {
         }
     }
 
-    // CommentPreprocessor errors
     // - EOF in block comment error
 
     sealed class EOFInBlockCommentError : CommentPreprocessorError {
@@ -251,7 +250,6 @@ namespace IonS {
         }
     }
 
-    // IncludePreprocessor errors
     // - File not found error
 
     sealed class FileNotFoundError : IncludePreprocessorError {
@@ -270,6 +268,8 @@ namespace IonS {
         }
     }
 
+    // - Incomplete include error
+
     sealed class IncompleteIncludeError : IncludePreprocessorError {
         public IncompleteIncludeError(Position position) {
             Position = position;
@@ -281,6 +281,8 @@ namespace IonS {
             return base.ToString() + "Incomplete include: at " + Position;
         }
     }
+
+    // - File path not a string literal error
 
     sealed class FilePathNotAStringLiteralError : IncludePreprocessorError {
         public FilePathNotAStringLiteralError(Word word) {
@@ -294,7 +296,6 @@ namespace IonS {
         }
     }
 
-    // MacroPreprocessor errors
     // - Macro errors
 
     sealed class IncompleteMacroDefinitionError : MacroPreprocessorError {
@@ -377,6 +378,34 @@ namespace IonS {
         
         public override string ToString() {
             return base.ToString() + "Incomplete assert: at " + Position;
+        }
+    }
+
+    // - Incomplete multicast error
+
+    sealed class IncompleteMultiCastOperation : ParserError {
+        public IncompleteMultiCastOperation(Position position) {
+            Position = position;
+        }
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Incomplete multicast: at " + Position;
+        }
+    }
+
+    // - Incomplete multicast error
+
+    sealed class InvalidMultiCastError : ParserError {
+        public InvalidMultiCastError(Position position) {
+            Position = position;
+        }
+        
+        public Position Position { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Invalid multicast: at " + Position;
         }
     }
 

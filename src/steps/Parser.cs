@@ -368,7 +368,31 @@ namespace IonS {
                 if(currentProcedure == null) return new ReturnOutsideProcedureError(Current.Position);
                 operations.Add(new ReturnOperation(currentProcedure, scope, Current.Position));
             } else if(Current.Text == "cast") {
-                
+                Word castWord = Current;
+                NextWord();
+
+                if(Current == null) return new IncompleteBindingError(castWord);
+                if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidMultiCastError(castWord.Position);
+                List<DataType> dataTypes = new List<DataType>();
+                if(Current.Text == "(") {
+                    NextWord();
+                    while(Current.Text != ")" && Current.Type == WordType.Word && Current != null) {
+                        if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidMultiCastError(castWord.Position);
+
+                        if(Utils.wildcardRegex.IsMatch(Current.Text)) dataTypes.Add(DataType.None);
+                        else if(!EDataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+                        else dataTypes.Add(dataType);
+
+                        NextWord();
+                    }
+                    if(Current == null) return new EOFInBindingListError(castWord);
+                    if(Current.Text != ")" || Current.Type != WordType.Word) return new InvalidMultiCastError(castWord.Position);
+                    NextWord();
+                } else return new IncompleteMultiCastOperation(castWord.Position);
+
+                operations.Add(new MultiCastOperation(dataTypes.ToArray(), castWord.Position));
+
+                return null;
             } else if(Current.Text.StartsWith("cast(") && Current.Text.EndsWith(")")) {
                 string dataTypeStr = Current.Text.Substring(5, Current.Text.Length-6);
                 if(!EDataType.TryParse(dataTypeStr, out DataType dataType)) return new InvalidDataTypeError(new Word(new Position(Current.Position.File, Current.Position.Line, Current.Position.Column+5), dataTypeStr));

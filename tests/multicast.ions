@@ -1,0 +1,15 @@
+12345
+
+inline proc bool. ( bool ) { cast(uint64) . }
+inline proc ptr. ( ptr ) { cast(uint64) . }
+
+1 cast(uint64)
+1 cast(uint64)
+1 cast(uint64)
+1 cast(uint64)
+1 cast(uint64)
+
+cast ( uint64 _ ptr bool _ )
+. bool. ptr. . .
+
+.

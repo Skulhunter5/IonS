@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace IonS {
 
@@ -1269,10 +1270,21 @@ namespace IonS {
         public override string GenerateAssembly(Assembler assembler) { return ""; }
 
         public override Error TypeCheck(TypeCheckContract contract) {
-            Error error = contract.RemoveElements(DataTypes.Length, this);
-            if(error != null) return error;
+            if(contract.GetElementsLeft() < DataTypes.Length) return new StackUnderflowError(this);
 
-            return contract.Provide(DataTypes);
+            List<DataType> wildcardTypes = new List<DataType>();
+            for(int i = DataTypes.Length-1; i >= 0; i--) {
+                if(DataTypes[DataTypes.Length - i - 1] == DataType.None) wildcardTypes.Add(contract.Pop());
+                else contract.Pop();
+            }
+
+            int j = wildcardTypes.Count-1;
+            for(int i = 0; i < DataTypes.Length; i++) {
+                if(DataTypes[i] == DataType.None) contract.Provide(wildcardTypes[j--]);
+                else contract.Provide(DataTypes[i]);
+            }
+
+            return null;
         }
     }
 
