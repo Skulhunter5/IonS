@@ -69,7 +69,8 @@ namespace IonS {
             TypeCheckContract contract = new TypeCheckContract();
             foreach(DataType dataType in Args) contract.Push(dataType);
 
-            Body.TypeCheck(contract);
+            Error error = Body.TypeCheck(contract);
+            if(error != null) return error;
 
             if(contract.GetElementsLeft() != Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
 
