@@ -1,3 +1,5 @@
+#include "./../std/std.ions"
+
 12345
 
 proc test ( uint64 uint64 uint64 ) {
@@ -22,5 +24,13 @@ let ( _ a _ b _ ) {
     a .
     b .
 }
+
+"-----\n" puts
+
+1 2 3 4 5
+peek ( _ a _ b _ ) {
+    b a b b a
+}
+. . . . . . . . . .
 
 .

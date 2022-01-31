@@ -392,11 +392,11 @@ namespace IonS {
                 return null;
             } else if(Current.Text == "iota" || Current.Text == "reset") {
                 operations.Add(new Push_uint64_Operation(Iota(Current.Text == "reset"), Current.Position));
-            } else if(Current.Text == "let") {
-                Word letWord = Current;
+            } else if(Current.Text == "let" || Current.Text == "peek") {
+                Word bindWord = Current;
                 NextWord();
 
-                if(Current == null) return new IncompleteBindingError(letWord);
+                if(Current == null) return new IncompleteBindingError(bindWord);
                 if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidBindingError(Current);
                 List<Binding> bindings = new List<Binding>();
                 if(Current.Text == "(") {
@@ -410,8 +410,8 @@ namespace IonS {
 
                         NextWord();
                     }
-                    if(Current == null) return new EOFInBindingListError(letWord);
-                    if(Current.Text != ")" || Current.Type != WordType.Word) return new InvalidBindingListError(letWord);
+                    if(Current == null) return new EOFInBindingListError(bindWord);
+                    if(Current.Text != ")" || Current.Type != WordType.Word) return new InvalidBindingListError(bindWord);
                     NextWord();
                 } else {
                     if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
@@ -424,9 +424,9 @@ namespace IonS {
                 BindingScope bindingScope = new BindingScope(scope, currentProcedure, bindings);
                 ParseCodeBlockResult result = ParseCodeBlock(scope, bindingScope, breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
-                LetBindingBlock letBindingBlock = new LetBindingBlock(bindingScope, letWord.Position, result.Block);
+                BindingBlock bindingBlock = new BindingBlock(bindingScope, result.Block, bindWord.Text == "let" ? BindingType.Let : BindingType.Peek, bindWord.Position);
 
-                operations.Add(letBindingBlock);
+                operations.Add(bindingBlock);
 
                 return null;
             } else {

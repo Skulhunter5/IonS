@@ -9,7 +9,7 @@ namespace IonS {
         While,
         DoWhile,
 
-        LetBinding,
+        LetBinding, PeekBinding,
     }
 
     abstract class Block : Operation {
@@ -57,14 +57,21 @@ namespace IonS {
         }
     }
 
-    sealed class LetBindingBlock : Block {
-        public LetBindingBlock(BindingScope scope, Position position, CodeBlock code) : base(BlockType.LetBinding, position) {
+    enum BindingType {
+        Let,
+        Peek,
+    }
+
+    sealed class BindingBlock : Block {
+        public BindingBlock(BindingScope scope, CodeBlock code, BindingType bindingType, Position position) : base(BlockType.LetBinding, position) {
             Scope = scope;
             Code = code;
+            BindingType = bindingType;
         }
 
         public BindingScope Scope { get; }
         public CodeBlock Code { get; }
+        public BindingType BindingType { get; }
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
@@ -73,10 +80,17 @@ namespace IonS {
                 asm += "    sub rax, " + (Scope.BindingsList.Count * 8) + "\n";
                 asm += "    mov [ret_stack_rsp], rax\n";
                 for(int i = Scope.BindingsList.Count-1; i >= 0; i--) {
-                    if(Scope.BindingsList[i] == null) asm += "    add rsp, 8\n";
-                    else {
-                        asm += "    pop rbx\n";
-                        asm += "    mov [rax+" + Scope.BindingsList[i].Offset + "], rbx\n";
+                    if(BindingType == BindingType.Let) {
+                        if(Scope.BindingsList[i] == null) asm += "    add rsp, 8\n";
+                        else {
+                            asm += "    pop rbx\n";
+                            asm += "    mov [rax + " + Scope.BindingsList[i].Offset + "], rbx\n";
+                        }
+                    } else { // BindingType.Peek
+                        if(Scope.BindingsList[i] != null) {
+                            asm += "    mov rbx, [rsp + " + ((Scope.BindingsList.Count-1 - i) * 8) + "]\n";
+                            asm += "    mov [rax + " + Scope.BindingsList[i].Offset + "], rbx\n";
+                        }
                     }
                 }
                 asm += Code.GenerateAssembly(assembler);
@@ -89,14 +103,14 @@ namespace IonS {
         }
 
         public override string ToString() {
-            return "Let-Binding at " + Position;
+            return (BindingType == BindingType.Let ? "Let" : "Peek") + "-Binding at " + Position;
         }
 
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < Scope.BindingsList.Count) return new StackUnderflowError(this);
 
             for(int i = Scope.BindingsList.Count-1; i >= 0; i--) {
-                DataType dataType = contract.Pop();
+                DataType dataType = BindingType == BindingType.Let ? contract.Pop() : contract.Peek(Scope.BindingsList.Count-1 - i);
                 
                 if(Scope.BindingsList[i] == null) continue;
 
