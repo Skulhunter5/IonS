@@ -158,7 +158,8 @@ namespace IonS {
                     int start = i;
                     int line = words[i].Position.Line;
                     while(words[i++].Position.Line == line) if(i >= words.Count) break;
-                    words.RemoveRange(start, i - start - 1);
+                    if(i < words.Count) i--;
+                    words.RemoveRange(start, i - start);
                     i = start;
                     continue;
                 }
