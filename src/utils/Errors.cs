@@ -19,25 +19,7 @@ namespace IonS {
 
     abstract class PreprocessorError : Error {
         public override string ToString() {
-            return "[PreprocessorError]: ";
-        }
-    }
-
-    abstract class CommentPreprocessorError : Error {
-        public override string ToString() {
-            return "[CommentPreprocessorError]: ";
-        }
-    }
-
-    abstract class IncludePreprocessorError : Error {
-        public override string ToString() {
-            return "[IncludePreprocessor]: ";
-        }
-    }
-
-    abstract class MacroPreprocessorError : Error {
-        public override string ToString() {
-            return "[MacroPreprocessor]: ";
+            return "[Preprocessor]: ";
         }
     }
 
@@ -238,7 +220,7 @@ namespace IonS {
 
     // - EOF in block comment error
 
-    sealed class EOFInBlockCommentError : CommentPreprocessorError {
+    sealed class EOFInBlockCommentError : PreprocessorError {
         public EOFInBlockCommentError(Position start) {
             Start = start;
         }
@@ -252,7 +234,7 @@ namespace IonS {
 
     // - File not found error
 
-    sealed class FileNotFoundError : IncludePreprocessorError {
+    sealed class FileNotFoundError : PreprocessorError {
         public FileNotFoundError(string path, string directory, Position position) {
             Path = path;
             Directory = directory;
@@ -270,7 +252,7 @@ namespace IonS {
 
     // - Incomplete include error
 
-    sealed class IncompleteIncludeError : IncludePreprocessorError {
+    sealed class IncompleteIncludeError : PreprocessorError {
         public IncompleteIncludeError(Position position) {
             Position = position;
         }
@@ -284,7 +266,7 @@ namespace IonS {
 
     // - File path not a string literal error
 
-    sealed class FilePathNotAStringLiteralError : IncludePreprocessorError {
+    sealed class FilePathNotAStringLiteralError : PreprocessorError {
         public FilePathNotAStringLiteralError(Word word) {
             Word = word;
         }
@@ -298,7 +280,7 @@ namespace IonS {
 
     // - Macro errors
 
-    sealed class IncompleteMacroDefinitionError : MacroPreprocessorError {
+    sealed class IncompleteMacroDefinitionError : PreprocessorError {
         public IncompleteMacroDefinitionError(Word macroWord, Word key) {
             MacroWord = macroWord;
             Key = key;
@@ -312,7 +294,7 @@ namespace IonS {
         }
     }
 
-    sealed class InvalidMacroKeyError : MacroPreprocessorError {
+    sealed class InvalidMacroKeyError : PreprocessorError {
         public InvalidMacroKeyError(Word key) {
             Key = key;
         }
@@ -324,7 +306,7 @@ namespace IonS {
         }
     }
 
-    sealed class MacroRedefinitionError : MacroPreprocessorError {
+    sealed class MacroRedefinitionError : PreprocessorError {
         public MacroRedefinitionError(Word o, Word n) {
             Old = o;
             New = n;
