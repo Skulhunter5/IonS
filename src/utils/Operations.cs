@@ -603,6 +603,8 @@ namespace IonS {
         }
     }
 
+    // TODO: rework the following instructions once more, e.g. you should probably be able to do bitwise operations with anything
+
     // Bitwise operations
 
     sealed class ShLOperation : Operation { // a b -- (a<<b)
@@ -621,10 +623,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
 
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
 
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
 
             return contract.Provide(dataType);
         }
@@ -646,10 +650,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
             
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
 
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
 
             return contract.Provide(dataType);
         }
@@ -671,10 +677,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
 
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
 
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
 
             return contract.Provide(dataType);
         }
@@ -696,10 +704,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
             
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
             
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
 
             return contract.Provide(dataType);
         }
@@ -721,10 +731,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
             
             DataType dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+
             dataType = contract.Pop();
-            if(!EDataType.Is_uint(dataType)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
             
             return contract.Provide(dataType);
         }
@@ -744,9 +756,11 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContract contract) {
             if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
 
-            if(!EDataType.Is_uint(contract.Peek())) return new UnexpectedDataTypeError(contract.Peek(), DataType.uint64, this);
-
-            return null;
+            DataType dataType = contract.Pop();
+            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
+            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            
+            return contract.Provide(DataType.uint64);
         }
     }
 

@@ -43,6 +43,12 @@ inline proc putc ( ptr ) {
     1 swap puts
 }
 
+proc putb ( bool ) {
+    if "true"
+    else "false"
+    puts
+}
+
 inline proc openat ( uint64 ptr uint64 uint64 -- uint64 ) {
     SYS_openat syscall4
 }
@@ -255,6 +261,7 @@ proc memcpy64 ( ptr ptr uint64 ) {
 }
 
 proc memcpy ( ptr ptr uint64 ) {
+    cast ( uint64 uint64 _ )
     // dest src n
     8 /% swap 8 *
     // dest src n%8 n//8*8
@@ -266,6 +273,7 @@ proc memcpy ( ptr ptr uint64 ) {
     // dest src n//8*8 n%8 src n//8*8 ndest
     rrot +
     // dest src n//8*8 n%8 ndest nsrc
+    cast ( ptr ptr _ _ ptr ptr )
     rot memcpy8
     // dest src n//8*8
     memcpy64
