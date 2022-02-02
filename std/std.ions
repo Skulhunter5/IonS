@@ -36,6 +36,14 @@ inline proc fputs ( uint64 ptr uint64 -- uint64 ) {
     SYS_write syscall3
 }
 
+inline proc fstat ( ptr int -- int ) {
+    SYS_fstat syscall2
+}
+
+inline proc openat ( uint64 ptr uint64 uint64 -- uint64 ) {
+    SYS_openat syscall4
+}
+
 inline proc puts ( uint64 ptr ) {
     STDOUT fputs drop
 }
@@ -52,10 +60,6 @@ proc putb ( bool ) {
     if "true"
     else "false"
     puts
-}
-
-inline proc openat ( uint64 ptr uint64 uint64 -- uint64 ) {
-    SYS_openat syscall4
 }
 
 #macro sizeof(Str) 16
@@ -77,6 +81,10 @@ proc cstrlen ( ptr -- uint64 ) {
         ++
     }
 	swap -
+}
+
+inline proc cstr-to-str ( ptr -- uint64 ptr ) {
+    dup cstrlen swap
 }
 
 inline proc cputs ( ptr ) {
