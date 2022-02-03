@@ -1,0 +1,53 @@
+#include "./../std/std.ions"
+
+12345
+
+1 switch {
+    case { dup 2 == } { }
+    case { dup 3 == } {
+        "2 or 3\n" puts
+        break
+    }
+    default {
+        "not 2 or 3\n" puts
+        break
+    }
+} drop
+
+2 switch {
+    case { dup 2 == } { }
+    case { dup 3 == } {
+        "2 or 3\n" puts
+        break
+    }
+    default {
+        "not 2 or 3\n" puts
+        break
+    }
+} drop
+
+3 switch {
+    case { dup 2 == } { }
+    case { dup 3 == } {
+        "2 or 3\n" puts
+        break
+    }
+    default {
+        "not 2 or 3\n" puts
+        break
+    }
+} drop
+
+4 switch {
+    case { dup 2 == } { }
+    case { dup 3 == } {
+        "2 or 3\n" puts
+        break
+    }
+    default {
+        "not 2 or 3\n" puts
+        break
+    }
+} drop
+
+.

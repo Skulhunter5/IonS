@@ -251,64 +251,121 @@ namespace IonS {
             } else if(Current.Text == "if") {
                 Position position = Current.Position;
                 NextWord();
+
                 ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
-                CodeBlock blockIf = result.Block;
-                IfBlock ifBlock = new IfBlock(blockIf, null, position);
-                while(Current.Text == "else*") {
+
+                IfBlock ifBlock = new IfBlock(result.Block, null, position);
+
+                while(Current.Type == WordType.Word && Current.Text == "else*") {
                     NextWord();
+
                     result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                     if(result.Error != null) return result.Error;
-                    CodeBlock Condition = result.Block;
+                    ifBlock.Conditions.Add(result.Block);
+
                     if(Current.Text != "if") return new MissingIfError(Current.Position);
                     NextWord();
+
                     result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                     if(result.Error != null) return result.Error;
-                    CodeBlock Conditional = result.Block;
-                    ifBlock.Conditions.Add(Condition);
-                    ifBlock.Conditionals.Add(Conditional);
+                    ifBlock.Conditionals.Add(result.Block);
                 }
-                if(Current.Text == "else") {
+
+                if(Current.Type == WordType.Word && Current.Text == "else") {
                     NextWord();
+
                     result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                     if(result.Error != null) return result.Error;
                     ifBlock.BlockElse = result.Block;
                 }
+
                 operations.Add(ifBlock);
+
                 return null;
             } else if(Current.Text == "while") {
                 Position position = Current.Position;
                 NextWord();
+
                 WhileBlock whileBlock = new WhileBlock(null, null, position);
+
                 ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 whileBlock.Condition = result.Block;
-                if(Current.Text != "do") return new MissingDoError(Current.Position);
+
+                if(Current.Type == WordType.Word && Current.Text != "do") return new MissingDoError(Current.Position);
                 NextWord();
+
                 result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), whileBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 whileBlock.Block = result.Block;
+
                 operations.Add(whileBlock);
+
                 return null;
             } else if(Current.Text == "do") {
                 Position position = Current.Position;
                 NextWord();
+
                 DoWhileBlock doWhileBlock = new DoWhileBlock(null, null, position);
+
                 ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), doWhileBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 doWhileBlock.Block = result.Block;
-                if(Current.Text != "while") return new MissingWhileError(Current.Position);
+
+                if(Current.Type == WordType.Word && Current.Text != "while") return new MissingWhileError(Current.Position);
                 NextWord();
+
                 result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
                 doWhileBlock.Condition = result.Block;
+
                 operations.Add(doWhileBlock);
+
+                return null;
+            } else if(Current.Text == "switch") {
+                Position position = Current.Position;
+                NextWord();
+
+                SwitchBlock switchBlock = new SwitchBlock(position);
+
+                if(Current.Type != WordType.Word || Current.Text != "{") return new MissingOpeningBraceError(switchBlock, Current.Position);
+                NextWord();
+
+                while(Current.Type == WordType.Word && Current.Text == "case") {
+                    NextWord();
+
+                    var result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                    if(result.Error != null) return result.Error;
+                    switchBlock.Cases.Add(result.Block);
+
+                    result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), switchBlock, currentProcedure);
+                    if(result.Error != null) return result.Error;
+                    switchBlock.Blocks.Add(result.Block);
+                }
+
+                if(Current.Type == WordType.Word && Current.Text == "default") {
+                    NextWord();
+
+                    var result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), switchBlock, currentProcedure);
+                    if(result.Error != null) return result.Error;
+                    switchBlock.DefaultBlock = result.Block;
+                }
+
+                if(Current.Type != WordType.Word || Current.Text != "}") return new MissingClosingBraceError(switchBlock, Current.Position);
+                NextWord();
+
+                operations.Add(switchBlock);
+
                 return null;
             } else if(Current.Text == "continue") {
                 if(breakableBlock == null) return new InvalidContinueError(Current.Position);
+                if(breakableBlock.BlockType == BlockType.Switch) return new InvalidContinueError(Current.Position); // TODO: add custom error for this case
+
                 operations.Add(new ContinueOperation(breakableBlock, Current.Position));
             } else if(Current.Text == "break") {
                 if(breakableBlock == null) return new InvalidBreakError(Current.Position);
+
                 operations.Add(new BreakOperation(breakableBlock, Current.Position));
             } else if(Current.Text == "var") {
                 Word varWord = Current;

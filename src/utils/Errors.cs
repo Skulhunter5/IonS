@@ -363,6 +363,38 @@ namespace IonS {
         }
     }
 
+    // - Missing opening brace error
+
+    sealed class MissingOpeningBraceError : ParserError {
+        public MissingOpeningBraceError(Operation operation, Position position) {
+            Operation = operation;
+            Position = position;
+        }
+        
+        public Operation Operation { get; }
+        public Position Position { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Missing opening brace: at " + Position + " for " + Operation;
+        }
+    }
+
+    // - Missing closing brace error
+
+    sealed class MissingClosingBraceError : ParserError {
+        public MissingClosingBraceError(Operation operation, Position position) {
+            Operation = operation;
+            Position = position;
+        }
+        
+        public Operation Operation { get; }
+        public Position Position { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Missing closing brace: at " + Position + " for " + Operation;
+        }
+    }
+
     // - Incomplete multicast error
 
     sealed class IncompleteMultiCastOperation : ParserError {

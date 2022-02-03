@@ -20,7 +20,7 @@ namespace IonS {
             ".",
             "true", "false",
             "null",
-            "if", "else", "while", "do",
+            "if", "else", "while", "do", "switch", "case",
             "continue", "break",
             "macro",
             "var",

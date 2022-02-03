@@ -8,6 +8,7 @@ namespace IonS {
         If,
         While,
         DoWhile,
+        Switch,
 
         LetBinding, PeekBinding,
     }
@@ -145,24 +146,35 @@ namespace IonS {
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 string asm = "";
+
                 asm += "if_" + Id + ":\n";
                 asm += "    pop rax\n";
                 asm += "    cmp rax, 0\n";
                 asm += (Conditionals.Count > 0) ? "    je if_" + Id + "_elseif_" + 0 + "\n" : "    je if_" + Id + "_else\n";
+
                 asm += BlockIf.GenerateAssembly(assembler);
+
                 asm += "    jmp if_" + Id + "_end\n";
+
                 for(int i = 0; i < Conditionals.Count; i++) {
                     asm += "if_" + Id + "_elseif_" + i + ":\n";
+
                     asm += Conditions[i].GenerateAssembly(assembler);
+
                     asm += "    pop rax\n";
                     asm += "    cmp rax, 0\n";
                     asm += (i < Conditionals.Count - 1) ? "    je if_" + Id + "_elseif_" + (i+1) + "\n" : "    je if_" + Id + "_else\n";
+
                     asm += Conditionals[i].GenerateAssembly(assembler);
+
                     asm += "jmp if_" + Id + "_end\n";
                 }
+
                 asm += "if_" + Id + "_else:\n";
                 if(BlockElse != null) asm += BlockElse.GenerateAssembly(assembler);
+
                 asm += "if_" + Id + "_end:\n";
+
                 return asm;
             }
             throw new NotImplementedException();
@@ -227,14 +239,21 @@ namespace IonS {
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 string asm = "";
+
                 asm += "while_" + Id + ":\n";
+
                 asm += Condition.GenerateAssembly(assembler);
+
                 asm += "    pop rax\n";
                 asm += "    cmp rax, 0\n";
                 asm += "    je while_" + Id + "_end\n";
+
                 asm += Block.GenerateAssembly(assembler);
+
                 asm += "    jmp while_" + Id + "\n";
+
                 asm += "while_" + Id + "_end:\n";
+
                 return asm;
             }
             throw new NotImplementedException();
@@ -247,6 +266,7 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
         public override string break___assembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    jmp while_{Id}_end
@@ -285,14 +305,21 @@ namespace IonS {
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 string asm = "";
+
                 asm += "dowhile_" + Id + ":\n";
+
                 asm += Block.GenerateAssembly(assembler);
+
                 asm += "dowhile_" + Id + "_do:\n";
+
                 asm += Condition.GenerateAssembly(assembler);
+
                 asm += "    pop rax\n";
                 asm += "    cmp rax, 0\n";
                 asm += "    jne dowhile_" + Id + "\n";
+
                 asm += "dowhile_" + Id + "_end:\n";
+
                 return asm;
             }
             throw new NotImplementedException();
@@ -305,6 +332,7 @@ namespace IonS {
             }
             throw new NotImplementedException();
         }
+
         public override string break___assembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    jmp dowhile_{Id}_end
@@ -327,6 +355,104 @@ namespace IonS {
             if(error != null) return error;
             if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
 
+
+            return null;
+        }
+    }
+
+    sealed class SwitchBlock : BreakableBlock {
+        public SwitchBlock(Position position) : base(BlockType.Switch, position) {
+            Cases = new List<CodeBlock>();
+            Blocks = new List<CodeBlock>();
+        }
+
+        public List<CodeBlock> Cases { get; }
+        public List<CodeBlock> Blocks { get; }
+        public CodeBlock DefaultBlock { get; set; }
+
+        public override string ToString() {
+            return "Switch-statement{" + Cases.Count + " cases} at " + Position;
+        }
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                string asm = "";
+
+                asm += "switch_" + Id + ":\n";
+
+                for(int i = 0; i < Cases.Count; i++) {
+                    asm += Cases[i].GenerateAssembly(assembler);
+                    asm += "    pop rax\n";
+                    asm += "    cmp rax, 0\n";
+                    asm += "    jne switch_" + Id + "_case_" + i + "\n";
+                }
+
+                asm += "    jmp switch_" + Id + "_" + (DefaultBlock != null ? "default" : "end") + "\n";
+
+                for(int i = 0; i < Cases.Count; i++) {
+                    asm += "switch_" + Id + "_case_" + i + ":\n";
+                    asm += Blocks[i].GenerateAssembly(assembler);
+                }
+
+                if(DefaultBlock != null) {
+                    asm += "switch_" + Id + "_default:\n";
+                    asm += DefaultBlock.GenerateAssembly(assembler);
+                }
+
+                asm += "switch_" + Id + "_end:\n";
+
+                return asm;
+            }
+            throw new NotImplementedException();
+        }
+
+        public override string continue___assembly(Assembler assembler) {
+            throw new NotImplementedException(); // Unreachable
+        }
+
+        public override string break___assembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    jmp switch_{Id}_end
+                return "    jmp switch_" + Id + "_end\n";
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContract contract) {
+            Reference = contract.Copy();
+
+            List<TypeCheckContract> contracts = new List<TypeCheckContract>();
+
+            for(int i = 0; i < Cases.Count; i++) {
+                TypeCheckContract contract1 = Reference.Copy();
+                Cases[i].TypeCheck(contract1);
+
+                Error error = contract1.Require(DataType.boolean, this);
+                if(error != null) return error;
+                if(!Reference.IsStackCompatible(contract1)) return new SignatureMustBeNoneError(Reference, contract1, Cases[i]);
+
+                error = Blocks[i].TypeCheck(contract1);
+                if(error != null) return error;
+
+                contracts.Add(contract1);
+            }
+
+            if(DefaultBlock != null) {
+                TypeCheckContract contract1 = Reference.Copy();
+                Error error = DefaultBlock.TypeCheck(contract1);
+                if(error != null) return error;
+
+                contracts.Add(contract1);
+            }
+
+            bool HasReturned = true;
+            foreach(TypeCheckContract cntr in contracts) if(!cntr.HasReturned) {
+                HasReturned = false;
+                break;
+            }
+            contract.HasReturned = HasReturned;
+
+            if(!HasReturned) for(int i = 0; i < contracts.Count; i++) if(!contracts[i].HasReturned) if(!contracts[i].IsStackCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
 
             return null;
         }
