@@ -265,9 +265,6 @@ namespace IonS {
             if(error != null) return error;
             if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
 
-            /* Console.WriteLine(String.Join(", ", contract.Stack));
-            Console.WriteLine(String.Join(", ", Reference.Stack)); */
-
             error = Block.TypeCheck(contract);
             if(error != null) return error;
             if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Block);
