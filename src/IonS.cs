@@ -5,8 +5,6 @@ namespace IonS {
 
     enum Action {
         Compile,
-        Interpret,
-        Simulate,
     }
 
     class IonS {
@@ -21,8 +19,6 @@ namespace IonS {
             while(i < args.Length) {
                 if(i == 0) {
                     if(args[i] == "c" || args[i] == "compile") action = Action.Compile;
-                    else if(args[i] == "s" || args[i] == "simulate") action = Action.Simulate;
-                    else if(args[i] == "i" || args[i] == "interpret") action = Action.Interpret;
                     else {
                         Console.WriteLine("Invalid action: '" + args[i] + "'");
                         Environment.ExitCode = 2;
@@ -31,7 +27,7 @@ namespace IonS {
                     i++;
                     continue;
                 }
-                if(action == Action.Compile || action == Action.Simulate) {
+                if(action == Action.Compile) {
                     if(args[i] == "--file") {
                         i++;
                         if(i >= args.Length) {
@@ -69,17 +65,6 @@ namespace IonS {
             if(action == Action.Compile) {
                 if(filename == null) filename = "res/test.ions";
                 Compile(filename, assembler);
-            } else if(action == Action.Simulate) {
-                Console.WriteLine("Feature is currently disabled.");
-                Environment.ExitCode = 2;
-                return;
-                //if(filename != null) filename = "res/test.ions";
-                //Simulate(filename);
-            } else if(action == Action.Interpret) {
-                Console.WriteLine("Feature is currently disabled.");
-                Environment.ExitCode = 2;
-                return;
-                //Interpret();
             }
         }
 
