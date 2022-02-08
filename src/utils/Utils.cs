@@ -7,6 +7,7 @@ namespace IonS {
     enum Assembler {
         nasm_linux_x86_64,
         fasm_linux_x86_64,
+        iasm_linux_x86_64,
     }
 
     abstract class Result {

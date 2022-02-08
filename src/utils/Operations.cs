@@ -41,9 +41,6 @@ namespace IonS {
     }
 
     abstract class Operation {
-        /* public Operation(OperationType type) {
-            Type = type;
-        } */
         public Operation(OperationType type, Position position) {
             Type = type;
             Position = position;
@@ -69,7 +66,7 @@ namespace IonS {
         public bool Value { get; }
         
         public override string GenerateAssembly(Assembler assembler) {
-            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64 || assembler == Assembler.iasm_linux_x86_64) {
                 //    push {bool}
                 return "    push " + (Value ? '1' : '0') + "\n";
             }
@@ -99,6 +96,16 @@ namespace IonS {
                     return "    push " + Value + "\n";
                 }
             }
+            if(assembler == Assembler.iasm_linux_x86_64) {
+                if(Value > ((ulong) int.MaxValue)) {
+                    //    mov rax, {uint64}
+                    //    push rax
+                    return "    mov rax " + Value + "\n    push rax\n";
+                } else {
+                    //    push {uint64}
+                    return "    push " + Value + "\n";
+                }
+            }
             throw new NotImplementedException();
         }
 
@@ -116,8 +123,24 @@ namespace IonS {
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                //    push {uint64}
-                return "    push " + Value + "\n";
+                if(Value > ((ulong) int.MaxValue)) {
+                    //    mov rax, {uint64}
+                    //    push rax
+                    return "    mov rax, " + Value + "\n    push rax\n";
+                } else {
+                    //    push {uint64}
+                    return "    push " + Value + "\n";
+                }
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) {
+                if(Value > ((ulong) int.MaxValue)) {
+                    //    mov rax, {uint64}
+                    //    push rax
+                    return "    mov rax " + Value + "\n    push rax\n";
+                } else {
+                    //    push {uint64}
+                    return "    push " + Value + "\n";
+                }
             }
             throw new NotImplementedException();
         }
@@ -166,7 +189,10 @@ namespace IonS {
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-               return "    add rsp, " + (8 * N) + "\n"; 
+                return "    add rsp, " + (8 * N) + "\n";
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) {
+                return "    add rsp " + (8 * N) + "\n";
             }
             throw new NotImplementedException();
         }
@@ -184,6 +210,12 @@ namespace IonS {
                 //    mov rax, [rsp]
                 //    push rax
                 return "    mov rax, [rsp]\n    push rax\n";
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rax
+                //    push rax
+                //    push rax
+                return "    pop rax\n    push rax\n    push rax\n";
             }
             throw new NotImplementedException();
         }
@@ -206,6 +238,15 @@ namespace IonS {
                 //    push rbx
                 return "    mov rbx, [rsp]\n    mov rax, [rsp+8]\n    push rax\n    push rbx\n";
             }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rbx
+                //    pop rax
+                //    push rax
+                //    push rbx
+                //    push rax
+                //    push rbx
+                return "    pop rbx\n    pop rax\n    push rax\n    push rbx\n    push rax\n    push rbx\n";
+            }
             throw new NotImplementedException();
         }
 
@@ -224,6 +265,14 @@ namespace IonS {
                 //    mov rax, [rsp+8]
                 //    push rax
                 return "    mov rax, [rsp+8]\n    push rax\n";
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rbx
+                //    pop rax
+                //    push rax
+                //    push rbx
+                //    push rax
+                return "    pop rbx\n    pop rax\n    push rax\n    push rbx\n    push rax\n";
             }
             throw new NotImplementedException();
         }
@@ -246,6 +295,19 @@ namespace IonS {
                 //    push rbx
                 return "    mov rbx, [rsp+16]\n    mov rax, [rsp+24]\n    push rax\n    push rbx\n";
             }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rdx
+                //    pop rcx
+                //    pop rbx
+                //    pop rax
+                //    push rax
+                //    push rbx
+                //    push rcx
+                //    push rdx
+                //    push rax
+                //    push rbx
+                return "    pop rdx\n    pop rcx\n    pop rbx\n    pop rax\n    push rax\n    push rbx\n    push rcx\n    push rdx\n    push rax\n    push rbx\n";
+            }
             throw new NotImplementedException();
         }
 
@@ -266,6 +328,13 @@ namespace IonS {
                 //    mov [rsp], rax
                 //    mov [rsp+8], rbx
                 return "    mov rbx, [rsp]\n    mov rax, [rsp+8]\n    mov [rsp], rax\n    mov [rsp+8], rbx\n";
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rbx
+                //    pop rax
+                //    push rbx
+                //    push rax
+                return "    pop rbx\n    pop rax\n    push rbx\n    push rax\n";
             }
             throw new NotImplementedException();
         }
@@ -292,6 +361,17 @@ namespace IonS {
                 //    mov [rsp+24], rax
                 //    mov [rsp+8], rbx
                 return "    mov rax, [rsp]\n    mov rbx, [rsp+16]\n    mov [rsp+16], rax\n    mov [rsp], rbx\n    mov rax, [rsp+8]\n    mov rbx, [rsp+24]\n    mov [rsp+24], rax\n    mov [rsp+8], rbx\n";
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rdx
+                //    pop rcx
+                //    pop rbx
+                //    pop rax
+                //    push rcx
+                //    push rdx
+                //    push rax
+                //    push rbx
+                return "    pop rdx    pop rcx    pop rbx    pop rax    push rcx    push rdx    push rax    push rbx";
             }
             throw new NotImplementedException();
         }
@@ -321,6 +401,15 @@ namespace IonS {
                 //    mov [rsp+16], rbx
                 return "    mov rcx, [rsp]\n    mov rbx, [rsp+8]\n    mov rax, [rsp+16]\n    mov [rsp], rax\n    mov [rsp+8], rcx\n    mov [rsp+16], rbx\n";
             }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rcx
+                //    pop rbx
+                //    pop rax
+                //    push rbx
+                //    push rcx
+                //    push rax
+                return "    pop rcx\n    pop rbx\n    pop rax\n    push rbx\n    push rcx\n    push rax\n";
+            }
             throw new NotImplementedException();
         }
 
@@ -347,6 +436,15 @@ namespace IonS {
                 //    mov [rsp+8], rax
                 //    mov [rsp+16], rcx
                 return "    mov rcx, [rsp]\n    mov rbx, [rsp+8]\n    mov rax, [rsp+16]\n    mov [rsp], rbx\n    mov [rsp+8], rax\n    mov [rsp+16], rcx\n";
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rcx
+                //    pop rbx
+                //    pop rax
+                //    push rcx
+                //    push rax
+                //    push rbx
+                return "    pop rcx\n    pop rbx\n    pop rax\n    push rcx\n    push rax\n    push rbx\n";
             }
             throw new NotImplementedException();
         }
@@ -437,6 +535,8 @@ namespace IonS {
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    mov rax, [rsp+{offset}]
+                //    push rax
                 return "    mov rax, [rsp+" + (Index*8-8) + "]\n    push rax\n";
             }
             throw new NotImplementedException();
@@ -459,6 +559,12 @@ namespace IonS {
                 //    inc QWORD [rsp]
                 return "    inc QWORD [rsp]\n";
             }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rax
+                //    inc rax
+                //    push rax
+                return "    pop rax\n    inc rax\n    push rax\n";
+            }
             throw new NotImplementedException();
         }
 
@@ -474,6 +580,12 @@ namespace IonS {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    dec QWORD [rsp]
                 return "    dec QWORD [rsp]\n";
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rax
+                //    dec rax
+                //    push rax
+                return "    pop rax\n    dec rax\n    push rax\n";
             }
             throw new NotImplementedException();
         }
@@ -492,6 +604,13 @@ namespace IonS {
                 //    add [rsp], rbx
                 return "    pop rbx\n    add [rsp], rbx\n";
             }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rbx
+                //    pop rax
+                //    add rax rbx
+                //    push rax
+                return "    pop rbx\n    pop rax\n    add rax rbx\n    push rax\n";
+            }
             throw new NotImplementedException();
         }
 
@@ -509,6 +628,13 @@ namespace IonS {
                 //    pop rbx
                 //    sub [rsp], rbx
                 return "    pop rbx\n    sub [rsp], rbx\n";
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rbx
+                //    pop rax
+                //    sub rax rbx
+                //    push rax
+                return "    pop rbx\n    pop rax\n    sub rax rbx\n    push rax\n";
             }
             throw new NotImplementedException();
         }
@@ -724,6 +850,13 @@ namespace IonS {
                 //    xor [rsp], rbx
                 return "    pop rbx\n    xor [rsp], rbx\n";
             }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rbx
+                //    pop rax
+                //    xor rax rbx
+                //    push rax
+                return "    pop rbx\n    pop rax\n    xor rax rbx\n    push rax\n";
+            }
             throw new NotImplementedException();
         }
 
@@ -852,6 +985,14 @@ namespace IonS {
                 //    mov [rsp], rax
                 return "    pop rbx\n    mov rax, [rsp]\n    cmp rbx, rax\n    cmovb rax, rbx\n    mov [rsp], rax\n";
             }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rbx
+                //    pop rax
+                //    cmp rbx, rax
+                //    cmovb rax rbx
+                //    push rax
+                return "    pop rbx\n    pop rax\n    cmp rbx, rax\n    cmovb rax rbx\n    push rax\n";
+            }
             throw new NotImplementedException();
         }
 
@@ -872,6 +1013,14 @@ namespace IonS {
                 //    cmova rax, rbx
                 //    mov [rsp], rax
                 return "    pop rbx\n    mov rax, [rsp]\n    cmp rbx, rax\n    cmova rax, rbx\n    mov [rsp], rax\n";
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) { // TODO: improve assembly
+                //    pop rbx
+                //    pop rax
+                //    cmp rbx, rax
+                //    cmova rax rbx
+                //    push rax
+                return "    pop rbx\n    pop rax\n    cmp rbx, rax\n    cmova rax rbx\n    push rax\n";
             }
             throw new NotImplementedException();
         }

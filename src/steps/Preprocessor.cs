@@ -131,7 +131,7 @@ namespace IonS {
         };
         private void InitSymbols() {
             _symbols = new Dictionary<string, Position>();
-            if(_assembler == Assembler.nasm_linux_x86_64 || _assembler == Assembler.fasm_linux_x86_64) {
+            if(_assembler == Assembler.nasm_linux_x86_64 || _assembler == Assembler.fasm_linux_x86_64 || _assembler == Assembler.iasm_linux_x86_64) {
                 _symbols.Add("OS_LINUX", null);
                 _symbols.Add("ARCH_X86_64", null);
             } else throw new NotImplementedException();

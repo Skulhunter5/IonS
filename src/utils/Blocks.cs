@@ -40,7 +40,7 @@ namespace IonS {
         public Position End { get; set; }
         
         public override string GenerateAssembly(Assembler assembler) {
-            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64 || assembler == Assembler.iasm_linux_x86_64) {
                 string asm = "";
                 foreach(Operation operation in Operations) asm += operation.GenerateAssembly(assembler);
                 return asm;

@@ -53,7 +53,7 @@ namespace IonS {
                     else asm += "    str_" + i + ":\n";
                 }
 
-                // Begin data segment
+                // Begin code segment
                 if(assembler == Assembler.nasm_linux_x86_64) asm += "segment .text\n";
                 else asm += "segment readable executable\n";
 
@@ -61,7 +61,7 @@ namespace IonS {
                 asm += File.ReadAllText("src/asm snippets/dump.asm");
 
                 // Procedures (only used ones for now)
-                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += proc.GenerateAssembly(Assembler.fasm_linux_x86_64);
+                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += proc.GenerateAssembly(assembler);
 
                 if(assembler == Assembler.nasm_linux_x86_64) asm += "global _start\n_start:\n";
                 else asm += "entry _start\n_start:\n";
@@ -73,12 +73,30 @@ namespace IonS {
                 asm += "    mov [ret_stack_rsp], rax\n";
 
                 // Actual code
-                asm += root.GenerateAssembly(Assembler.fasm_linux_x86_64);
+                asm += root.GenerateAssembly(assembler);
 
                 // Exit code
                 asm += "exit:\n";
                 asm += "    mov rax, 60\n";
                 asm += "    mov rdi, 0\n";
+                asm += "    syscall\n";
+                return new AssemblyTranscriptionResult(asm, null);
+            }
+            if(assembler == Assembler.iasm_linux_x86_64) {
+                string asm = "";
+
+                var parser = new Parser(_text, _source, assembler);
+                var result = parser.Parse();
+                if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
+                var root = result.Root;
+
+                // Actual code
+                asm += root.GenerateAssembly(assembler);
+
+                // Exit code
+                asm += "exit:\n";
+                asm += "    mov rax 60\n";
+                asm += "    mov rdi 0\n";
                 asm += "    syscall\n";
                 return new AssemblyTranscriptionResult(asm, null);
             }

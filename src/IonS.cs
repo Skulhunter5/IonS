@@ -49,6 +49,7 @@ namespace IonS {
                         }
                         if(args[i] == "nasm-linux-x86_64" || args[i] == "nasm") assembler = Assembler.nasm_linux_x86_64;
                         else if(args[i] == "fasm-linux-x86_64" || args[i] == "fasm") assembler = Assembler.fasm_linux_x86_64;
+                        else if(args[i] == "iasm-linux-x86_64" || args[i] == "iasm") assembler = Assembler.iasm_linux_x86_64;
                         else {
                             Console.WriteLine("Invalid assembler: '" + args[i] + "'");
                             Environment.ExitCode = 2;
