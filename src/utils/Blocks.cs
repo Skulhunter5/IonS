@@ -81,7 +81,10 @@ namespace IonS {
                 asm += "    sub rax, " + (Scope.BindingsList.Count * 8) + "\n";
                 asm += "    mov [ret_stack_rsp], rax\n";
                 for(int i = Scope.BindingsList.Count-1; i >= 0; i--) {
-                    if(BindingType == BindingType.Let) {
+                    if(Scope.BindingsList[i] == null) continue;
+                    asm += "    mov rbx, [rsp + " + ((Scope.BindingsList.Count-1 - i) * 8) + "]\n";
+                    asm += "    mov [rax + " + Scope.BindingsList[i].Offset + "], rbx\n";
+                    /* if(BindingType == BindingType.Let) {
                         if(Scope.BindingsList[i] == null) asm += "    add rsp, 8\n";
                         else {
                             asm += "    pop rbx\n";
@@ -92,8 +95,9 @@ namespace IonS {
                             asm += "    mov rbx, [rsp + " + ((Scope.BindingsList.Count-1 - i) * 8) + "]\n";
                             asm += "    mov [rax + " + Scope.BindingsList[i].Offset + "], rbx\n";
                         }
-                    }
+                    } */
                 }
+                if(BindingType == BindingType.Let) asm += "    add rsp, " + (Scope.BindingsList.Count * 8) + "\n";
                 asm += Code.GenerateAssembly(assembler);
                 asm += "    mov rax, [ret_stack_rsp]\n";
                 asm += "    add rax, " + (Scope.BindingsList.Count * 8) + "\n";
