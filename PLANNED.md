@@ -20,7 +20,6 @@
 
 # Notes
 - Add HasSkipped to TypeCheckContract
-- add c calls (e.g.: extern c proc ...)
 - REWORK THE IMPLICIT CAST SYSTEM (e.g. everything can be cast to boolean without a warning (at least for an if, while, ...))
 
 # TODO
