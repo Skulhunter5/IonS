@@ -43,7 +43,7 @@ namespace IonS {
                 asm += "    ret_stack_end:\n";
 
                 foreach(Variable var in result.Variables) asm += var.GenerateAssembly(assembler);
-                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += var.GenerateAssembly(assembler);
+                foreach(var procs in result.Procedures.Values) foreach(Procedure proc in procs.Values) if(proc.IsUsed) foreach(Variable var in proc.Variables) asm += var.GenerateAssembly(assembler);
 
                 // Begin data segment
                 if(assembler == Assembler.nasm_linux_x86_64 && result.Strings.Count > 0) asm += "segment .data\n";
@@ -61,7 +61,10 @@ namespace IonS {
                 asm += File.ReadAllText("src/asm snippets/dump.asm");
 
                 // Procedures (only used ones for now)
-                foreach(Procedure proc in result.Procedures.Values) if(proc.IsUsed) asm += proc.GenerateAssembly(assembler);
+                foreach(var overloads in result.Procedures.Values) foreach(Procedure proc in overloads.Values) if(proc.IsUsed) {
+                    //Console.WriteLine(proc.Name);
+                    asm += proc.GenerateAssembly(assembler);
+                }
 
                 if(assembler == Assembler.nasm_linux_x86_64) asm += "global _start\n_start:\n";
                 else asm += "entry _start\n_start:\n";

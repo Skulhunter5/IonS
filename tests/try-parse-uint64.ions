@@ -3,11 +3,11 @@
 12345
 
 var test 8
-"12345432123454321" test try-parse-uint64 dup . if { test @64 . }
-"18446744073709551615" test try-parse-uint64 dup . if { test @64 . }
-"18446744073709551616" test try-parse-uint64 dup . if { test @64 . }
-"12384653842658357382534756835" test try-parse-uint64 dup . if { test @64 . }
-"12432453a34523" test try-parse-uint64 dup . if { test @64 . }
-"asfdhgdfg" test try-parse-uint64 dup . if { test @64 . }
+"12345432123454321" test try-parse-uint64 dup bool. if { test @64 . }
+"18446744073709551615" test try-parse-uint64 dup bool. if { test @64 . }
+"18446744073709551616" test try-parse-uint64 dup bool. if { test @64 . }
+"12384653842658357382534756835" test try-parse-uint64 dup bool. if { test @64 . }
+"12432453a34523" test try-parse-uint64 dup bool. if { test @64 . }
+"asfdhgdfg" test try-parse-uint64 dup bool. if { test @64 . }
 
 .

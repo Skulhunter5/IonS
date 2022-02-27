@@ -63,6 +63,10 @@ proc putb ( bool ) {
     puts
 }
 
+inline proc bool. ( bool ) {
+    cast(uint64) .
+}
+
 #macro sizeof(Str) 16
 proc !Str ( uint64 ptr ptr ) {
     rot over !64
@@ -183,8 +187,9 @@ proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
         2drop 2drop
         false return
     }
-    over - rot +
+    over - rot cast(uint64) +
     over swap 2swap swap
+    cast ( _ ptr _ ptr )
     streq
 }
 
@@ -207,7 +212,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it going over th
         // len i str ptr
         swap 2swap
         // ptr str len i
-        rot 2dup + @8
+        rot 2dup cast ( uint64 uint64 ) + cast(ptr) @8
         // ptr len i str str[i]
         dup isDigit not if {
             // ptr len i str str[i]

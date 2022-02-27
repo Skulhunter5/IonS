@@ -48,9 +48,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) {
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             foreach(Operation operation in Operations) {
-                Error error = operation.TypeCheck(contract);
+                Error error = operation.TypeCheck(context, contract);
                 if(error != null) return error;
                 if(contract.HasReturned) return null;
             }
@@ -84,18 +84,6 @@ namespace IonS {
                     if(Scope.BindingsList[i] == null) continue;
                     asm += "    mov rbx, [rsp + " + ((Scope.BindingsList.Count-1 - i) * 8) + "]\n";
                     asm += "    mov [rax + " + Scope.BindingsList[i].Offset + "], rbx\n";
-                    /* if(BindingType == BindingType.Let) {
-                        if(Scope.BindingsList[i] == null) asm += "    add rsp, 8\n";
-                        else {
-                            asm += "    pop rbx\n";
-                            asm += "    mov [rax + " + Scope.BindingsList[i].Offset + "], rbx\n";
-                        }
-                    } else { // BindingType.Peek
-                        if(Scope.BindingsList[i] != null) {
-                            asm += "    mov rbx, [rsp + " + ((Scope.BindingsList.Count-1 - i) * 8) + "]\n";
-                            asm += "    mov [rax + " + Scope.BindingsList[i].Offset + "], rbx\n";
-                        }
-                    } */
                 }
                 if(BindingType == BindingType.Let) asm += "    add rsp, " + (Scope.BindingsList.Count * 8) + "\n";
                 asm += Code.GenerateAssembly(assembler);
@@ -111,7 +99,7 @@ namespace IonS {
             return (BindingType == BindingType.Let ? "Let" : "Peek") + "-Binding at " + Position;
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) {
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             if(contract.GetElementsLeft() < Scope.BindingsList.Count) return new StackUnderflowError(this);
 
             for(int i = Scope.BindingsList.Count-1; i >= 0; i--) {
@@ -123,7 +111,7 @@ namespace IonS {
                 Scope.BindingsList[i].Offset = i * 8;
             }
             
-            return Code.TypeCheck(contract);
+            return Code.TypeCheck(context, contract);
         }
     }
 
@@ -184,38 +172,37 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) {
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             List<TypeCheckContract> contracts = new List<TypeCheckContract>();
 
             Error error = contract.Require(DataType.boolean, this);
             if(error != null) return error;
 
-            TypeCheckContract reference = contract.Copy();
-            
-            error = BlockIf.TypeCheck(contract);
+            TypeCheckContract tmpContract = contract.Copy();
+            error = BlockIf.TypeCheck(context, tmpContract);
             if(error != null) return error;
-            contracts.Add(contract);
+            contracts.Add(tmpContract);
 
             for(int i = 0; i < Conditionals.Count; i++) {
-                TypeCheckContract contract1 = reference.Copy();
-                Conditions[i].TypeCheck(contract1);
+                tmpContract = contract.Copy();
+                Conditions[i].TypeCheck(context, tmpContract);
 
-                error = contract1.Require(DataType.boolean, this); // TODO: put something better here (maybe even save the Positions of every elseif and else)
+                error = tmpContract.Require(DataType.boolean, this); // TODO: put something better here (maybe even save the Positions of every elseif and else)
                 if(error != null) return error;
-                if(!reference.IsStackCompatible(contract1)) return new SignatureMustBeNoneError(reference, contract1, Conditions[i]);
+                if(!contract.IsStackCompatible(tmpContract)) return new SignatureMustBeNoneError(contract, tmpContract, Conditions[i]);
 
-                error = Conditionals[i].TypeCheck(contract1);
+                error = Conditionals[i].TypeCheck(context, tmpContract);
                 if(error != null) return error;
 
-                contracts.Add(contract1);
+                contracts.Add(tmpContract);
             }
 
             if(BlockElse != null) {
-                TypeCheckContract contract1 = reference.Copy();
-                error = BlockElse.TypeCheck(contract1);
+                tmpContract = contract.Copy();
+                error = BlockElse.TypeCheck(context, tmpContract);
                 if(error != null) return error;
 
-                contracts.Add(contract1);
+                contracts.Add(tmpContract);
             }
 
             bool HasReturned = true;
@@ -223,9 +210,14 @@ namespace IonS {
                 HasReturned = false;
                 break;
             }
-            contract.HasReturned = HasReturned;
+            if(BlockElse != null) contract.HasReturned = HasReturned;
 
-            if(!HasReturned) for(int i = 0; i < contracts.Count; i++) if(!contracts[i].HasReturned) if(!contracts[i].IsStackCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
+            if(!HasReturned) {
+                for(int i = 0; i < contracts.Count; i++) if(!contracts[i].HasReturned) if(!contracts[i].IsStackCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
+                if(BlockElse == null) {
+                    if(!contract.IsStackCompatible(contracts[0])) return new SignatureMustBeNoneError(contract, contracts[0], BlockIf);
+                } else contract.SetStackFrom(contracts[0].Stack);
+            }
 
             return null;
         }
@@ -279,17 +271,17 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) {
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             Reference = contract.Copy();
 
-            Error error = Condition.TypeCheck(contract);
+            Error error = Condition.TypeCheck(context, contract);
             if(error != null) return error;
 
             error = contract.Require(DataType.boolean, this);
             if(error != null) return error;
             if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
 
-            error = Block.TypeCheck(contract);
+            error = Block.TypeCheck(context, contract);
             if(error != null) return error;
             if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Block);
 
@@ -345,14 +337,14 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) {
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             Reference = contract.Copy();
 
-            Error error = Block.TypeCheck(contract);
+            Error error = Block.TypeCheck(context, contract);
             if(error != null) return error;
             if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Block);
 
-            error = Condition.TypeCheck(contract);
+            error = Condition.TypeCheck(context, contract);
             if(error != null) return error;
 
             error = contract.Require(DataType.boolean, this);
@@ -422,20 +414,20 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) {
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             Reference = contract.Copy();
 
             List<TypeCheckContract> contracts = new List<TypeCheckContract>();
 
             for(int i = 0; i < Cases.Count; i++) {
                 TypeCheckContract contract1 = Reference.Copy();
-                Cases[i].TypeCheck(contract1);
+                Cases[i].TypeCheck(context, contract1);
 
                 Error error = contract1.Require(DataType.boolean, this);
                 if(error != null) return error;
                 if(!Reference.IsStackCompatible(contract1)) return new SignatureMustBeNoneError(Reference, contract1, Cases[i]);
 
-                error = Blocks[i].TypeCheck(contract1);
+                error = Blocks[i].TypeCheck(context, contract1);
                 if(error != null) return error;
 
                 contracts.Add(contract1);
@@ -443,7 +435,7 @@ namespace IonS {
 
             if(DefaultBlock != null) {
                 TypeCheckContract contract1 = Reference.Copy();
-                Error error = DefaultBlock.TypeCheck(contract1);
+                Error error = DefaultBlock.TypeCheck(context, contract1);
                 if(error != null) return error;
 
                 contracts.Add(contract1);
@@ -485,7 +477,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) {
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             if(!contract.IsStackCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
 
             return null;
@@ -506,7 +498,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public override Error TypeCheck(TypeCheckContract contract) {
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             if(!contract.IsStackCompatible(Block.Reference)) return new SignatureMustBeNoneBeforeBreakActionError(Block.Reference, contract, this);
 
             return null;

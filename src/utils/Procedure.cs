@@ -12,28 +12,45 @@ namespace IonS {
 
         public Procedure(Word name, DataType[] args, DataType[] rets, CodeBlock body, bool isInlined) {
             Id = ProcedureId();
+
             Name = name;
+
             Args = args;
             Rets = rets;
+
             Body = body;
+
             Variables = new List<Variable>();
+
             IsUsed = false;
             UsedProcedures = new List<Procedure>();
+
             IsInlined = isInlined;
         }
 
         public int Id { get; }
+
         public Word Name { get; }
+
         public DataType[] Args { get; }
         public DataType[] Rets { get; }
+
         public CodeBlock Body { get; set; }
+
         public List<Variable> Variables { get; }
+
         public bool IsUsed { get; set; }
         public List<Procedure> UsedProcedures { get; }
+
         public bool IsInlined { get; }
 
         public override string ToString() {
             return Name + (Args != null ? "(" + String.Join(" ", Args) + " -- " + String.Join(" ", Rets) + ")" : "");
+        }
+
+        public void Use() {
+            IsUsed = true;
+            foreach(Procedure proc in UsedProcedures) proc.Use();
         }
 
         public string GenerateAssembly(Assembler assembler) {
@@ -65,16 +82,18 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        public Error TypeCheck() {
+        public Error TypeCheck(TypeCheckContext context) {
             TypeCheckContract contract = new TypeCheckContract();
             foreach(DataType dataType in Args) contract.Push(dataType);
 
-            Error error = Body.TypeCheck(contract);
+            Error error = Body.TypeCheck(context, contract);
             if(error != null) return error;
+
+            if(contract.HasReturned) return null;
 
             if(contract.GetElementsLeft() != Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
 
-            for(int i = 0; i < Rets.Length; i++) if(!EDataType.IsImplicitlyCastable(contract.Peek(Rets.Length-1-i), Rets[i])) {
+            for(int i = 0; i < Rets.Length; i++) if(!EDataType.IsImplicitlyCastable(contract.Peek(Rets.Length-1-i), Rets[i])) { // TODO: check what I want to do here, this looks odd
                 Console.WriteLine(contract.Peek(Rets.Length-1-i) + " " + Rets[i]);
                 if(contract.Peek(Rets.Length-1-i) != Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(contract.Peek(Rets.Length-1-i)) + " to " + Rets[i] + " while returning from " + this); // Error-Warning-System
                 return new InvalidReturnDataError(contract.Stack.ToArray(), this);

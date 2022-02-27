@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace IonS {
 
     class ParseResult : Result {
-        public ParseResult(CodeBlock root, List<string> strings, List<Variable> variables, Dictionary<string, Procedure> procedures, Error error) : base(error) {
+        public ParseResult(CodeBlock root, List<string> strings, List<Variable> variables, Dictionary<string, Dictionary<string, Procedure>> procedures, Error error) : base(error) {
             Root = root;
             Strings = strings;
             Variables = variables;
@@ -14,7 +14,7 @@ namespace IonS {
         public CodeBlock Root { get; }
         public List<string> Strings { get; }
         public List<Variable> Variables { get; }
-        public Dictionary<string, Procedure> Procedures { get; }
+        public Dictionary<string, Dictionary<string, Procedure>> Procedures { get; }
     }
 
     class ParseCodeBlockResult : Result {
@@ -31,7 +31,7 @@ namespace IonS {
         private int _position;
 
         private List<Variable> _vars;
-        private Dictionary<string, Procedure> _procs;
+        private Dictionary<string, Dictionary<string, Procedure>> _procs;
         private List<string> _strings;
 
         private readonly Assembler _assembler;
@@ -77,14 +77,22 @@ namespace IonS {
         }
 
         private Error RegisterProcedure(Procedure procedure) {
-            if(_procs.ContainsKey(procedure.Name.Text)) return new ProcedureRedefinitionError(_procs[procedure.Name.Text].Name, procedure.Name);
-            _procs.Add(procedure.Name.Text, procedure);
+            string signature = procedure.GetArgsSignature();
+            if(_procs.ContainsKey(procedure.Name.Text)) {
+                if(_procs[procedure.Name.Text].ContainsKey(signature)) return new ProcedureRedefinitionError(_procs[procedure.Name.Text][signature].Name, procedure.Name);
+            } else _procs.Add(procedure.Name.Text, new Dictionary<string, Procedure>());
+            _procs[procedure.Name.Text].Add(signature, procedure);
             return null;
         }
 
-        private Procedure GetProcedure(string name, bool use) {
-            _procs.TryGetValue(name, out Procedure procedure);
-            return procedure;
+        private bool ProcedureExists(string name) {
+            if(!_procs.ContainsKey(name)) return false;
+            return true;
+        }
+        private bool ProcedureExists(string name, string signature) { // CHECKIFNECESSARY
+            if(!_procs.ContainsKey(name)) return false;
+            if(!_procs[name].ContainsKey(signature)) return false;
+            return true;
         }
 
         private void UseProcedure(Procedure currentProcedure, Procedure procedure) {
@@ -523,13 +531,8 @@ namespace IonS {
                     if(var != null) {
                         if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, Current.Position));
                         else operations.Add(new VariableAccessOperation(var.Id, Current.Position));
-                    } else {
-                        Procedure proc = GetProcedure(Current.Text, true);
-                        if(proc != null) {
-                            operations.Add(new ProcedureCallOperation(proc, Current.Position));
-                            UseProcedure(currentProcedure, proc);
-                        } else return new UnexpectedWordError(Current);
-                    }
+                    } else if(ProcedureExists(Current.Text)) operations.Add(new ProcedureCallOperation(Current, currentProcedure, Current.Position));
+                    else return new UnexpectedWordError(Current);
                 }
             }
             NextWord();
@@ -545,7 +548,7 @@ namespace IonS {
             _words = preprocessorResult.Words;
 
             _vars = new List<Variable>();
-            _procs = new Dictionary<string, Procedure>();
+            _procs = new Dictionary<string, Dictionary<string, Procedure>>();
             _strings = new List<string>();
 
             ParseCodeBlockResult parseResult = ParseCodeBlock(null, new Scope(null, null), null, null);
@@ -554,9 +557,10 @@ namespace IonS {
             Error error = new TypeChecker(parseResult.Block, _procs).run();
             if(error != null) return new ParseResult(null, null, null, null, error);
 
-            List<string> toRemove = new List<string>();
-            foreach(string proc in _procs.Keys) if(_procs[proc].IsInlined) toRemove.Add(proc);
-            foreach(string proc in toRemove) _procs.Remove(proc);
+            foreach(string name in _procs.Keys) {
+                Dictionary<string, Procedure> overloads = _procs[name];
+                foreach(string signature in overloads.Keys) if(overloads[signature].IsInlined) overloads.Remove(signature);
+            }
             
             new Optimizer(parseResult.Block, _procs).run();
 

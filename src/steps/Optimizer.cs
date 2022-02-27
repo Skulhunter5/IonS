@@ -5,9 +5,9 @@ namespace IonS {
     class Optimizer {
 
         private readonly CodeBlock _root;
-        private readonly Dictionary<string, Procedure> _procs;
+        private readonly Dictionary<string, Dictionary<string, Procedure>> _procs;
 
-        public Optimizer(CodeBlock root, Dictionary<string, Procedure> procs) {
+        public Optimizer(CodeBlock root, Dictionary<string, Dictionary<string, Procedure>> procs) {
             _root = root;
             _procs = procs;
         }
@@ -26,7 +26,10 @@ namespace IonS {
 
         public CodeBlock run() {
             // TODO: optimize Inline Procedures even more by inlining them before optimization so it can optimize them where they are (maybe even: optimize inline procs, inline them, optimize code)
-            foreach(Procedure proc in _procs.Values) OptimizeBlock(proc.Body);
+            foreach(Dictionary<string, Procedure> procs in _procs.Values) {
+                foreach(Procedure proc in procs.Values) OptimizeBlock(proc.Body);
+            }
+            //foreach(Procedure proc in _procs.Values) OptimizeBlock(proc.Body);
             OptimizeBlock(_root);
             return _root;
         }

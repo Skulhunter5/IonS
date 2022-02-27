@@ -887,4 +887,18 @@ namespace IonS {
         }
     }
 
+    // Unknown procedure overload error
+
+    sealed class UnknownProcedureOverloadError : TypeCheckerError { // TODO: add stack view or to make debugging easier
+        public UnknownProcedureOverloadError(Word name) {
+            Name = name;
+        }
+
+        public Word Name { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Unknown procedure overload for: " + Name;
+        }
+    }
+
 }

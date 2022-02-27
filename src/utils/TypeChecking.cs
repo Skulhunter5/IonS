@@ -3,6 +3,18 @@ using System.Collections.Generic;
 
 namespace IonS {
 
+    class TypeCheckContext {
+
+        public TypeCheckContext(Dictionary<string, Dictionary<string, Procedure>> procedures) {
+            Procedures = procedures;
+            UsedProcedures = new List<Procedure>();
+        }
+
+        public Dictionary<string, Dictionary<string, Procedure>> Procedures { get; }
+        public List<Procedure> UsedProcedures { get; }
+
+    }
+
     class TypeCheckContract {
         
         public TypeCheckContract() {
