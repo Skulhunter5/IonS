@@ -12,12 +12,11 @@
 - Implement ; as empty block
 - Implement heap-allocation handler
 - Implement structs
-- Make switch statements viable (just assume a fallthrough at every point and then check if all endings have the same signature)
-- (Implement automatic clearing of the stack when returning from functions)
+- Make switch statements viable (just assume a fallthrough at every point and then check if all endings have the same signature) \
+-> conditionally breaking or non-breaking cases have to have a signature of none \
+-> all breaks have to have the same signature
 
 # Implement in IonS
-
-# restructure std.ions in to multiple files
 
 # Notes
 - Add HasSkipped to TypeCheckContract
