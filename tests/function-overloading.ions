@@ -1,0 +1,16 @@
+#include "./../std/std.ions"
+
+proc a ( uint64 -- bool ) {
+    drop true
+}
+
+proc a ( ptr -- bool ) {
+    drop false
+}
+
+12345
+
+0 cast(uint64) a bool.
+0 cast(ptr) a bool.
+
+.
