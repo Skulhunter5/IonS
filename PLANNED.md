@@ -10,7 +10,6 @@
 - Implement nested bindings (maybe add something like a 'global nested counter' || recursive backtracking again but set the offset accordingly whenever the Scope.GetVariable() method is called)
 - Implement function prototypes
 - Implement ; as empty block
-- Implement multiple procedures with same name but different arguments (overloading)
 - Implement heap-allocation handler
 - Implement structs
 - Make switch statements viable (just assume a fallthrough at every point and then check if all endings have the same signature)
