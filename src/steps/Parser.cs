@@ -529,7 +529,7 @@ namespace IonS {
                 else {
                     Variable var = scope.GetVariable(Current.Text);
                     if(var != null) {
-                        if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, Current.Position));
+                        if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, scope.GetBindingOffset((Binding) var), Current.Position));
                         else operations.Add(new VariableAccessOperation(var.Id, Current.Position));
                     } else if(ProcedureExists(Current.Text)) operations.Add(new ProcedureCallOperation(Current, currentProcedure, Current.Position));
                     else return new UnexpectedWordError(Current);

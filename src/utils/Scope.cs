@@ -26,20 +26,20 @@ namespace IonS {
             return null;
         }
 
-        public Variable GetVariable(string identifier) {
-            return GetVariable(identifier, true);
-        }
-
-        public virtual Variable GetVariable(string identifier, bool direct) {
+        public virtual Variable GetVariable(string identifier) {
             Variables.TryGetValue(identifier, out Variable ownVar);
             if(ownVar != null) return ownVar;
-            if(Parent != null) return Parent.GetVariable(identifier, direct);
+            if(Parent != null) return Parent.GetVariable(identifier);
             return null;
         }
 
         public virtual int GetRetStackOffset() {
             if(Parent != null) return Parent.GetRetStackOffset();
             return 0;
+        }
+
+        public virtual int GetBindingOffset(Binding binding) {
+            return Parent.GetBindingOffset(binding);
         }
 
     }
@@ -64,14 +64,12 @@ namespace IonS {
             return null;
         }
 
-        public override Variable GetVariable(string identifier, bool direct) {
+        public override Variable GetVariable(string identifier) {
             Variables.TryGetValue(identifier, out Variable var);
             if(var != null) return var;
-            if(direct) {
-                Bindings.TryGetValue(identifier, out Binding binding);
-                if(binding != null) return binding;
-            }
-            if(Parent != null) return Parent.GetVariable(identifier, false);
+            Bindings.TryGetValue(identifier, out Binding binding);
+            if(binding != null) return binding;
+            if(Parent != null) return Parent.GetVariable(identifier);
             return null;
         }
 
@@ -79,6 +77,11 @@ namespace IonS {
             int offset = BindingsList.Count * 8;
             if(Parent != null) offset += Parent.GetRetStackOffset();
             return offset;
+        }
+
+        public override int GetBindingOffset(Binding binding) {
+            if(BindingsList.Contains(binding)) return 0;
+            return Parent.GetBindingOffset(binding) + BindingsList.Count * 8;
         }
 
     }

@@ -18,7 +18,7 @@ namespace IonS {
         Swap, Swap2, Rot, RRot, Rot5, RRot5,
         CTT,
         Exit,
-        VariableAccess,
+        VariableAccess, PushBinding,
         MemRead, MemWrite,
         String, CStyleString,
         Syscall,
@@ -153,11 +153,13 @@ namespace IonS {
     // Bind access operation
     
     sealed class PushBindingOperation : Operation { // -- a
-        public PushBindingOperation(Binding binding, Position position) : base(OperationType.VariableAccess, position) {
+        public PushBindingOperation(Binding binding, int offset, Position position) : base(OperationType.PushBinding, position) {
             Binding = binding;
+            Offset = offset;
         }
 
         public Binding Binding { get; }
+        public int Offset { get; }
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
@@ -166,7 +168,7 @@ namespace IonS {
                 //    push QWORD [rax]
                 string asm = "";
                 asm += "    mov rax, [ret_stack_rsp]\n";
-                if(Binding.Offset > 0) asm += "    add rax, " + Binding.Offset + "\n";
+                if(Binding.Offset + Offset > 0) asm += "    add rax, " + (Binding.Offset + Offset) + "\n";
                 asm += "    push QWORD [rax]\n";
                 return asm;
             }
