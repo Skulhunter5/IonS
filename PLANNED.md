@@ -7,7 +7,6 @@
 - look into capturing all words and strings through regex or maybe do list-parsing through regex
 - Rework Error-Warning-System to maybe allow for single syntax error but multiple other errors and also allow warnings (see TypeChecker & ExitOperation)
 - Rework words/tokens
-- Implement nested bindings (maybe add something like a 'global nested counter' || recursive backtracking again but set the offset accordingly whenever the Scope.GetVariable() method is called)
 - Implement function prototypes
 - Implement ; as empty block
 - Implement heap-allocation handler
