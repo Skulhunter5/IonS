@@ -34,3 +34,27 @@ peek ( _ a _ b _ ) {
 . . . . . . . . . .
 
 .
+
+
+"-----\n" puts
+
+
+1 2 3 4 5
+let ( a b c d e ) {
+    e d c b a
+    e . d . c . b . a .
+    let ( a2 b2 c2 d2 e2 ) {
+        a . b . c . d . e .
+        a2 . b2 . c2 . d2 . e2 .
+    }
+}
+
+1 2 3 4 5
+peek ( a b c d e ) {
+    e . d . c . b . a .
+    peek ( a2 b2 c2 d2 e2 ) {
+        a . b . c . d . e .
+        a2 . b2 . c2 . d2 . e2 .
+    }
+}
+. . . . .
