@@ -1,0 +1,125 @@
+#include "./../std/std.ions"
+
+inline proc isNegative ( uint64 -- bool ) { // TODO: implement signed numbers and signed comparisons
+    0b1000000000000000000000000000000000000000000000000000000000000000 & 0 >
+}
+
+inline proc alloc_info.flags ( -- uint64 ) {
+    0
+}
+inline proc !alloc_info.flags ( uint64 ptr ) {
+    !64
+}
+inline proc @alloc_info.flags ( ptr -- uint64 ) {
+    @64
+}
+inline proc alloc_info.base ( -- uint64 ) {
+    8
+}
+inline proc !alloc_info.base ( ptr ptr ) {
+    8 ptr+ !ptr
+}
+inline proc @alloc_info.base ( ptr -- ptr ) {
+    8 ptr+ @ptr
+}
+inline proc alloc_info.size ( -- uint64 ) {
+    16
+}
+inline proc !alloc_info.size ( uint64 ptr ) {
+    16 ptr+ !64
+}
+inline proc @alloc_info.size ( ptr -- uint64 ) {
+    16 ptr+ @64
+}
+
+#macro ENTRY_FREE 0
+#macro ENTRY_BEEN_USED 1
+#macro ENTRY_IN_USE 2
+
+var alloc_tbl 8
+var next_base 8
+var tbl_entries 8
+var space_left 8
+
+proc alloc ( uint64 -- ptr ) {
+    let ( size ) {
+        space_left @64 size - dup isNegative swap 0 == || if {
+            null return
+        }
+        0 while { dup tbl_entries @64 < } do {
+            alloc_tbl @ptr over 24 * ptr+
+            dup @alloc_info.flags ENTRY_FREE == if {
+                let ( _ alloc_info ) {
+                    ENTRY_IN_USE   alloc_info !alloc_info.flags
+                    next_base @ptr alloc_info !alloc_info.base
+                    size           alloc_info !alloc_info.size
+
+                    next_base @ptr   size ptr+  next_base !ptr
+                    space_left @64   size -     space_left !64
+                    
+                    alloc_info @alloc_info.base return
+                }
+            } else* { dup @alloc_info.flags ENTRY_BEEN_USED == over @alloc_info.size size >= && } if {
+                let ( _ alloc_info ) {
+                    ENTRY_IN_USE alloc_info !alloc_info.flags
+
+                    alloc_info @alloc_info.base return
+                }
+            } else drop
+            ++
+        } drop
+        null return
+    }
+}
+
+proc find_entry ( ptr -- ptr ) {
+    let ( base ) {
+        0 while { dup tbl_entries @64 < } do {
+            alloc_tbl @ptr over 24 * ptr+
+            dup @alloc_info.base base ptr== if {
+                swap drop return
+            } else drop
+            ++
+        } drop
+        null return
+    }
+}
+
+proc realloc ( ptr uint64 -- ptr ) {
+    let ( base size ) {
+        base find_entry
+
+        dup @alloc_info.size size >= if {
+            drop base return
+        }
+
+        size alloc
+        dup null ptr== if {
+            2drop null return
+        }
+
+        // alloc_info new_base
+        let ( alloc_info new_base ) {
+                new_base
+                alloc_info @alloc_info.base
+                alloc_info @alloc_info.size
+            memcpy
+            ENTRY_BEEN_USED alloc_info !alloc_info.flags
+            new_base return
+        }
+        //dup rot dup @alloc_info.base swap @alloc_info.size memcpy
+    }
+}
+
+proc free ( ptr ) {
+    find_entry ENTRY_BEEN_USED swap !alloc_info.flags
+}
+
+proc init_alloc ( ptr uint64 uint64 ) { // TODO: implement safeguard if n is too large for the given size
+    let ( base size n ) {
+        base alloc_tbl !ptr
+        n tbl_entries !64
+        size n 24 * - space_left !64
+        base n 24 * ptr+ next_base !ptr
+    }
+}
