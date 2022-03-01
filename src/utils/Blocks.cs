@@ -213,10 +213,17 @@ namespace IonS {
             if(BlockElse != null) contract.HasReturned = HasReturned;
 
             if(!HasReturned) {
-                for(int i = 0; i < contracts.Count; i++) if(!contracts[i].HasReturned) if(!contracts[i].IsStackCompatible(contracts[0])) return new NonMatchingSignaturesError(contracts, this);
+                TypeCheckContract reference = null;
+                int j = 0;
+                for(int i = 0; i < contracts.Count; i++) if(!contracts[i].HasReturned) {
+                    reference = contracts[i];
+                    j = i;
+                    break;
+                }
+                for(int i = j+1; i < contracts.Count; i++) if(!contracts[i].HasReturned) if(!contracts[i].IsStackCompatible(contracts[j])) return new NonMatchingSignaturesError(contracts, this);
                 if(BlockElse == null) {
                     if(!contract.IsStackCompatible(contracts[0])) return new SignatureMustBeNoneError(contract, contracts[0], BlockIf);
-                } else contract.SetStackFrom(contracts[0].Stack);
+                } else contract.SetStackFrom(reference.Stack);
             }
 
             return null;
