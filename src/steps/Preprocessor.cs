@@ -167,6 +167,7 @@ namespace IonS {
                     int start = i;
                     while(!words[i++].Text.EndsWith("*/")) if(i >= words.Count) return new PreprocessorResult(null, new EOFInBlockCommentError(words[start].Position));
                     words.RemoveRange(start, i - start);
+                    i = start;
                     continue;
                 }
 
