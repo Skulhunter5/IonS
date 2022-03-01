@@ -23,6 +23,6 @@
 
 # TODO
 - check that variable names aren't strings/chars
-- check that variable names are actuallly valid
+- check that variable names are actuallly valid (correct and normalize invalid identifier errors)
 - normalize Incomplete/EOF errors
 - make signature errors more readable
