@@ -417,8 +417,8 @@ namespace IonS {
             } else if(Current.Text.StartsWith("syscall")) {
                 string argcStr = Current.Text.Substring(7, Current.Text.Length - 7);
                 if(!int.TryParse(argcStr, out int argc)) return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
-                if(argc >= 0 && argc <= 6) operations.Add(new SyscallOperation(argc, Current.Position));
-                else return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
+                if(argc > 6 || argc < 0) return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
+                operations.Add(new SyscallOperation(argc, Current.Position));
             } else if(IsBraceOpen()) {
                 var result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 if(result.Error != null) return result.Error;
