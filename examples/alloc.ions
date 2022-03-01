@@ -1,0 +1,42 @@
+#include "./../std/std.ions"
+#include "./../std/alloc.ions"
+
+#macro HEAP_SIZE 1024
+
+var org_brk 8
+var cur_brk 8
+
+null brk dup org_brk !ptr
+HEAP_SIZE ptr+ brk cur_brk !ptr
+
+    org_brk @ptr
+    HEAP_SIZE
+    10
+init_alloc
+
+"-----\n" puts
+org_brk @ptr ptr.
+cur_brk @ptr ptr.
+"-----\n" puts
+20 alloc dup ptr. free
+10 alloc dup ptr.
+20 realloc ptr.
+"-----\n" puts
+10 alloc dup ptr.
+5 realloc ptr.
+"-----\n" puts
+10 alloc dup ptr.
+10 realloc ptr.
+"-----\n" puts
+10 alloc dup ptr.
+20 realloc ptr.
+"-----\n" puts
+
+var str_ptr 8
+
+"Hello, world!\n" 2dup puts 16 alloc dup str_ptr !ptr !Str
+
+str_ptr @ptr ptr.
+str_ptr @ptr 32 realloc dup ptr. @Str puts
+
+"-----\n" puts
