@@ -24,5 +24,6 @@
 # TODO
 - check that variable names aren't strings/chars
 - check that variable names are actuallly valid (correct and normalize invalid identifier errors)
+- check for duplicate identifier usage (also cross-reference between e.g. variables and procedures (maybe store all used identifiers in one List/Dictionary/HashSet/...))
 - normalize Incomplete/EOF errors
 - make signature errors more readable
