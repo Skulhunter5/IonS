@@ -4,6 +4,7 @@
 #macro SYS_read 0
 #macro SYS_write 1
 #macro SYS_fstat 5
+#macro SYS_brk 12
 #macro SYS_openat 257
 
 #macro STDIN 0
@@ -41,6 +42,10 @@ inline proc fstat ( ptr uint64 -- uint64 ) {
     SYS_fstat syscall2
 }
 
+inline proc brk ( ptr -- ptr ) {
+    SYS_brk syscall1
+}
+
 inline proc openat ( uint64 ptr uint64 uint64 -- uint64 ) {
     SYS_openat syscall4
 }
@@ -63,8 +68,25 @@ proc putb ( bool ) {
     puts
 }
 
+inline proc ptr. ( ptr ) {
+    cast(uint64) .
+}
 inline proc bool. ( bool ) {
     cast(uint64) .
+}
+
+inline proc !ptr ( ptr ptr ) {
+    cast ( uint64 ptr ) !64
+}
+inline proc @ptr ( ptr -- ptr ) {
+    @64 cast(ptr)
+}
+
+inline proc ptr+ ( ptr uint64 -- ptr ) {
+    cast ( uint64 uint64 ) + cast(ptr)
+}
+inline proc ptr+ ( ptr ptr -- ptr ) {
+    cast ( uint64 uint64 ) + cast(ptr)
 }
 
 #macro sizeof(Str) 16
@@ -125,11 +147,7 @@ inline proc dec64 ( ptr ) {
 	dup @64 -- swap !64
 }
 
-inline proc ptr+ ( ptr uint64 -- ptr ) {
-    swap cast(uint64) + cast(ptr)
-}
-
-proc streq ( uint64 ptr uint64 ptr -- bool ) { // TODO: maybe add up all individual char differences (has to be unsigned/absolute value) and check if this is zero
+proc streq ( uint64 ptr uint64 ptr -- bool ) {
     let ( n s1 m s2 ) {
         n m != if { false return }
 
@@ -194,39 +212,25 @@ proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
 }
 
 proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it going over the maximum uint64 value
-    // len str ptr
     rrot swap
-    // ptr str len
     dup 20 > if {
         2drop drop
         false return
     }
-    // ptr str len
     rot 0 over !64
-    // str len ptr
     rrot
-    // ptr str len
     0 while { 2dup > } do {
-        // ptr str len i
         2swap swap dup @64 10 * over !64
-        // len i str ptr
         swap 2swap
-        // ptr str len i
         rot 2dup cast ( uint64 uint64 ) + cast(ptr) @8
-        // ptr len i str str[i]
         dup isDigit not if {
-            // ptr len i str str[i]
             2drop 2drop drop
             false return
         }
-        // ptr len i str str[i]
         48 - rot5 dup @64 rot + over !64
-        // len i str ptr
         swap 2swap
-        // ptr str len i
         ++
     }
-    // ptr str len i
     2drop 2drop
     true return
 }
@@ -281,22 +285,14 @@ proc memcpy64 ( ptr ptr uint64 ) {
 
 proc memcpy ( ptr ptr uint64 ) {
     cast ( uint64 uint64 _ )
-    // dest src n
     8 /% swap 8 *
-    // dest src n%8 n//8*8
     swap over
-    // dest src n//8*8 n%8 n//8*8
     ctt5 ctt5
-    // dest src n//8*8 n%8 n//8*8 dest src
     rrot over +
-    // dest src n//8*8 n%8 src n//8*8 ndest
     rrot +
-    // dest src n//8*8 n%8 ndest nsrc
     cast ( ptr ptr _ _ ptr ptr )
     rot memcpy8
-    // dest src n//8*8
     memcpy64
-    // 
 }
 
 proc strcat ( uint64 ptr uint64 ptr ptr -- uint64 ptr ) {
