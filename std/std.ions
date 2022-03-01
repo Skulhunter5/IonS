@@ -75,6 +75,10 @@ inline proc bool. ( bool ) {
     cast(uint64) .
 }
 
+inline proc ptr== ( ptr ptr -- bool ) {
+    cast ( uint64 uint64 ) ==
+}
+
 inline proc !ptr ( ptr ptr ) {
     cast ( uint64 ptr ) !64
 }
