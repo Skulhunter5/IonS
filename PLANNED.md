@@ -1,7 +1,7 @@
 # Internal changes
 - Redo stuff like ShLOperation.TypeCheck
 - Move argument-, binding-, ... parsing into "parselist" function
-- See if linear comparison of every object in a list is faster or slower than checking if a key exists inside a Dictionary (useful for Keyword.isKeyword())
+- See if linear comparison of every object in a list is faster or slower than checking if a key exists inside a Dictionary (useful for Keyword.isKeyword()) or check if a HashSet would help
 
 # Implement for IonS
 - look into capturing all words and strings through regex or maybe do list-parsing through regex
@@ -9,13 +9,9 @@
 - Rework words/tokens
 - Implement function prototypes
 - Implement ; as empty block
-- Implement heap-allocation handler
-- Implement structs
 - Make switch statements viable (just assume a fallthrough at every point and then check if all endings have the same signature) \
 -> conditionally breaking or non-breaking cases have to have a signature of none \
 -> all breaks have to have the same signature
-
-# Implement in IonS
 
 # Notes
 - Add HasSkipped to TypeCheckContract
