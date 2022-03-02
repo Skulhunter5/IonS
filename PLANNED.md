@@ -27,3 +27,4 @@
 - check for duplicate identifier usage (also cross-reference between e.g. variables and procedures (maybe store all used identifiers in one List/Dictionary/HashSet/...))
 - normalize Incomplete/EOF errors
 - make signature errors more readable
+- normalize some parsing-steps (like generalizing: *keyword* *identifier*)
