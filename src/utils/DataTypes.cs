@@ -37,6 +37,10 @@ namespace IonS {
             else return ""+dataType;
         }
 
+        public static int GetByteSize(DataType dataType) { // TODO: implement bytesizes
+            return 8;
+        }
+
     }
 
 }

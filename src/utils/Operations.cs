@@ -33,6 +33,7 @@ namespace IonS {
         Cast,
 
         Argc, Argv,
+        StructFieldRead, StructFieldWrite,
     }
 
     enum Direction2 {
@@ -1516,6 +1517,58 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             return contract.Provide(DataType.pointer);
+        }
+    }
+
+    // Struct field read/write operations
+
+    sealed class StructFieldReadOperation : Operation {
+        public StructFieldReadOperation(StructField field, Position position) : base(OperationType.StructFieldRead, position) {
+            Field = field;
+        }
+
+        public StructField Field { get; }
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    pop rax
+                //    push [rax+{Offset}]
+                string asm = "";
+                asm += "    pop rax\n";
+                asm += "    push QWORD [rax+" + Field.Offset + "]\n";
+                return asm;
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
+            return contract.RequireAndProvide(DataType.pointer, Field.DataType, this);
+        }
+    }
+
+    sealed class StructFieldWriteOperation : Operation {
+        public StructFieldWriteOperation(StructField field, Position position) : base(OperationType.StructFieldWrite, position) {
+            Field = field;
+        }
+
+        public StructField Field { get; }
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    pop rax
+                //    pop rbx
+                //    mov [rax+{Offset}], rbx
+                string asm = "";
+                asm += "    pop rax\n";
+                asm += "    pop rbx\n";
+                asm += "    mov [rax+" + Field.Offset + "], rbx\n";
+                return asm;
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
+            return contract.Require(new DataType[] {Field.DataType, DataType.pointer}, this);
         }
     }
 

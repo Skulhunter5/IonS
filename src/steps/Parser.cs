@@ -30,8 +30,9 @@ namespace IonS {
         private Word[] _words;
         private int _position;
 
-        private List<Variable> _vars;
         private Dictionary<string, Dictionary<string, Procedure>> _procs;
+        private Dictionary<string, Struct> _structs;
+        private List<Variable> _vars;
         private List<string> _strings;
 
         private readonly Assembler _assembler;
@@ -202,7 +203,6 @@ namespace IonS {
         }
 
         private Error ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
-            
             if(Current.Type == WordType.String) {
                 StringWord stringWord = (StringWord) Current;
                 if(stringWord.StringType == "") operations.Add(RegisterString(Current.Text));
@@ -520,6 +520,38 @@ namespace IonS {
                 operations.Add(bindingBlock);
 
                 return null;
+            } else if(Current.Text == "struct") {
+                Word structWord = Current;
+                NextWord();
+
+                if(Current == null) return new IncompleteStructDefinitionError(structWord);
+                if(Current.Type != WordType.Word) return new InvalidIdentifierError(Current);
+                Word nameWord = Current;
+                NextWord();
+
+                Struct structt = new Struct(nameWord);
+                while(Current != null && Current.Type == WordType.Word && Current.Text != "end") { // TODO: implement braces as block-marker for struct-definitions aswell
+                    if(!EDataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+                    NextWord();
+
+                    if(Current == null) return new IncompleteStructDefinitionError(structWord);
+                    if(Current.Type != WordType.Word || Current.Text != ":") return new MissingColonInStructDefinitionError(Current.Position);
+                    NextWord();
+                    
+                    if(Current == null) return new IncompleteStructDefinitionError(structWord);
+                    if(Current.Type != WordType.Word || !Keyword.isValidIdenfitier(Current.Text)) return new InvalidIdentifierError(Current);
+                    if(structt.HasField(Current.Text)) return new StructFieldRedefinitionError(Current, structt.GetField(Current.Text).Identifier.Position);
+                    structt.AddField(new StructField(Current, dataType, structt.GetNextOffset()));
+
+                    NextWord();
+                }
+                if(Current == null || Current.Type != WordType.Word || Current.Text != "end") return new IncompleteStructDefinitionError(structWord);
+
+                _structs.Add(structt.Name.Text, structt);
+
+                // Could theoretically let this fall through
+                NextWord();
+                return null;
             } else {
                 // TODO: add overflow protection for binary and hexadecimal numbers
                 if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 2), Current.Position));
@@ -532,7 +564,26 @@ namespace IonS {
                         if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, scope.GetBindingOffset((Binding) var), Current.Position));
                         else operations.Add(new VariableAccessOperation(var.Id, Current.Position));
                     } else if(ProcedureExists(Current.Text)) operations.Add(new ProcedureCallOperation(Current, currentProcedure, Current.Position));
-                    else return new UnexpectedWordError(Current);
+                    else {
+                        if(Current.Text.StartsWith("@") || Current.Text.StartsWith("!")) { // CWDTODO: complete this step and add safeguards
+                            string[] tokens = Current.Text.Substring(1).Split(".");
+                            if(tokens.Length == 2 && _structs.ContainsKey(tokens[0])) {
+                                Struct structt = _structs[tokens[0]];
+                                if(!structt.HasField(tokens[1])) {
+                                    Console.WriteLine("ERROR: Invalid field"); // CWDTODO: move into an error class
+                                    Environment.Exit(1);
+                                }
+                                operations.Add(
+                                    Current.Text[0] == '@'
+                                        ? new StructFieldReadOperation(structt.GetField(tokens[1]), Current.Position)
+                                        : new StructFieldWriteOperation(structt.GetField(tokens[1]), Current.Position)
+                                );
+                                NextWord();
+                                return null;
+                            }
+                        }
+                        return new UnexpectedWordError(Current);
+                    }
                 }
             }
             NextWord();
@@ -547,8 +598,9 @@ namespace IonS {
             if(preprocessorResult.Error != null) return new ParseResult(null, null, null, null, preprocessorResult.Error);
             _words = preprocessorResult.Words;
 
-            _vars = new List<Variable>();
             _procs = new Dictionary<string, Dictionary<string, Procedure>>();
+            _structs = new Dictionary<string, Struct>();
+            _vars = new List<Variable>();
             _strings = new List<string>();
 
             ParseCodeBlockResult parseResult = ParseCodeBlock(null, new Scope(null, null), null, null);

@@ -772,6 +772,64 @@ namespace IonS {
         }
     }
 
+    // - Incomplete struct definition error
+
+    sealed class IncompleteStructDefinitionError : ParserError {
+        public IncompleteStructDefinitionError(Word structWord) {
+            StructWord = structWord;
+        }
+
+        public Word StructWord { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Incomplete struct definition error: " + StructWord;
+        }
+    }
+
+    // - Missing colon in struct definition error
+
+    sealed class MissingColonInStructDefinitionError : ParserError {
+        public MissingColonInStructDefinitionError(Position position) {
+            Position = position;
+        }
+
+        public Position Position { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Missing colon in struct definition: " + Position;
+        }
+    }
+
+    // - Invalid identifier error
+
+    sealed class InvalidIdentifierError : ParserError {
+        public InvalidIdentifierError(Word word) {
+            Word = word;
+        }
+
+        public Word Word { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Invalid identifier: " + Word;
+        }
+    }
+
+    // StructFieldRedefinitionError
+
+    sealed class StructFieldRedefinitionError : ParserError {
+        public StructFieldRedefinitionError(Word word, Position originalPosition) {
+            Word = word;
+            OriginalPosition = originalPosition;
+        }
+        
+        public Word Word { get; }
+        public Position OriginalPosition { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Redefining struct field: '" + Word.Text + "' (" + OriginalPosition + ") at " + Word.Position;
+        }
+    }
+
     // TypeChecker errors
 
     sealed class StackUnderflowError : TypeCheckerError {
