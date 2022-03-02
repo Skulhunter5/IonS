@@ -35,10 +35,10 @@ namespace IonS {
         public static readonly Regex readBytesRegex = new Regex("^@[0-9]+$", RegexOptions.Compiled);
         public static readonly Regex writeBytesRegex = new Regex("^![0-9]+$", RegexOptions.Compiled);
 
-        public static readonly Regex binaryRegex = new Regex("^0b[01]+$", RegexOptions.Compiled);
-        public static readonly Regex octalRegex = new Regex("^0[0-7]+$", RegexOptions.Compiled);
-        public static readonly Regex decimalRegex = new Regex("^[0-9]+$", RegexOptions.Compiled);
-        public static readonly Regex hexadecimalRegex = new Regex("^0x[0-9a-fA-F]+$", RegexOptions.Compiled);
+        public static readonly Regex binaryRegex = new Regex("^0b[01_]+$", RegexOptions.Compiled);
+        public static readonly Regex octalRegex = new Regex("^0[0-7_]+$", RegexOptions.Compiled);
+        public static readonly Regex decimalRegex = new Regex("^[0-9_]+$", RegexOptions.Compiled);
+        public static readonly Regex hexadecimalRegex = new Regex("^0x[0-9a-fA-F_]+$", RegexOptions.Compiled);
 
 
         public static string StringLiteralToByteString(string literal) {

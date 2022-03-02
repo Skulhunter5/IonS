@@ -561,10 +561,10 @@ namespace IonS {
                 } else return new InvalidTypeError(Current);
             } else {
                 // TODO: add overflow protection for binary and hexadecimal numbers
-                if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 2), Current.Position));
-                else if(Utils.octalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(1, Current.Text.Length-1), 8), Current.Position));
-                else if(Utils.decimalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text, 10), Current.Position));
-                else if(Utils.hexadecimalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 16), Current.Position));
+                if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2).Replace("_", ""), 2), Current.Position));
+                else if(Utils.octalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(1, Current.Text.Length-1).Replace("_", ""), 8), Current.Position));
+                else if(Utils.decimalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Replace("_", ""), 10), Current.Position));
+                else if(Utils.hexadecimalRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2).Replace("_", ""), 16), Current.Position));
                 else {
                     Variable var = scope.GetVariable(Current.Text);
                     if(var != null) {
