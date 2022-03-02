@@ -33,7 +33,7 @@ namespace IonS {
             "argc", "argv",
         };
 
-        public static bool isValidIdenfitier(string word) {
+        public static bool IsValidIdentifier(string word) {
             if(word.StartsWith("#")) return false;
 
             if(Utils.wildcardRegex.IsMatch(word)) return false;
