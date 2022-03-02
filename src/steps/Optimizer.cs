@@ -29,7 +29,6 @@ namespace IonS {
             foreach(Dictionary<string, Procedure> procs in _procs.Values) {
                 foreach(Procedure proc in procs.Values) OptimizeBlock(proc.Body);
             }
-            //foreach(Procedure proc in _procs.Values) OptimizeBlock(proc.Body);
             OptimizeBlock(_root);
             return _root;
         }
