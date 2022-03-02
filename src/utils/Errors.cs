@@ -45,9 +45,22 @@ namespace IonS {
 
         public Word DataType { get; }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return base.ToString() + "Invalid DataType: " + DataType;
+        }
+    }
+
+    // - Invalid type error
+
+    sealed class InvalidTypeError : GeneralError {
+        public InvalidTypeError(Word type) {
+            Type = type;
+        }
+
+        public Word Type { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Invalid type: " + Type;
         }
     }
 

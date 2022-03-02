@@ -1,3 +1,5 @@
+using System;
+
 namespace IonS {
 
     enum DataType {
@@ -38,6 +40,8 @@ namespace IonS {
         }
 
         public static int GetByteSize(DataType dataType) { // TODO: implement bytesizes
+            if(dataType == DataType.None) throw new NotImplementedException();
+            if(dataType == DataType.boolean) return 1;
             return 8;
         }
 

@@ -541,7 +541,7 @@ namespace IonS {
                     if(Current == null) return new IncompleteStructDefinitionError(structWord);
                     if(Current.Type != WordType.Word || !Keyword.IsValidIdentifier(Current.Text)) return new InvalidIdentifierError(Current);
                     if(structt.HasField(Current.Text)) return new StructFieldRedefinitionError(Current, structt.GetField(Current.Text).Identifier.Position);
-                    structt.AddField(new StructField(Current, dataType, structt.GetNextOffset()));
+                    structt.AddField(new StructField(Current, dataType, structt.GetByteSize()));
 
                     NextWord();
                 }
@@ -552,6 +552,13 @@ namespace IonS {
                 // Could theoretically let this fall through
                 NextWord();
                 return null;
+            } else if(Current.Text.StartsWith("sizeof(") && Current.Text.EndsWith(")")) {
+                string type = Current.Text.Substring(7, Current.Text.Length-8);
+                if(EDataType.TryParse(type, out DataType dataType)) {
+                    operations.Add(new Push_uint64_Operation((ulong) EDataType.GetByteSize(dataType), Current.Position));
+                } else if(_structs.ContainsKey(type)) {
+                    operations.Add(new Push_uint64_Operation((ulong) _structs[type].GetByteSize(), Current.Position));
+                } else return new InvalidTypeError(Current);
             } else {
                 // TODO: add overflow protection for binary and hexadecimal numbers
                 if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2), 2), Current.Position));
