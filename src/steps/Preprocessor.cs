@@ -54,7 +54,7 @@ namespace IonS {
             Word key = words[i];
 
             // TODO: allow actually valid identifiers only
-            if(!Keyword.isValidIdenfitier(key.Text)) return new InvalidMacroKeyError(key);
+            if(!Keyword.IsValidIdentifier(key.Text)) return new InvalidMacroKeyError(key);
 
             if(i++ == words.Count-2) return new IncompleteMacroDefinitionError(word, key);
 

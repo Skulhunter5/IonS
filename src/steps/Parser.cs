@@ -162,7 +162,7 @@ namespace IonS {
             if(Current == null) return new IncompleteProcedureError(procWord, null);
             Word name = Current;
             // TODO: Check that the name is valid for nasm aswell
-            if(!Keyword.isValidIdenfitier(name.Text)) return new InvalidProcedureNameError(name);
+            if(!Keyword.IsValidIdentifier(name.Text)) return new InvalidProcedureNameError(name);
             NextWord();
 
             if(Current == null) return new IncompleteProcedureError(procWord, name);
@@ -382,7 +382,7 @@ namespace IonS {
 
                 Word identifier = Current;
                 // TODO: Check that the identifier is valid for nasm aswell
-                if(!Keyword.isValidIdenfitier(identifier.Text)) return new InvalidVariableIdentifierError(identifier);
+                if(!Keyword.IsValidIdentifier(identifier.Text)) return new InvalidVariableIdentifierError(identifier);
                 
                 NextWord();
                 if(Current.Text == null) return new IncompleteVariableDeclarationError(varWord, identifier);
@@ -496,7 +496,7 @@ namespace IonS {
                         if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidBindingError(Current);
 
                         if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
-                        else if(!Keyword.isValidIdenfitier(Current.Text)) return new InvalidBindingError(Current);
+                        else if(!Keyword.IsValidIdentifier(Current.Text)) return new InvalidBindingError(Current);
                         else bindings.Add(new Binding(Current));
 
                         NextWord();
@@ -506,7 +506,7 @@ namespace IonS {
                     NextWord();
                 } else {
                     if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
-                    else if(!Keyword.isValidIdenfitier(Current.Text)) return new InvalidBindingError(Current);
+                    else if(!Keyword.IsValidIdentifier(Current.Text)) return new InvalidBindingError(Current);
                     else bindings.Add(new Binding(Current));
 
                     NextWord();
@@ -539,7 +539,7 @@ namespace IonS {
                     NextWord();
                     
                     if(Current == null) return new IncompleteStructDefinitionError(structWord);
-                    if(Current.Type != WordType.Word || !Keyword.isValidIdenfitier(Current.Text)) return new InvalidIdentifierError(Current);
+                    if(Current.Type != WordType.Word || !Keyword.IsValidIdentifier(Current.Text)) return new InvalidIdentifierError(Current);
                     if(structt.HasField(Current.Text)) return new StructFieldRedefinitionError(Current, structt.GetField(Current.Text).Identifier.Position);
                     structt.AddField(new StructField(Current, dataType, structt.GetNextOffset()));
 
