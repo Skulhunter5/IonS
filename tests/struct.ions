@@ -8,6 +8,8 @@ var test2 24
 
 12345
 
+sizeof(test) .
+
 test2 @test.a .
 test2 @test.b cast(uint64) .
 test2 @test.c .
