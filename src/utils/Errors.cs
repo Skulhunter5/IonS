@@ -880,7 +880,7 @@ namespace IonS {
         }
     }
 
-    sealed class InvalidReturnDataError : TypeCheckerError { // TODO: Fix it not showing if this happens at a ReturnOperation
+    sealed class InvalidReturnDataError : TypeCheckerError {
         public InvalidReturnDataError(DataType[] gotTypes, Procedure procedure) {
             GotTypes = gotTypes;
             Procedure = procedure;
