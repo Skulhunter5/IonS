@@ -29,11 +29,6 @@
 #macro PROT_WRITE 0x2
 #macro PROT_EXEC 0x4
 
-#macro sizeof(bool) 1
-#macro sizeof(uint) 8
-#macro sizeof(uint64) 8
-#macro sizeof(ptr) 8
-
 inline proc fputs ( uint64 ptr uint64 -- uint64 ) {
     SYS_write syscall3
 }
@@ -93,7 +88,6 @@ inline proc ptr+ ( ptr ptr -- ptr ) {
     cast ( uint64 uint64 ) + cast(ptr)
 }
 
-#macro sizeof(Str) 16
 proc !Str ( uint64 ptr ptr ) {
     rot over !64
     cast(uint64) 8 + cast(ptr)
