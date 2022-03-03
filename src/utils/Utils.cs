@@ -64,6 +64,8 @@ namespace IonS {
 
         public static readonly Regex readBytesRegex = new Regex("^@[0-9]+$", RegexOptions.Compiled);
         public static readonly Regex writeBytesRegex = new Regex("^![0-9]+$", RegexOptions.Compiled);
+        public static readonly Regex cttRegex = new Regex("^ctt[0-9]+$", RegexOptions.Compiled);
+        public static readonly Regex syscallRegex = new Regex("^syscall[0-9]+$", RegexOptions.Compiled);
 
         public static readonly Regex binaryRegex = new Regex("^0b[01_]+$", RegexOptions.Compiled);
         public static readonly Regex octalRegex = new Regex("^0[0-7_]+$", RegexOptions.Compiled);
@@ -79,9 +81,9 @@ namespace IonS {
             if(Utils.wildcardRegex.IsMatch(word)) return false;
 
             if(Utils.readBytesRegex.IsMatch(word) || Utils.writeBytesRegex.IsMatch(word)) return false;
+            if(Utils.cttRegex.IsMatch(word)) return false;
+            if(Utils.syscallRegex.IsMatch(word)) return false;
 
-            if(word.StartsWith("syscall")) return false;
-            if(word.StartsWith("ctt")) return false;
             if(word.StartsWith("cast(") && word.EndsWith(")")) return false;
 
             if(Utils.binaryRegex.IsMatch(word) || Utils.octalRegex.IsMatch(word) || Utils.decimalRegex.IsMatch(word) || Utils.hexadecimalRegex.IsMatch(word)) return false;

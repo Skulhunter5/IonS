@@ -259,7 +259,7 @@ namespace IonS {
             else if(Current.Text == "null") operations.Add(new Push_ptr_Operation(0, Current.Position));
             else if(Current.Text == "argc") operations.Add(new ArgcOperation(Current.Position));
             else if(Current.Text == "argv") operations.Add(new ArgvOperation(Current.Position));
-            else if(Current.Text.StartsWith("ctt")) {
+            else if(Utils.cttRegex.IsMatch(Current.Text)) {
                 if(!int.TryParse(Current.Text.Substring(3, Current.Text.Length - 3), out int n) || n < 1) return new InvalidCTTIndexError(Current);
                 operations.Add(new CTTOperation(n, Current.Position));
             } else if(Current.Text == "if") {
@@ -420,7 +420,7 @@ namespace IonS {
             } else if(Current.Text == "chere") {
                 operations.Add(new CStyleStringOperation(_strings.Count, Current.Position));
                 _strings.Add(Current.Position + "\0");
-            } else if(Current.Text.StartsWith("syscall")) {
+            } else if(Utils.syscallRegex.IsMatch(Current.Text)) {
                 string argcStr = Current.Text.Substring(7, Current.Text.Length - 7);
                 if(!int.TryParse(argcStr, out int argc)) return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
                 if(argc > 6 || argc < 0) return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
