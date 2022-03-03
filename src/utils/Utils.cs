@@ -26,6 +26,35 @@ namespace IonS {
 
     class Utils {
         
+        public static readonly string[] keywords = new string[] {
+            "exit",
+            "drop", "2drop",
+            "dup", "2dup",
+            "over", "2over",
+            "swap", "2swap",
+            "rot", "rrot", "rot5", "rrot5",
+            "+", "-", "*", "/", "%", "/%",
+            "<<", ">>", "&", "|", "^", "inv",
+            "&&", "||", "not",
+            "min", "max",
+            "==", "!=", "<", ">", "<=", ">=",
+            ".",
+            "true", "false",
+            "null",
+            "if", "else", "while", "do", "switch", "case",
+            "continue", "break",
+            "macro",
+            "var",
+            "#include",
+            "here", "chere",
+            "{", "}",
+            "proc", "return", "inline",
+            "assert",
+            "iota", "reset",
+            "argc", "argv",
+        };
+
+
         public static readonly string[] SyscallRegisters = new string[] {"rdi", "rsi", "rdx", "r10", "r8", "r9"};
 
         public static readonly Regex symbolRegex = new Regex("^[a-zA-Z_][0-9a-zA-Z_]*$", RegexOptions.Compiled);
