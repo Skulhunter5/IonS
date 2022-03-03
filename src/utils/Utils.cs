@@ -57,6 +57,7 @@ namespace IonS {
 
         public static readonly string[] SyscallRegisters = new string[] {"rdi", "rsi", "rdx", "r10", "r8", "r9"};
 
+
         public static readonly Regex symbolRegex = new Regex("^[a-zA-Z_][0-9a-zA-Z_]*$", RegexOptions.Compiled);
 
         public static readonly Regex wildcardRegex = new Regex("^_+$", RegexOptions.Compiled);
@@ -69,6 +70,28 @@ namespace IonS {
         public static readonly Regex decimalRegex = new Regex("^[0-9_]+$", RegexOptions.Compiled);
         public static readonly Regex hexadecimalRegex = new Regex("^0x[0-9a-fA-F_]+$", RegexOptions.Compiled);
 
+
+        public static bool IsValidIdentifier(string word) {
+            if(word == ";") return false;
+
+            if(word.StartsWith("#")) return false;
+
+            if(Utils.wildcardRegex.IsMatch(word)) return false;
+
+            if(Utils.readBytesRegex.IsMatch(word) || Utils.writeBytesRegex.IsMatch(word)) return false;
+
+            if(word.StartsWith("syscall")) return false;
+            if(word.StartsWith("ctt")) return false;
+            if(word.StartsWith("cast(") && word.EndsWith(")")) return false;
+
+            if(Utils.binaryRegex.IsMatch(word) || Utils.octalRegex.IsMatch(word) || Utils.decimalRegex.IsMatch(word) || Utils.hexadecimalRegex.IsMatch(word)) return false;
+
+            if(EDataType.TryParse(word, out DataType _)) return false;
+
+            foreach(string keyword in Utils.keywords) if(keyword == word) return false;
+
+            return true;
+        }
 
         public static string StringLiteralToByteString(string literal) {
             return String.Join(',', Encoding.ASCII.GetBytes(literal));

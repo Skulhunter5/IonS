@@ -69,26 +69,6 @@ namespace IonS {
             return Current;
         }
 
-        private bool IsValidIdentifier(string text) {
-            if(word.StartsWith("#")) return false;
-
-            if(Utils.wildcardRegex.IsMatch(word)) return false;
-
-            if(Utils.readBytesRegex.IsMatch(word) || Utils.writeBytesRegex.IsMatch(word)) return false;
-
-            if(word.StartsWith("syscall")) return false;
-            if(word.StartsWith("ctt")) return false;
-            if(word.StartsWith("cast(")) return false;
-
-            if(Utils.binaryRegex.IsMatch(word) || Utils.octalRegex.IsMatch(word) || Utils.decimalRegex.IsMatch(word) || Utils.hexadecimalRegex.IsMatch(word)) return false;
-
-            if(EDataType.TryParse(word, out DataType _)) return false;
-
-            foreach(string keyword in Utils.keywords) if(keyword == word) return false;
-
-            return true;
-        }
-
         private Error RegisterVariable(Scope scope, Variable var) {
             var error = scope.RegisterVariable(var);
             if(error != null) return error;
@@ -146,15 +126,21 @@ namespace IonS {
 
         private ParseCodeBlockResult ParseCodeBlock(Scope parentScope, Scope newScope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             bool root = parentScope == null;
-            CodeBlock block = new CodeBlock(newScope, Current != null ? Current.Position : null);
+            CodeBlock block = new CodeBlock(newScope, Current != null ? Current.Position : null); // TODO: check if last null can be replaced with 'new Position(_source, 1, 1)'
             if(Current == null) {
                 if(root) return new ParseCodeBlockResult(block, null);
                 return new ParseCodeBlockResult(null, new MissingCodeBlockError());
             }
+
+            if(Current.Type == WordType.Word && Current.Text == ";") {
+                NextWord();
+                return new ParseCodeBlockResult(block, null);
+            }
+
             block.Start = Current.Position;
             if(IsBraceOpen() || root) {
                 Position openBracePosition = Current.Position;
-                if(IsBraceOpen()) NextWord();
+                if(IsBraceOpen() && !root) NextWord();
                 while(Current != null && (!IsBraceClose() || root)) {
                     if(IsBraceClose()) break;
                     var error = ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
@@ -182,7 +168,7 @@ namespace IonS {
             if(Current == null) return new IncompleteProcedureError(procWord, null);
             Word name = Current;
             // TODO: Check that the name is valid for nasm aswell
-            if(!IsValidIdentifier(name.Text)) return new InvalidProcedureNameError(name);
+            if(!Utils.IsValidIdentifier(name.Text)) return new InvalidProcedureNameError(name);
             NextWord();
 
             if(Current == null) return new IncompleteProcedureError(procWord, name);
@@ -285,7 +271,7 @@ namespace IonS {
 
                 IfBlock ifBlock = new IfBlock(result.Block, null, position);
 
-                while(Current.Type == WordType.Word && Current.Text == "else*") {
+                while(Current != null && Current.Type == WordType.Word && Current.Text == "else*") {
                     NextWord();
 
                     result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
@@ -300,7 +286,7 @@ namespace IonS {
                     ifBlock.Conditionals.Add(result.Block);
                 }
 
-                if(Current.Type == WordType.Word && Current.Text == "else") {
+                if(Current != null && Current.Type == WordType.Word && Current.Text == "else") {
                     NextWord();
 
                     result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
@@ -402,7 +388,7 @@ namespace IonS {
 
                 Word identifier = Current;
                 // TODO: Check that the identifier is valid for nasm aswell
-                if(!IsValidIdentifier(identifier.Text)) return new InvalidVariableIdentifierError(identifier);
+                if(!Utils.IsValidIdentifier(identifier.Text)) return new InvalidVariableIdentifierError(identifier);
                 
                 NextWord();
                 if(Current.Text == null) return new IncompleteVariableDeclarationError(varWord, identifier);
@@ -516,7 +502,7 @@ namespace IonS {
                         if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidBindingError(Current);
 
                         if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
-                        else if(!IsValidIdentifier(Current.Text)) return new InvalidBindingError(Current);
+                        else if(!Utils.IsValidIdentifier(Current.Text)) return new InvalidBindingError(Current);
                         else bindings.Add(new Binding(Current));
 
                         NextWord();
@@ -526,7 +512,7 @@ namespace IonS {
                     NextWord();
                 } else {
                     if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
-                    else if(!IsValidIdentifier(Current.Text)) return new InvalidBindingError(Current);
+                    else if(!Utils.IsValidIdentifier(Current.Text)) return new InvalidBindingError(Current);
                     else bindings.Add(new Binding(Current));
 
                     NextWord();
@@ -559,7 +545,7 @@ namespace IonS {
                     NextWord();
                     
                     if(Current == null) return new IncompleteStructDefinitionError(structWord);
-                    if(Current.Type != WordType.Word || !IsValidIdentifier(Current.Text)) return new InvalidIdentifierError(Current);
+                    if(Current.Type != WordType.Word || !Utils.IsValidIdentifier(Current.Text)) return new InvalidIdentifierError(Current);
                     if(structt.HasField(Current.Text)) return new StructFieldRedefinitionError(Current, structt.GetField(Current.Text).Identifier.Position);
                     structt.AddField(new StructField(Current, dataType, structt.GetByteSize()));
 
