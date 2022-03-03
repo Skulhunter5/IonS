@@ -4,7 +4,13 @@ inline proc isNegative ( uint64 -- bool ) { // TODO: implement signed numbers an
     0b1000000000000000000000000000000000000000000000000000000000000000 & 0 >
 }
 
-inline proc alloc_info.flags ( -- uint64 ) {
+struct alloc_info
+    uint64 : flags
+    ptr : base
+    uint64 : size
+end
+
+/* inline proc alloc_info.flags ( -- uint64 ) {
     0
 }
 inline proc !alloc_info.flags ( uint64 ptr ) {
@@ -30,7 +36,7 @@ inline proc !alloc_info.size ( uint64 ptr ) {
 }
 inline proc @alloc_info.size ( ptr -- uint64 ) {
     16 ptr+ @64
-}
+} */
 
 #macro ENTRY_FREE 0
 #macro ENTRY_BEEN_USED 1
@@ -115,11 +121,14 @@ proc free ( ptr ) {
     find_entry ENTRY_BEEN_USED swap !alloc_info.flags
 }
 
-proc init_alloc ( ptr uint64 uint64 ) { // TODO: implement safeguard if n is too large for the given size
+proc init_alloc ( ptr uint64 uint64 -- bool ) { // TODO: implement safeguard if n is too large for the given size
     let ( base size n ) {
+        n 24 * size > if { false return }
+        
         base alloc_tbl !ptr
         n tbl_entries !64
         size n 24 * - space_left !64
         base n 24 * ptr+ next_base !ptr
     }
+    true
 }

@@ -13,6 +13,10 @@ HEAP_SIZE ptr+ brk cur_brk !ptr
     HEAP_SIZE
     10
 init_alloc
+not if {
+    "ERROR: could not initialize alloc\n" eputs
+    1 exit
+}
 
 "-----\n" puts
 org_brk @ptr ptr.
