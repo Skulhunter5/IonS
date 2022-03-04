@@ -8,7 +8,6 @@
 - Rework Error-Warning-System to maybe allow for single syntax error but multiple other errors and also allow warnings (see TypeChecker & ExitOperation)
 - Rework words/tokens
 - Implement function prototypes
-- Implement ; as empty block
 - Make switch statements viable (just assume a fallthrough at every point and then check if all endings have the same signature) \
 -> conditionally breaking or non-breaking cases have to have a signature of none \
 -> all breaks have to have the same signature
