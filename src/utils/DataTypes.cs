@@ -25,7 +25,8 @@ namespace IonS {
 
         public bool Equals(DataType dataType) {
             if(Value != dataType.Value) return false;
-            if(!Kind.Equals(dataType.Kind)) return false;
+            if(Kind != dataType.Kind) return false;
+            if(Kind != null) if(!Kind.Equals(dataType.Kind)) return false;
             return true;
         }
 
@@ -37,6 +38,12 @@ namespace IonS {
             if(IsType(DataType.NONE)) throw new NotImplementedException();
             return bytesizeDict[Value];
         }
+
+        public bool IsTypedPointer() {
+            return Value == POINTER && Kind != null;
+        }
+
+        // STATIC
 
         public static readonly int NONE     = 0x00;
         public static readonly int BOOLEAN  = 0x01;
@@ -63,10 +70,6 @@ namespace IonS {
             {DataType.UINT64,   8},
             {DataType.POINTER,  8},
         };
-
-        public static bool Is_uint(DataType dataType) {
-            return dataType.IsType(DataType.UINT64);
-        }
 
         public static bool IsImplicitlyCastable(DataType from, DataType to) { // TODO: see how I can improve this (maybe Dictionary and save every possible combination as a string or whatever)
             if(from == to) return true;

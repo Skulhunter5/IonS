@@ -972,4 +972,20 @@ namespace IonS {
         }
     }
 
+    // Expected DataType error
+
+    sealed class ExpectedDataTypeError : TypeCheckerError {
+        public ExpectedDataTypeError(string msg, Operation operation) {
+            Msg = msg;
+            Operation = operation;
+        }
+
+        public string Msg { get; }
+        public Operation Operation { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Expected " + Msg + " for " + Operation;
+        }
+    }
+
 }

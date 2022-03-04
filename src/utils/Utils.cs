@@ -52,6 +52,9 @@ namespace IonS {
             "assert",
             "iota", "reset",
             "argc", "argv",
+            "let", "peek",
+            "struct",
+            "@[]", "![]",
         };
 
 

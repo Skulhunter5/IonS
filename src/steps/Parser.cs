@@ -259,6 +259,8 @@ namespace IonS {
             else if(Current.Text == "null") operations.Add(new Push_ptr_Operation(0, Current.Position));
             else if(Current.Text == "argc") operations.Add(new ArgcOperation(Current.Position));
             else if(Current.Text == "argv") operations.Add(new ArgvOperation(Current.Position));
+            else if(Current.Text == "@[]") operations.Add(new ArrayReadOperation(Current.Position));
+            else if(Current.Text == "![]") operations.Add(new ArrayWriteOperation(Current.Position));
             else if(Utils.cttRegex.IsMatch(Current.Text)) {
                 if(!int.TryParse(Current.Text.Substring(3, Current.Text.Length - 3), out int n) || n < 1) return new InvalidCTTIndexError(Current);
                 operations.Add(new CTTOperation(n, Current.Position));

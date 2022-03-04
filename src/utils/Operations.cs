@@ -33,7 +33,10 @@ namespace IonS {
         Cast,
 
         Argc, Argv,
+
         StructFieldRead, StructFieldWrite,
+
+        ArrayRead, ArrayWrite,
     }
 
     enum Direction2 {
@@ -1569,6 +1572,75 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             return contract.Require(new DataType[] {Field.DataType, DataType.I_POINTER}, this);
+        }
+    }
+
+    // Array access operations
+
+    sealed class ArrayReadOperation : Operation {
+        public ArrayReadOperation(Position position) : base(OperationType.ArrayRead, position) {}
+
+        public int ByteSize { get; set; }
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                if(ByteSize != 8) throw new NotImplementedException();
+                //    pop rbx
+                //    pop rax
+                //    xor rdx, rdx
+                //    mov rcx, {ByteSize}
+                //    mul rcx
+                //    add rax, rbx
+                //    push {word-size with respect to ByteSize} [rax]
+                return "    pop rbx\n    pop rax\n    xor rdx, rdx\n    mov rcx, " + ByteSize + "\n    mul rcx\n    add rax, rbx\n    push QWORD [rax]\n";
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
+            DataType dataType = contract.Pop();
+            if(!dataType.IsTypedPointer()) return new ExpectedDataTypeError("typed-pointer", this);
+
+            Error error = contract.Require(DataType.I_UINT64, this);
+            if(error != null) return error;
+
+            ByteSize = dataType.Kind.GetByteSize();
+
+            return contract.Provide(dataType.Kind);
+        }
+    }
+
+    sealed class ArrayWriteOperation : Operation {
+        public ArrayWriteOperation(Position position) : base(OperationType.ArrayWrite, position) {}
+
+        public int ByteSize { get; set; }
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                if(ByteSize != 8) throw new NotImplementedException();
+                //    pop rbx
+                //    pop rax
+                //    xor rdx, rdx
+                //    mov rcx, {ByteSize}
+                //    mul rcx
+                //    add rax, rbx
+                //    pop rbx
+                //    mov [rax], rbx
+                return "    pop rbx\n    pop rax\n    xor rdx, rdx\n    mov rcx, " + ByteSize + "\n    mul rcx\n    add rax, rbx\n    pop rbx\n    mov [rax], rbx\n";
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
+            DataType dataType = contract.Pop();
+            if(!dataType.IsTypedPointer()) return new ExpectedDataTypeError("typed-pointer", this);
+
+            Error error = contract.Require(DataType.I_UINT64, this);
+            if(error != null) return error;
+
+            ByteSize = dataType.Kind.GetByteSize();
+
+            return contract.Require(dataType.Kind, this);
         }
     }
 
