@@ -175,7 +175,7 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             List<TypeCheckContract> contracts = new List<TypeCheckContract>();
 
-            Error error = contract.Require(DataType.boolean, this);
+            Error error = contract.Require(DataType.I_BOOLEAN, this);
             if(error != null) return error;
 
             TypeCheckContract tmpContract = contract.Copy();
@@ -187,7 +187,7 @@ namespace IonS {
                 tmpContract = contract.Copy();
                 Conditions[i].TypeCheck(context, tmpContract);
 
-                error = tmpContract.Require(DataType.boolean, this); // TODO: put something better here (maybe even save the Positions of every elseif and else)
+                error = tmpContract.Require(DataType.I_BOOLEAN, this); // TODO: put something better here (maybe even save the Positions of every elseif and else)
                 if(error != null) return error;
                 if(!contract.IsStackCompatible(tmpContract)) return new SignatureMustBeNoneError(contract, tmpContract, Conditions[i]);
 
@@ -284,7 +284,7 @@ namespace IonS {
             Error error = Condition.TypeCheck(context, contract);
             if(error != null) return error;
 
-            error = contract.Require(DataType.boolean, this);
+            error = contract.Require(DataType.I_BOOLEAN, this);
             if(error != null) return error;
             if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
 
@@ -354,7 +354,7 @@ namespace IonS {
             error = Condition.TypeCheck(context, contract);
             if(error != null) return error;
 
-            error = contract.Require(DataType.boolean, this);
+            error = contract.Require(DataType.I_BOOLEAN, this);
             if(error != null) return error;
             if(!contract.IsStackCompatible(Reference)) return new SignatureMustBeNoneError(Reference, contract, Condition);
 
@@ -430,7 +430,7 @@ namespace IonS {
                 TypeCheckContract contract1 = Reference.Copy();
                 Cases[i].TypeCheck(context, contract1);
 
-                Error error = contract1.Require(DataType.boolean, this);
+                Error error = contract1.Require(DataType.I_BOOLEAN, this);
                 if(error != null) return error;
                 if(!Reference.IsStackCompatible(contract1)) return new SignatureMustBeNoneError(Reference, contract1, Cases[i]);
 

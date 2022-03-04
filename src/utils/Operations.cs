@@ -75,7 +75,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Provide(DataType.boolean);
+            return contract.Provide(DataType.I_BOOLEAN);
         }
     }
 
@@ -111,7 +111,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Provide(DataType.uint64);
+            return contract.Provide(DataType.I_UINT64);
         }
     }
 
@@ -147,7 +147,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Provide(DataType.pointer);
+            return contract.Provide(DataType.I_POINTER);
         }
     }
 
@@ -572,7 +572,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.CheckFor(DataType.uint64, this);
+            return contract.CheckFor(DataType.I_UINT64, this);
         }
     }
 
@@ -594,7 +594,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.CheckFor(DataType.uint64, this);
+            return contract.CheckFor(DataType.I_UINT64, this);
         }
     }
 
@@ -617,9 +617,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_UINT64};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.uint64, this);
+            return contract.RequireAndProvide(required, DataType.I_UINT64, this);
         }
     }
 
@@ -642,9 +642,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_UINT64};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.uint64, this);
+            return contract.RequireAndProvide(required, DataType.I_UINT64, this);
         }
     }
 
@@ -662,9 +662,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_UINT64};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.uint64, this);
+            return contract.RequireAndProvide(required, DataType.I_UINT64, this);
         }
     }
 
@@ -683,9 +683,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_UINT64};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.uint64, this);
+            return contract.RequireAndProvide(required, DataType.I_UINT64, this);
         }
     }
 
@@ -704,9 +704,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_UINT64};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.uint64, this);
+            return contract.RequireAndProvide(required, DataType.I_UINT64, this);
         }
     }
 
@@ -726,7 +726,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_UINT64};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             return contract.CheckFor(required, this);
         }
@@ -752,12 +752,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
 
             DataType dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
 
             dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
 
             return contract.Provide(dataType);
         }
@@ -779,12 +779,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
             
             DataType dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
 
             dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
 
             return contract.Provide(dataType);
         }
@@ -806,12 +806,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
 
             DataType dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
 
             dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
 
             return contract.Provide(dataType);
         }
@@ -833,12 +833,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
             
             DataType dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
             
             dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
 
             return contract.Provide(dataType);
         }
@@ -867,12 +867,12 @@ namespace IonS {
             if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
             
             DataType dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
 
             dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
             
             return contract.Provide(dataType);
         }
@@ -893,10 +893,10 @@ namespace IonS {
             if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
 
             DataType dataType = contract.Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, DataType.uint64)) return new UnexpectedDataTypeError(dataType, DataType.uint64, this);
-            if(dataType != DataType.uint64) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + DataType.uint64 + " during " + this); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
+            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
             
-            return contract.Provide(DataType.uint64);
+            return contract.Provide(DataType.I_UINT64);
         }
     }
 
@@ -922,9 +922,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.boolean, DataType.boolean};
+        private static readonly DataType[] required = new DataType[] {DataType.I_BOOLEAN, DataType.I_BOOLEAN};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.boolean, this);
+            return contract.RequireAndProvide(required, DataType.I_BOOLEAN, this);
         }
     }
 
@@ -948,9 +948,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.boolean, DataType.boolean};
+        private static readonly DataType[] required = new DataType[] {DataType.I_BOOLEAN, DataType.I_BOOLEAN};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.boolean, this);
+            return contract.RequireAndProvide(required, DataType.I_BOOLEAN, this);
         }
     }
 
@@ -970,7 +970,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.CheckFor(DataType.boolean, this);
+            return contract.CheckFor(DataType.I_BOOLEAN, this);
         }
     }
 
@@ -999,9 +999,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_UINT64};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.uint64, this);
+            return contract.RequireAndProvide(required, DataType.I_UINT64, this);
         }
     }
 
@@ -1028,9 +1028,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_UINT64};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.uint64, this);
+            return contract.RequireAndProvide(required, DataType.I_UINT64, this);
         }
     }
 
@@ -1071,9 +1071,9 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.uint64};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_UINT64};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(required, DataType.boolean, this);
+            return contract.RequireAndProvide(required, DataType.I_BOOLEAN, this);
         }
     }
 
@@ -1092,7 +1092,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Require(DataType.uint64, this);
+            return contract.Require(DataType.I_UINT64, this);
         }
     }
 
@@ -1112,7 +1112,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            Error error = contract.Require(DataType.uint64, this);
+            Error error = contract.Require(DataType.I_UINT64, this);
             if(error != null) return error;
 
             if(!contract.IsEmpty()) Console.WriteLine("[TypeChecker] Warning: excess data on the stack after exit: [" + String.Join(", ", contract.Stack) + "]");  // Error-Warning-System
@@ -1138,7 +1138,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Provide(DataType.pointer);
+            return contract.Provide(DataType.I_POINTER);
         }
     }
 
@@ -1166,7 +1166,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(DataType.pointer, DataType.uint64, this);
+            return contract.RequireAndProvide(DataType.I_POINTER, DataType.I_UINT64, this);
         }
     }
 
@@ -1191,7 +1191,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.uint64, DataType.pointer};
+        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_POINTER};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             return contract.Require(required, this);
         }
@@ -1217,7 +1217,7 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] provided = new DataType[] {DataType.uint64, DataType.pointer};
+        private static readonly DataType[] provided = new DataType[] {DataType.I_UINT64, DataType.I_POINTER};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             return contract.Provide(provided);
         }
@@ -1239,7 +1239,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Provide(DataType.pointer);
+            return contract.Provide(DataType.I_POINTER);
         }
     }
 
@@ -1269,7 +1269,7 @@ namespace IonS {
             Error error = contract.RemoveElements(Argc+1, this);
             if(error != null) return error;
 
-            return contract.Provide(DataType.uint64);
+            return contract.Provide(DataType.I_UINT64);
         }
     }
 
@@ -1362,8 +1362,8 @@ namespace IonS {
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             if(contract.GetElementsLeft() != Proc.Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
 
-            for(int i = 0; i < Proc.Rets.Length; i++) if(!EDataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) {
-                if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(contract.Peek(Proc.Rets.Length-1-i)) + " to " + Proc.Rets[i] + " while returning from " + Proc + " at " + this); // Error-Warning-System
+            for(int i = 0; i < Proc.Rets.Length; i++) if(!DataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) {
+                if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + contract.Peek(Proc.Rets.Length-1-i) + " to " + Proc.Rets[i] + " while returning from " + Proc + " at " + this); // Error-Warning-System
                 return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
             }
             contract.RemoveElements(Proc.Rets.Length, this); // Should be unnecessary
@@ -1425,7 +1425,7 @@ namespace IonS {
             Error error = Condition.TypeCheck(context, contract);
             if(error != null) return error;
 
-            error = contract.Require(DataType.boolean, this);
+            error = contract.Require(DataType.I_BOOLEAN, this);
             if(error != null) return error;
             
             if(!contract.IsStackCompatible(reference)) return new SignatureMustBeNoneError(reference, contract, Condition);
@@ -1470,13 +1470,13 @@ namespace IonS {
 
             List<DataType> wildcardTypes = new List<DataType>();
             for(int i = DataTypes.Length-1; i >= 0; i--) {
-                if(DataTypes[i] == DataType.None) wildcardTypes.Add(contract.Pop());
+                if(DataTypes[i].Equals(DataType.I_NONE)) wildcardTypes.Add(contract.Pop());
                 else contract.Pop();
             }
 
             int j = wildcardTypes.Count-1;
             for(int i = 0; i < DataTypes.Length; i++) {
-                if(DataTypes[i] == DataType.None) contract.Provide(wildcardTypes[j--]);
+                if(DataTypes[i].Equals(DataType.I_NONE)) contract.Provide(wildcardTypes[j--]);
                 else contract.Provide(DataTypes[i]);
             }
 
@@ -1499,7 +1499,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Provide(DataType.uint64);
+            return contract.Provide(DataType.I_UINT64);
         }
     }
 
@@ -1516,7 +1516,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Provide(DataType.pointer);
+            return contract.Provide(DataType.I_POINTER);
         }
     }
 
@@ -1542,7 +1542,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(DataType.pointer, Field.DataType, this);
+            return contract.RequireAndProvide(DataType.I_POINTER, Field.DataType, this);
         }
     }
 
@@ -1568,7 +1568,7 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Require(new DataType[] {Field.DataType, DataType.pointer}, this);
+            return contract.Require(new DataType[] {Field.DataType, DataType.I_POINTER}, this);
         }
     }
 

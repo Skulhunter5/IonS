@@ -897,9 +897,9 @@ namespace IonS {
 
         public override string ToString() {
             string msg = "";
-            for(int i = 0; i < Procedure.Rets.Length; i++) msg += EDataType.StringOf(Procedure.Rets[i]) + (i < Procedure.Rets.Length - 1 ? ", " : "");
+            for(int i = 0; i < Procedure.Rets.Length; i++) msg += Procedure.Rets[i] + (i < Procedure.Rets.Length - 1 ? ", " : "");
             msg += "] but got [";
-            for(int i = 0; i < GotTypes.Length; i++) msg += EDataType.StringOf(GotTypes[i]) + (i < GotTypes.Length - 1 ? ", " : "");
+            for(int i = 0; i < GotTypes.Length; i++) msg += GotTypes[i] + (i < GotTypes.Length - 1 ? ", " : "");
             return base.ToString() + "Invalid return arguments: expected [" + msg + "] "  + (Operation != null ? "for return at " + Operation.Position + " in " : "at the end of ") + Procedure;
         }
     }

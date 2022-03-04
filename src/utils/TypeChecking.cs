@@ -60,8 +60,8 @@ namespace IonS {
             if(Stack.Count < required.Length) return new StackUnderflowError(operation);
 
             for(int i = required.Length-1; i >= 0; i--) {
-                if(!EDataType.IsImplicitlyCastable(Peek(), required[i])) return new UnexpectedDataTypeError(Peek(), required[i], operation);
-                if(Peek() != required[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(Peek()) + " to " + required[i] + " during " + operation); // Error-Warning-System
+                if(!DataType.IsImplicitlyCastable(Peek(), required[i])) return new UnexpectedDataTypeError(Peek(), required[i], operation);
+                if(!Peek().Equals(required[i])) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + Peek() + " to " + required[i] + " during " + operation); // Error-Warning-System
             }
             return null;
         }
@@ -69,8 +69,8 @@ namespace IonS {
         public Error CheckFor(DataType required, Operation operation) {
             if(Stack.Count < 1) return new StackUnderflowError(operation);
 
-            if(!EDataType.IsImplicitlyCastable(Peek(), required)) return new UnexpectedDataTypeError(Peek(), required, operation);
-            if(Peek() != required) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(Peek()) + " to " + required + " during " + operation); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(Peek(), required)) return new UnexpectedDataTypeError(Peek(), required, operation);
+            if(!Peek().Equals(required)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + Peek() + " to " + required + " during " + operation); // Error-Warning-System
 
             return null;
         }
@@ -80,8 +80,8 @@ namespace IonS {
 
             for(int i = required.Length-1; i >= 0; i--) {
                 DataType dataType = Pop();
-                if(!EDataType.IsImplicitlyCastable(dataType, required[i])) return new UnexpectedDataTypeError(dataType, required[i], operation);
-                if(dataType != required[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + required[i] + " during " + operation); // Error-Warning-System
+                if(!DataType.IsImplicitlyCastable(dataType, required[i])) return new UnexpectedDataTypeError(dataType, required[i], operation);
+                if(!dataType.Equals(required[i])) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + required[i] + " during " + operation); // Error-Warning-System
             }
             return null;
         }
@@ -90,8 +90,8 @@ namespace IonS {
             if(Stack.Count < 1) return new StackUnderflowError(operation);
 
             DataType dataType = Pop();
-            if(!EDataType.IsImplicitlyCastable(dataType, required)) return new UnexpectedDataTypeError(dataType, required, operation);
-            if(dataType != required) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(dataType) + " to " + required + " during " + operation); // Error-Warning-System
+            if(!DataType.IsImplicitlyCastable(dataType, required)) return new UnexpectedDataTypeError(dataType, required, operation);
+            if(!dataType.Equals(required)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + required + " during " + operation); // Error-Warning-System
 
             return null;
         }
@@ -124,12 +124,12 @@ namespace IonS {
             return Provide(provided);
         }
 
-        public bool IsStackCompatible(object obj) {
+        public bool IsStackCompatible(object obj) { // CWD
             if(obj == null) return false;
             if(typeof(TypeCheckContract) != obj.GetType()) return false;
             TypeCheckContract other = (TypeCheckContract) obj;
             if(other.Stack.Count != this.Stack.Count) return false;
-            for(int i = 0; i < this.Stack.Count; i++) if(this.Stack[i] != other.Stack[i]) return false;
+            for(int i = 0; i < this.Stack.Count; i++) if(!this.Stack[i].Equals(other.Stack[i])) return false;
             return true;
         }
         

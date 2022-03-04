@@ -184,7 +184,7 @@ namespace IonS {
                         if(dir) return new InvalidProcedureParametersError(name, Current);
                         else dir = true;
                     } else {
-                        if(Current.Type != WordType.Word || !EDataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+                        if(Current.Type != WordType.Word || !DataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
                         if(dir) Rets.Add(dataType);
                         else Args.Add(dataType);
                     }
@@ -450,8 +450,8 @@ namespace IonS {
                     while(Current.Text != ")" && Current.Type == WordType.Word && Current != null) {
                         if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidMultiCastError(castWord.Position);
 
-                        if(Utils.wildcardRegex.IsMatch(Current.Text)) dataTypes.Add(DataType.None);
-                        else if(!EDataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+                        if(Utils.wildcardRegex.IsMatch(Current.Text)) dataTypes.Add(DataType.I_NONE);
+                        else if(!DataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
                         else dataTypes.Add(dataType);
 
                         NextWord();
@@ -466,7 +466,7 @@ namespace IonS {
                 return null;
             } else if(Current.Text.StartsWith("cast(") && Current.Text.EndsWith(")")) {
                 string dataTypeStr = Current.Text.Substring(5, Current.Text.Length-6);
-                if(!EDataType.TryParse(dataTypeStr, out DataType dataType)) return new InvalidDataTypeError(new Word(new Position(Current.Position.File, Current.Position.Line, Current.Position.Column+5), dataTypeStr));
+                if(!DataType.TryParse(dataTypeStr, out DataType dataType)) return new InvalidDataTypeError(new Word(new Position(Current.Position.File, Current.Position.Line, Current.Position.Column+5), dataTypeStr));
                 operations.Add(new SingleCastOperation(dataType, Current.Position));
             } else if(Current.Text == "assert") {
                 Position assertPosition = Current.Position;
@@ -537,7 +537,7 @@ namespace IonS {
 
                 Struct structt = new Struct(nameWord);
                 while(Current != null && Current.Type == WordType.Word && Current.Text != "end") { // TODO: implement braces as block-marker for struct-definitions aswell
-                    if(!EDataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+                    if(!DataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
                     NextWord();
 
                     if(Current == null) return new IncompleteStructDefinitionError(structWord);
@@ -560,8 +560,8 @@ namespace IonS {
                 return null;
             } else if(Current.Text.StartsWith("sizeof(") && Current.Text.EndsWith(")")) {
                 string type = Current.Text.Substring(7, Current.Text.Length-8);
-                if(EDataType.TryParse(type, out DataType dataType)) {
-                    operations.Add(new Push_uint64_Operation((ulong) EDataType.GetByteSize(dataType), Current.Position));
+                if(DataType.TryParse(type, out DataType dataType)) {
+                    operations.Add(new Push_uint64_Operation((ulong) dataType.GetByteSize(), Current.Position));
                 } else if(_structs.ContainsKey(type)) {
                     operations.Add(new Push_uint64_Operation((ulong) _structs[type].GetByteSize(), Current.Position));
                 } else return new InvalidTypeError(Current);

@@ -42,7 +42,7 @@ namespace IonS {
 
         public int GetByteSize() {
             if(LastField == null) return 0;
-            return LastField.Offset + EDataType.GetByteSize(LastField.DataType);
+            return LastField.Offset + LastField.DataType.GetByteSize();
         }
 
     }

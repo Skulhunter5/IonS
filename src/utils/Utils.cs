@@ -88,7 +88,7 @@ namespace IonS {
 
             if(Utils.binaryRegex.IsMatch(word) || Utils.octalRegex.IsMatch(word) || Utils.decimalRegex.IsMatch(word) || Utils.hexadecimalRegex.IsMatch(word)) return false;
 
-            if(EDataType.TryParse(word, out DataType _)) return false;
+            if(DataType.TryParse(word, out DataType _)) return false;
 
             foreach(string keyword in Utils.keywords) if(keyword == word) return false;
 

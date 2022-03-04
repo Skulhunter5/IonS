@@ -45,7 +45,7 @@ namespace IonS {
         public bool IsInlined { get; }
 
         public override string ToString() {
-            return Name + (Args != null ? "(" + String.Join(" ", Args) + " -- " + String.Join(" ", Rets) + ")" : "");
+            return Name + (Args != null ? "(" + String.Join(" ", (object[]) Args) + " -- " + String.Join(" ", (object[]) Rets) + ")" : "");
         }
 
         public void Use() {
@@ -93,9 +93,9 @@ namespace IonS {
 
             if(contract.GetElementsLeft() != Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), this);
 
-            for(int i = 0; i < Rets.Length; i++) if(!EDataType.IsImplicitlyCastable(contract.Peek(Rets.Length-1-i), Rets[i])) { // TODO: check what I want to do here, this looks odd
+            for(int i = 0; i < Rets.Length; i++) if(!DataType.IsImplicitlyCastable(contract.Peek(Rets.Length-1-i), Rets[i])) { // TODO: check what I want to do here, this looks odd
                 Console.WriteLine(contract.Peek(Rets.Length-1-i) + " " + Rets[i]);
-                if(contract.Peek(Rets.Length-1-i) != Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + EDataType.StringOf(contract.Peek(Rets.Length-1-i)) + " to " + Rets[i] + " while returning from " + this); // Error-Warning-System
+                if(contract.Peek(Rets.Length-1-i) != Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + contract.Peek(Rets.Length-1-i) + " to " + Rets[i] + " while returning from " + this); // Error-Warning-System
                 return new InvalidReturnDataError(contract.Stack.ToArray(), this);
             }
 
@@ -104,15 +104,15 @@ namespace IonS {
 
         public string GetArgsSignature() {
             string sig = "";
-            for(int i = 0; i < Args.Length; i++) sig += EDataType.StringOf(Args[i]) + (i < Args.Length-1 ? "::" : "");
+            for(int i = 0; i < Args.Length; i++) sig += Args[i] + (i < Args.Length-1 ? "::" : "");
             return sig;
         }
 
         public string GetSignature() {
             string sig = "";
-            for(int i = 0; i < Args.Length; i++) sig += EDataType.StringOf(Args[i]) + (i < Args.Length-1 ? "::" : "");
+            for(int i = 0; i < Args.Length; i++) sig += Args[i] + (i < Args.Length-1 ? "::" : "");
             sig += "--";
-            for(int i = 0; i < Rets.Length; i++) sig += EDataType.StringOf(Rets[i]) + (i < Rets.Length-1 ? "::" : "");
+            for(int i = 0; i < Rets.Length; i++) sig += Rets[i] + (i < Rets.Length-1 ? "::" : "");
             return sig;
         }
 
