@@ -9,14 +9,23 @@ namespace IonS {
             Value = value;
         }
 
+        public DataType(int value, DataType kind) {
+            Value = value;
+            Kind = kind;
+        }
+
         public int Value { get; }
+        public DataType Kind { get; }
 
         public override string ToString() {
-            return stringDict[Value];
+            if(stringDict.ContainsKey(Value)) return stringDict[Value];
+            if(Value == POINTER) return "ptr<" + Kind + ">";
+            throw new NotImplementedException();
         }
 
         public bool Equals(DataType dataType) {
             if(Value != dataType.Value) return false;
+            if(!Kind.Equals(dataType.Kind)) return false;
             return true;
         }
 
@@ -43,13 +52,11 @@ namespace IonS {
             {"bool",    I_BOOLEAN},
             {"uint",    I_UINT64},
             {"uint64",  I_UINT64},
-            {"ptr",     I_POINTER},
         };
         public static readonly Dictionary<int, string> stringDict = new Dictionary<int, string>() {
             {DataType.NONE,     "none"},
             {DataType.BOOLEAN,  "bool"},
             {DataType.UINT64,   "uint64"},
-            {DataType.POINTER,  "ptr"},
         };
         public static readonly Dictionary<int, int> bytesizeDict = new Dictionary<int, int>() {
             {DataType.BOOLEAN,  1},
@@ -70,10 +77,19 @@ namespace IonS {
             if(parseDict.ContainsKey(str)) {
                 dataType = parseDict[str];
                 return true;
-            } else {
-                dataType = I_NONE;
-                return false;
+            } else if(str == "ptr") {
+                    dataType = I_POINTER;
+                    return true;
+            } else if(str.StartsWith("ptr<") && str.EndsWith('>')) {
+                if(!DataType.TryParse(str.Substring(4, str.Length-5), out DataType kind)) {
+                    dataType = I_NONE;
+                    return false;
+                }
+                dataType = new DataType(DataType.POINTER, kind);
+                return true;
             }
+            dataType = I_NONE;
+            return false;
         }
 
     }
