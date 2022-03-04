@@ -124,10 +124,7 @@ namespace IonS {
             return Provide(provided);
         }
 
-        public bool IsStackCompatible(object obj) { // CWD
-            if(obj == null) return false;
-            if(typeof(TypeCheckContract) != obj.GetType()) return false;
-            TypeCheckContract other = (TypeCheckContract) obj;
+        public bool IsStackCompatible(TypeCheckContract other) {
             if(other.Stack.Count != this.Stack.Count) return false;
             for(int i = 0; i < this.Stack.Count; i++) if(!this.Stack[i].Equals(other.Stack[i])) return false;
             return true;
