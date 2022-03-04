@@ -61,7 +61,7 @@ namespace IonS {
         public static readonly Regex symbolRegex = new Regex("^[a-zA-Z_][0-9a-zA-Z_]*$", RegexOptions.Compiled);
 
         public static readonly Regex wildcardRegex = new Regex("^_+$", RegexOptions.Compiled);
-
+        
         public static readonly Regex readBytesRegex = new Regex("^@[0-9]+$", RegexOptions.Compiled);
         public static readonly Regex writeBytesRegex = new Regex("^![0-9]+$", RegexOptions.Compiled);
         public static readonly Regex cttRegex = new Regex("^ctt[0-9]+$", RegexOptions.Compiled);
