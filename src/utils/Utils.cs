@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace IonS {
 
@@ -26,7 +27,7 @@ namespace IonS {
 
     class Utils {
         
-        public static readonly string[] keywords = new string[] {
+        public static readonly HashSet<string> keywords = new HashSet<string> {
             "exit",
             "drop", "2drop",
             "dup", "2dup",
