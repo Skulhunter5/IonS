@@ -1169,7 +1169,12 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.RequireAndProvide(DataType.I_POINTER, DataType.I_UINT64, this);
+            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
+
+            DataType dataType = contract.Pop();
+            if(dataType.Value != DataType.POINTER) return new UnexpectedDataTypeError(dataType, DataType.I_POINTER, this);
+
+            return contract.Provide(dataType.Kind != null ? dataType.Kind : DataType.I_UINT64);
         }
     }
 
@@ -1194,9 +1199,13 @@ namespace IonS {
             throw new NotImplementedException();
         }
 
-        private static readonly DataType[] required = new DataType[] {DataType.I_UINT64, DataType.I_POINTER};
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Require(required, this);
+            if(contract.GetElementsLeft() < 2) return new StackUnderflowError(this);
+
+            DataType dataType = contract.Pop();
+            if(dataType.Value != DataType.POINTER) return new UnexpectedDataTypeError(dataType, DataType.I_POINTER, this);
+
+            return contract.Require(dataType.Kind != null ? dataType.Kind : DataType.I_UINT64, this);
         }
     }
 

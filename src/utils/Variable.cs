@@ -63,7 +63,7 @@ namespace IonS {
         }
 
         public override DataType GetProvideDataType() {
-            return DataTypeT;
+            return new DataType(DataType.POINTER, DataTypeT);
         }
 
     }

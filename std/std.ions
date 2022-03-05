@@ -87,6 +87,9 @@ inline proc ptr+ ( ptr uint64 -- ptr ) {
 inline proc ptr+ ( ptr ptr -- ptr ) {
     cast ( uint64 uint64 ) + cast(ptr)
 }
+inline proc ptr+ ( uint64 ptr -- ptr ) {
+    cast ( uint64 uint64 ) + cast(ptr)
+}
 
 proc !Str ( uint64 ptr ptr ) {
     rot over !64
