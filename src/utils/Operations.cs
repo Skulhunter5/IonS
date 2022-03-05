@@ -1127,21 +1127,21 @@ namespace IonS {
     // Variable access operation
     
     sealed class VariableAccessOperation : Operation { // -- ptr
-        public VariableAccessOperation(int id, Position position) : base(OperationType.VariableAccess, position) {
-            Id = id;
+        public VariableAccessOperation(Variable variable, Position position) : base(OperationType.VariableAccess, position) {
+            Variable_ = variable;
         }
 
-        public int Id { get; }
+        public Variable Variable_ { get; }
         
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                return "    push var_" + Id + "\n";
+                return "    push var_" + Variable_.Id + "\n";
             }
             throw new NotImplementedException();
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            return contract.Provide(DataType.I_POINTER);
+            return contract.Provide(Variable_.GetProvideDataType());
         }
     }
 

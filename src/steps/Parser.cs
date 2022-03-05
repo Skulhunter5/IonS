@@ -395,10 +395,17 @@ namespace IonS {
                 NextWord();
                 if(Current.Text == null) return new IncompleteVariableDeclarationError(varWord, identifier);
 
-                if(int.TryParse(Current.Text, out int bytesize)) { // TODO: add support for endings like K or KB or something similar
-                    Error error = RegisterVariable(scope, new Variable(identifier, bytesize));
+                if(Utils.decimalRegex.IsMatch(Current.Text)) { // TODO: add support for bin, oct and hex
+                    // TODO: add support for endings like K or KB or something similar
+                    Error error = RegisterVariable(scope, new DirectVariable(identifier, Convert.ToInt32(Current.Text.Replace("_", ""), 10)));
                     if(error != null) return error;
-                } else new InvalidVariableBytesizeError(Current);
+                } else if(_structs.ContainsKey(Current.Text)) {
+                    Error error = RegisterVariable(scope, new StructVariable(identifier, _structs[Current.Text]));
+                    if(error != null) return error;
+                } else if(DataType.TryParse(Current.Text, out DataType dataType)) {
+                    Error error = RegisterVariable(scope, new DataTypeVariable(identifier, dataType));
+                    if(error != null) return error;
+                } else new InvalidVariableByteSizeError(Current);
             } else if(Utils.writeBytesRegex.IsMatch(Current.Text)) {
                 string amountStr = Current.Text.Substring(1);
                 bool isByte = byte.TryParse(amountStr, out byte amount);
@@ -577,7 +584,7 @@ namespace IonS {
                     Variable var = scope.GetVariable(Current.Text);
                     if(var != null) {
                         if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, scope.GetBindingOffset((Binding) var), Current.Position));
-                        else operations.Add(new VariableAccessOperation(var.Id, Current.Position));
+                        else operations.Add(new VariableAccessOperation(var, Current.Position));
                     } else if(ProcedureExists(Current.Text)) operations.Add(new ProcedureCallOperation(Current, currentProcedure, Current.Position));
                     else {
                         if(Current.Text.StartsWith("@") || Current.Text.StartsWith("!")) { // CWDTODO: complete this step and add safeguards

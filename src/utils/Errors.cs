@@ -536,15 +536,15 @@ namespace IonS {
         }
     }
 
-    sealed class InvalidVariableBytesizeError : ParserError {
-        public InvalidVariableBytesizeError(Word bytesize) {
-            Bytesize = bytesize;
+    sealed class InvalidVariableByteSizeError : ParserError {
+        public InvalidVariableByteSizeError(Word byteSize) {
+            ByteSize = byteSize;
         }
         
-        public Word Bytesize { get; }
+        public Word ByteSize { get; }
         
         public override string ToString() {
-            return base.ToString() + "Invalid bytesize for variable: " + Bytesize;
+            return base.ToString() + "Invalid bytesize for variable: " + ByteSize;
         }
     }
 

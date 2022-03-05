@@ -19,7 +19,10 @@ namespace IonS {
 
         public override string ToString() {
             if(stringDict.ContainsKey(Value)) return stringDict[Value];
-            if(Value == POINTER) return "ptr<" + Kind + ">";
+            if(Value == POINTER) {
+                if(Kind == null) return "ptr";
+                return "ptr<" + Kind + ">";
+            }
             throw new NotImplementedException();
         }
 
