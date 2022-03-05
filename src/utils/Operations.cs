@@ -1158,11 +1158,11 @@ namespace IonS {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
                 //    mov rax, [rsp]
                 string asm = "    mov rax, [rsp]\n";
-                if(Amount < 64) asm += "    xor rbx, rbx\n";
+                if(Amount < 64 && Amount != 0) asm += "    xor rbx, rbx\n";
                 if(Amount == 8) asm += "    mov bl, [rax]\n";
                 else if(Amount == 16) asm += "    mov bx, [rax]\n";
                 else if(Amount == 32) asm += "    mov ebx, [rax]\n";
-                else if(Amount == 64) asm += "    mov rbx, [rax]\n";
+                else if(Amount == 64 || Amount == 0) asm += "    mov rbx, [rax]\n";
                 return asm + "    mov [rsp], rbx\n";
             }
             throw new NotImplementedException();
@@ -1174,7 +1174,14 @@ namespace IonS {
             DataType dataType = contract.Pop();
             if(dataType.Value != DataType.POINTER) return new UnexpectedDataTypeError(dataType, DataType.I_POINTER, this);
 
-            return contract.Provide(dataType.Kind != null ? dataType.Kind : DataType.I_UINT64);
+            if(Amount == 0) {
+                if(dataType.Kind == null) {
+                    Console.Error.WriteLine("[] ERROR: @ requires a typed pointer"); // TODO: move into error class
+                    Environment.Exit(1);
+                }
+            }
+
+            return contract.Provide(Amount == 0 ? dataType.Kind : DataType.I_UINT64);
         }
     }
 
@@ -1193,7 +1200,7 @@ namespace IonS {
                 if(Amount == 8) asm += "    mov [rax], bl\n";
                 else if(Amount == 16) asm += "    mov [rax], bx\n";
                 else if(Amount == 32) asm += "    mov [rax], ebx\n";
-                else if(Amount == 64) asm += "    mov [rax], rbx\n";
+                else if(Amount == 64 || Amount == 0) asm += "    mov [rax], rbx\n";
                 return asm;
             }
             throw new NotImplementedException();
@@ -1205,7 +1212,14 @@ namespace IonS {
             DataType dataType = contract.Pop();
             if(dataType.Value != DataType.POINTER) return new UnexpectedDataTypeError(dataType, DataType.I_POINTER, this);
 
-            return contract.Require(dataType.Kind != null ? dataType.Kind : DataType.I_UINT64, this);
+            if(Amount == 0) {
+                if(dataType.Kind == null) {
+                    Console.Error.WriteLine("[] ERROR: ! requires a typed pointer"); // TODO: move into error class
+                    Environment.Exit(1);
+                }
+            }
+
+            return contract.Require(Amount == 0 ? dataType.Kind : DataType.I_UINT64, this);
         }
     }
 

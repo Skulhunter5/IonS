@@ -54,6 +54,7 @@ namespace IonS {
             "argc", "argv",
             "let", "peek",
             "struct",
+            "@", "!",
             "@[]", "![]",
         };
 
