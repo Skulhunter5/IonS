@@ -1145,7 +1145,7 @@ namespace IonS {
         }
     }
 
-    // Mem read/write operations
+    // Mem read/write operations // TODO: determine the operation size based on the given typed pointer
 
     sealed class MemReadOperation : Operation { // ptr -- *ptr
         public MemReadOperation(byte amount, Position position) : base(OperationType.MemRead, position) {
