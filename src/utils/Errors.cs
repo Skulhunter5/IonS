@@ -7,31 +7,31 @@ namespace IonS {
 
     abstract class GeneralError : Error {
         public override string ToString() {
-            return "[General]: ";
+            return "[General] ERROR: ";
         }
     }
 
     abstract class LexerError : Error {
         public override string ToString() {
-            return "[Lexer]: ";
+            return "[Lexer] ERROR: ";
         }
     }
 
     abstract class PreprocessorError : Error {
         public override string ToString() {
-            return "[Preprocessor]: ";
+            return "[Preprocessor] ERROR: ";
         }
     }
 
     abstract class ParserError : Error {
         public override string ToString() {
-            return "[Parser]: ";
+            return "[Parser] ERROR: ";
         }
     }
 
     abstract class TypeCheckerError : Error {
         public override string ToString() {
-            return "[TypeChecker]: ";
+            return "[TypeChecker] ERROR: ";
         }
     }
 
@@ -408,10 +408,10 @@ namespace IonS {
         }
     }
 
-    // - Incomplete multicast error
+    // - MultiCast errors
 
-    sealed class IncompleteMultiCastOperation : ParserError {
-        public IncompleteMultiCastOperation(Position position) {
+    sealed class IncompleteMultiCastError : ParserError {
+        public IncompleteMultiCastError(Position position) {
             Position = position;
         }
         

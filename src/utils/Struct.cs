@@ -3,8 +3,7 @@ using System.Collections.Generic;
 namespace IonS {
 
     class StructField {
-
-        public StructField(Word identifier, DataType dataType, int offset) {
+        public StructField(Word identifier, DataType dataType, uint offset) {
             Identifier = identifier;
             DataType = dataType;
             Offset = offset;
@@ -12,7 +11,7 @@ namespace IonS {
 
         public Word Identifier { get; }
         public DataType DataType { get; }
-        public int Offset { get; }
+        public uint Offset { get; }
 
     }
 
@@ -40,7 +39,7 @@ namespace IonS {
             return Fields.ContainsKey(identifier);
         }
 
-        public int GetByteSize() {
+        public uint GetByteSize() {
             if(LastField == null) return 0;
             return LastField.Offset + LastField.DataType.GetByteSize();
         }

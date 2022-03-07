@@ -5,16 +5,16 @@ namespace IonS {
 
     class DataType {
 
-        public DataType(int value) {
+        public DataType(uint value) {
             Value = value;
         }
 
-        public DataType(int value, DataType kind) {
+        public DataType(uint value, DataType kind) {
             Value = value;
             Kind = kind;
         }
 
-        public int Value { get; }
+        public uint Value { get; }
         public DataType Kind { get; }
 
         public override string ToString() {
@@ -33,13 +33,13 @@ namespace IonS {
             return true;
         }
 
-        public bool IsType(int type) {
+        public bool IsType(uint type) {
             return Value == type;
         }
 
-        public int GetByteSize() {
+        public uint GetByteSize() {
             if(IsType(DataType.NONE)) throw new NotImplementedException();
-            return bytesizeDict[Value];
+            return byteSizeDict[Value];
         }
 
         public bool IsTypedPointer() {
@@ -48,10 +48,10 @@ namespace IonS {
 
         // STATIC
 
-        public static readonly int NONE     = 0x00;
-        public static readonly int BOOLEAN  = 0x01;
-        public static readonly int UINT64   = 0x10;
-        public static readonly int POINTER  = 0x11;
+        public static readonly uint NONE     = 0x00;
+        public static readonly uint BOOLEAN  = 0x01;
+        public static readonly uint UINT64   = 0x10;
+        public static readonly uint POINTER  = 0x11;
 
         public static readonly DataType I_NONE      = new DataType(DataType.NONE);
         public static readonly DataType I_BOOLEAN   = new DataType(DataType.BOOLEAN);
@@ -63,12 +63,12 @@ namespace IonS {
             {"uint",    I_UINT64},
             {"uint64",  I_UINT64},
         };
-        public static readonly Dictionary<int, string> stringDict = new Dictionary<int, string>() {
+        public static readonly Dictionary<uint, string> stringDict = new Dictionary<uint, string>() {
             {DataType.NONE,     "none"},
             {DataType.BOOLEAN,  "bool"},
             {DataType.UINT64,   "uint64"},
         };
-        public static readonly Dictionary<int, int> bytesizeDict = new Dictionary<int, int>() {
+        public static readonly Dictionary<uint, uint> byteSizeDict = new Dictionary<uint, uint>() {
             {DataType.BOOLEAN,  1},
             {DataType.UINT64,   8},
             {DataType.POINTER,  8},

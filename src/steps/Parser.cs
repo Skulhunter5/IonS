@@ -4,30 +4,25 @@ using System.Collections.Generic;
 
 namespace IonS {
 
-    class ParseResult : Result {
-        public ParseResult(CodeBlock root, List<string> strings, List<Variable> variables, Dictionary<string, Dictionary<string, Procedure>> procedures, Error error) : base(error) {
+    class ParseResult {
+        public ParseResult(CodeBlock root, List<string> strings, List<Variable> variables, Dictionary<string, Dictionary<string, Procedure>> procedures) {
             Root = root;
             Strings = strings;
             Variables = variables;
             Procedures = procedures;
         }
+
         public CodeBlock Root { get; }
         public List<string> Strings { get; }
         public List<Variable> Variables { get; }
         public Dictionary<string, Dictionary<string, Procedure>> Procedures { get; }
-    }
 
-    class ParseCodeBlockResult : Result {
-        public ParseCodeBlockResult(CodeBlock block, Error error) : base(error) {
-            Block = block;
-        }
-        public CodeBlock Block { get; }
     }
 
     class Parser {
 
         private readonly string _text, _source;
-        private Word[] _words;
+        private List<Word> _words;
         private int _position;
 
         private Dictionary<string, Dictionary<string, Procedure>> _procs;
@@ -53,13 +48,13 @@ namespace IonS {
 
         private Word Peek(int offset) {
             var index = _position + offset;
-            if(index >= _words.Length) return null;
+            if(index >= _words.Count) return null;
             return _words[index];
         }
 
         private Word Current {
             get {
-                if(_position >= _words.Length) return null;
+                if(_position >= _words.Count) return null;
                 return _words[_position];
             }
         }
@@ -124,17 +119,17 @@ namespace IonS {
             return Current.Text == "}" && Current.Type == WordType.Word;
         }
 
-        private ParseCodeBlockResult ParseCodeBlock(Scope parentScope, Scope newScope, BreakableBlock breakableBlock, Procedure currentProcedure) {
+        private CodeBlock ParseCodeBlock(Scope parentScope, Scope newScope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             bool root = parentScope == null;
             CodeBlock block = new CodeBlock(newScope, Current != null ? Current.Position : null); // TODO: check if last null can be replaced with 'new Position(_source, 1, 1)'
             if(Current == null) {
-                if(root) return new ParseCodeBlockResult(block, null);
-                return new ParseCodeBlockResult(null, new MissingCodeBlockError());
+                if(root) return block;
+                ErrorSystem.AddError_i(new MissingCodeBlockError());
             }
 
             if(Current.Type == WordType.Word && Current.Text == ";") {
                 NextWord();
-                return new ParseCodeBlockResult(block, null);
+                return block;
             }
 
             block.Start = Current.Position;
@@ -143,21 +138,19 @@ namespace IonS {
                 if(IsBraceOpen() && !root) NextWord();
                 while(Current != null && (!IsBraceClose() || root)) {
                     if(IsBraceClose()) break;
-                    var error = ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
-                    if(error != null) return new ParseCodeBlockResult(null, error);
+                    ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
                 }
                 if(!root) {
-                    if(Current == null) return new ParseCodeBlockResult(null, new EOFInCodeBlockError(openBracePosition));
-                    if(!IsBraceClose()) return new ParseCodeBlockResult(null, new EOFInCodeBlockError(openBracePosition));
+                    if(Current == null) ErrorSystem.AddError_i(new EOFInCodeBlockError(openBracePosition));
+                    if(!IsBraceClose()) ErrorSystem.AddError_i(new EOFInCodeBlockError(openBracePosition));
                     block.End = Current.Position;
                     NextWord();
                 }
             } else {
                 block.End = Current.Position;
-                var error = ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
-                if(error != null) return new ParseCodeBlockResult(null, error);
+                ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
             }
-            return new ParseCodeBlockResult(block, null);
+            return block;
         }
 
         private Error ParseProcedure(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure, bool isInlined) {
@@ -201,19 +194,17 @@ namespace IonS {
 
             if(Current == null) return new IncompleteProcedureError(procWord, name);
 
-            ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, proc), null, proc);
-            if(result.Error != null) return result.Error;
-            proc.Body = result.Block;
+            proc.Body = ParseCodeBlock(scope, new Scope(scope, proc), null, proc);
 
             return null;
         }
 
-        private Error ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
+        private void ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             if(Current.Type == WordType.String) {
                 StringWord stringWord = (StringWord) Current;
                 if(stringWord.StringType == "") operations.Add(RegisterString(Current.Text));
                 else if(stringWord.StringType == "c") operations.Add(RegisterCStyleString(Current.Text));
-                else return new InternalParserError("Forgot to add a new StringType in Parser.ParseOperation");
+                else ErrorSystem.InternalError("Forgot to add a new StringType in Parser.ParseOperation");
             } else if(Current.Type == WordType.Char) operations.Add(new Push_uint64_Operation(Encoding.ASCII.GetBytes(""+Current.Text)[0], Current.Position));
             else if(Current.Text == "exit") operations.Add(new ExitOperation(Current.Position));
             else if(Current.Text == "drop") operations.Add(new DropOperation(1, Current.Position));
@@ -264,166 +255,137 @@ namespace IonS {
             else if(Current.Text == "@[]") operations.Add(new ArrayReadOperation(Current.Position));
             else if(Current.Text == "![]") operations.Add(new ArrayWriteOperation(Current.Position));
             else if(Utils.cttRegex.IsMatch(Current.Text)) {
-                if(!int.TryParse(Current.Text.Substring(3, Current.Text.Length - 3), out int n) || n < 1) return new InvalidCTTIndexError(Current);
-                operations.Add(new CTTOperation(n, Current.Position));
+                if(!int.TryParse(Current.Text.Substring(3, Current.Text.Length - 3), out int n) || n < 1) ErrorSystem.AddError_s(new InvalidCTTIndexError(Current));
+                else operations.Add(new CTTOperation(n, Current.Position));
             } else if(Current.Text == "if") {
                 Position position = Current.Position;
                 NextWord();
 
-                ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                if(result.Error != null) return result.Error;
-
-                IfBlock ifBlock = new IfBlock(result.Block, null, position);
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                IfBlock ifBlock = new IfBlock(block, null, position);
 
                 while(Current != null && Current.Type == WordType.Word && Current.Text == "else*") {
                     NextWord();
 
-                    result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                    if(result.Error != null) return result.Error;
-                    ifBlock.Conditions.Add(result.Block);
+                    block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                    ifBlock.Conditions.Add(block);
 
-                    if(Current.Text != "if") return new MissingIfError(Current.Position);
+                    if(Current.Text != "if") ErrorSystem.AddError_i(new MissingIfError(Current.Position));
                     NextWord();
 
-                    result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                    if(result.Error != null) return result.Error;
-                    ifBlock.Conditionals.Add(result.Block);
+                    block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                    ifBlock.Conditionals.Add(block);
                 }
 
                 if(Current != null && Current.Type == WordType.Word && Current.Text == "else") {
                     NextWord();
 
-                    result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                    if(result.Error != null) return result.Error;
-                    ifBlock.BlockElse = result.Block;
+                    block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                    ifBlock.BlockElse = block;
                 }
 
                 operations.Add(ifBlock);
-
-                return null;
+                return;
             } else if(Current.Text == "while") {
                 Position position = Current.Position;
                 NextWord();
 
                 WhileBlock whileBlock = new WhileBlock(null, null, position);
 
-                ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                if(result.Error != null) return result.Error;
-                whileBlock.Condition = result.Block;
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                whileBlock.Condition = block;
 
-                if(Current.Type == WordType.Word && Current.Text != "do") return new MissingDoError(Current.Position);
+                if(Current.Type == WordType.Word && Current.Text != "do") ErrorSystem.AddError_i(new MissingDoError(Current.Position));
                 NextWord();
 
-                result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), whileBlock, currentProcedure);
-                if(result.Error != null) return result.Error;
-                whileBlock.Block = result.Block;
+                block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), whileBlock, currentProcedure);
+                whileBlock.Block = block;
 
                 operations.Add(whileBlock);
-
-                return null;
+                return;
             } else if(Current.Text == "do") {
                 Position position = Current.Position;
                 NextWord();
 
                 DoWhileBlock doWhileBlock = new DoWhileBlock(null, null, position);
 
-                ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), doWhileBlock, currentProcedure);
-                if(result.Error != null) return result.Error;
-                doWhileBlock.Block = result.Block;
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), doWhileBlock, currentProcedure);
+                doWhileBlock.Block = block;
 
-                if(Current.Type == WordType.Word && Current.Text != "while") return new MissingWhileError(Current.Position);
+                if(Current.Type == WordType.Word && Current.Text != "while") ErrorSystem.AddError_i(new MissingWhileError(Current.Position));
                 NextWord();
 
-                result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                if(result.Error != null) return result.Error;
-                doWhileBlock.Condition = result.Block;
+                block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                doWhileBlock.Condition = block;
 
                 operations.Add(doWhileBlock);
-
-                return null;
+                return;
             } else if(Current.Text == "switch") {
                 Position position = Current.Position;
                 NextWord();
 
                 SwitchBlock switchBlock = new SwitchBlock(position);
 
-                if(Current.Type != WordType.Word || Current.Text != "{") return new MissingOpeningBraceError(switchBlock, Current.Position);
+                if(Current.Type != WordType.Word || Current.Text != "{") ErrorSystem.AddError_i(new MissingOpeningBraceError(switchBlock, Current.Position));
                 NextWord();
 
                 while(Current.Type == WordType.Word && Current.Text == "case") {
                     NextWord();
 
-                    var result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                    if(result.Error != null) return result.Error;
-                    switchBlock.Cases.Add(result.Block);
+                    CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                    switchBlock.Cases.Add(block);
 
-                    result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), switchBlock, currentProcedure);
-                    if(result.Error != null) return result.Error;
-                    switchBlock.Blocks.Add(result.Block);
+                    block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), switchBlock, currentProcedure);
+                    switchBlock.Blocks.Add(block);
                 }
 
                 if(Current.Type == WordType.Word && Current.Text == "default") {
                     NextWord();
-
-                    var result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), switchBlock, currentProcedure);
-                    if(result.Error != null) return result.Error;
-                    switchBlock.DefaultBlock = result.Block;
+                    switchBlock.DefaultBlock = ParseCodeBlock(scope, new Scope(scope, currentProcedure), switchBlock, currentProcedure);
                 }
 
-                if(Current.Type != WordType.Word || Current.Text != "}") return new MissingClosingBraceError(switchBlock, Current.Position);
+                if(Current.Type != WordType.Word || Current.Text != "}") ErrorSystem.AddError_i(new MissingClosingBraceError(switchBlock, Current.Position));
                 NextWord();
 
                 operations.Add(switchBlock);
-
-                return null;
+                return;
             } else if(Current.Text == "continue") {
-                if(breakableBlock == null) return new InvalidContinueError(Current.Position);
-                if(breakableBlock.BlockType == BlockType.Switch) return new InvalidContinueError(Current.Position); // TODO: add custom error for this case
-
-                operations.Add(new ContinueOperation(breakableBlock, Current.Position));
+                if(breakableBlock == null || breakableBlock.BlockType == BlockType.Switch) ErrorSystem.AddError_s(new InvalidContinueError(Current.Position));
+                else operations.Add(new ContinueOperation(breakableBlock, Current.Position));
             } else if(Current.Text == "break") {
-                if(breakableBlock == null) return new InvalidBreakError(Current.Position);
-
-                operations.Add(new BreakOperation(breakableBlock, Current.Position));
+                if(breakableBlock == null) ErrorSystem.AddError_s(new InvalidBreakError(Current.Position));
+                else operations.Add(new BreakOperation(breakableBlock, Current.Position));
             } else if(Current.Text == "var") {
                 Word varWord = Current;
                 NextWord();
-                if(Current == null) return new IncompleteVariableDeclarationError(varWord, null);
+                if(Current == null) ErrorSystem.AddError_i(new IncompleteVariableDeclarationError(varWord, null));
 
                 Word identifier = Current;
-                // TODO: Check that the identifier is valid for nasm aswell
-                if(!Utils.IsValidIdentifier(identifier.Text)) return new InvalidVariableIdentifierError(identifier);
+                if(!Utils.IsValidIdentifier(identifier)) ErrorSystem.AddError_i(new InvalidVariableIdentifierError(identifier));
                 
                 NextWord();
-                if(Current.Text == null) return new IncompleteVariableDeclarationError(varWord, identifier);
+                if(Current.Text == null) ErrorSystem.AddError_i(new IncompleteVariableDeclarationError(varWord, identifier));
 
-                if(Utils.decimalRegex.IsMatch(Current.Text)) { // TODO: add support for bin, oct and hex
-                    // TODO: add support for endings like K or KB or something similar
-                    Error error = RegisterVariable(scope, new DirectVariable(identifier, Convert.ToInt32(Current.Text.Replace("_", ""), 10)));
-                    if(error != null) return error;
-                } else if(_structs.ContainsKey(Current.Text)) {
-                    Error error = RegisterVariable(scope, new StructVariable(identifier, _structs[Current.Text]));
-                    if(error != null) return error;
-                } else if(DataType.TryParse(Current.Text, out DataType dataType)) {
-                    Error error = RegisterVariable(scope, new DataTypeVariable(identifier, dataType));
-                    if(error != null) return error;
-                } else new InvalidVariableByteSizeError(Current);
+                // TODO: add support for endings like K or KB or something similar
+                if(Utils.binaryRegex.IsMatch(Current.Text))                         RegisterVariable(scope, new DirectVariable(identifier, Convert.ToUInt32(Current.Text.Replace("_", ""), 2)));
+                else if(Utils.octalRegex.IsMatch(Current.Text))                     RegisterVariable(scope, new DirectVariable(identifier, Convert.ToUInt32(Current.Text.Replace("_", ""), 8)));
+                else if(Utils.decimalRegex.IsMatch(Current.Text))                   RegisterVariable(scope, new DirectVariable(identifier, Convert.ToUInt32(Current.Text.Replace("_", ""), 10)));
+                else if(Utils.hexadecimalRegex.IsMatch(Current.Text))               RegisterVariable(scope, new DirectVariable(identifier, Convert.ToUInt32(Current.Text.Replace("_", ""), 16)));
+                else if(_structs.ContainsKey(Current.Text))                         RegisterVariable(scope, new StructVariable(identifier, _structs[Current.Text]));
+                else if(DataType.TryParse(Current.Text, out DataType dataType))     RegisterVariable(scope, new DataTypeVariable(identifier, dataType));
+                else ErrorSystem.AddError_s(new InvalidVariableByteSizeError(Current));
             } else if(Utils.writeBytesRegex.IsMatch(Current.Text)) {
                 string amountStr = Current.Text.Substring(1);
                 bool isByte = byte.TryParse(amountStr, out byte amount);
-                if(!isByte) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
-
-                if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
-
-                operations.Add(new MemWriteOperation(amount, Current.Position));
+                
+                if(!isByte || (amount != 8 && amount != 16 && amount != 32 && amount != 64)) ErrorSystem.AddError_s(new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                else operations.Add(new MemWriteOperation(amount, Current.Position));
             } else if(Utils.readBytesRegex.IsMatch(Current.Text)) {
                 string amountStr = Current.Text.Substring(1);
                 bool isByte = byte.TryParse(amountStr, out byte amount);
-                if(!isByte) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
 
-                if(!(amount == 8 || amount == 16 || amount == 32 || amount == 64)) return new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1));
-
-                operations.Add(new MemReadOperation(amount, Current.Position));
+                if(!isByte || (amount != 8 && amount != 16 && amount != 32 && amount != 64)) ErrorSystem.AddError_s(new InvalidMemReadWriteAmountError(amountStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 1)));
+                else operations.Add(new MemReadOperation(amount, Current.Position));
             } else if(Current.Text == "here") {
                 string text = Current.Position.ToString();
                 operations.Add(new StringOperation(_strings.Count, text.Length, Current.Position));
@@ -433,149 +395,139 @@ namespace IonS {
                 _strings.Add(Current.Position + "\0");
             } else if(Utils.syscallRegex.IsMatch(Current.Text)) {
                 string argcStr = Current.Text.Substring(7, Current.Text.Length - 7);
-                if(!int.TryParse(argcStr, out int argc)) return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
-                if(argc > 6 || argc < 0) return new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7));
+                if(!int.TryParse(argcStr, out int argc) || argc > 6 || argc < 0) ErrorSystem.AddError_s(new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7)));
                 operations.Add(new SyscallOperation(argc, Current.Position));
             } else if(IsBraceOpen()) {
-                var result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                if(result.Error != null) return result.Error;
-                operations.Add(result.Block);
-                return null;
-            } else if(Current.Text == "proc") return ParseProcedure(operations, scope, breakableBlock, currentProcedure, false);
-            else if(Current.Text == "inline") {
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                operations.Add(block);
+                return;
+            } else if(Current.Text == "proc") {
+                ParseProcedure(operations, scope, breakableBlock, currentProcedure, false);
+                return;
+            } else if(Current.Text == "inline") {
                 NextWord();
-                if(Current.Text != "proc") return new MissingProcAfterInlineError(Current);
-                return ParseProcedure(operations, scope, breakableBlock, currentProcedure, true);
+                if(Current.Text != "proc") ErrorSystem.AddError_i(new MissingProcAfterInlineError(Current));
+                ParseProcedure(operations, scope, breakableBlock, currentProcedure, true);
+                return;
             } else if(Current.Text == "return") {
-                if(currentProcedure == null) return new ReturnOutsideProcedureError(Current.Position);
+                if(currentProcedure == null) ErrorSystem.AddError_s(new ReturnOutsideProcedureError(Current.Position));
                 operations.Add(new ReturnOperation(currentProcedure, scope, Current.Position));
             } else if(Current.Text == "cast") {
                 Word castWord = Current;
                 NextWord();
 
-                if(Current == null) return new IncompleteBindingError(castWord);
-                if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidMultiCastError(castWord.Position);
+                if(Current == null) ErrorSystem.AddError_i(new IncompleteMultiCastError(castWord.Position));
+                if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidMultiCastError(castWord.Position));
                 List<DataType> dataTypes = new List<DataType>();
                 if(Current.Text == "(") {
                     NextWord();
                     while(Current.Text != ")" && Current.Type == WordType.Word && Current != null) {
-                        if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidMultiCastError(castWord.Position);
+                        if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidMultiCastError(castWord.Position));
 
                         if(Utils.wildcardRegex.IsMatch(Current.Text)) dataTypes.Add(DataType.I_NONE);
-                        else if(!DataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+                        else if(!DataType.TryParse(Current.Text, out DataType dataType)) ErrorSystem.AddError_s(new InvalidDataTypeError(Current));
                         else dataTypes.Add(dataType);
 
                         NextWord();
                     }
-                    if(Current == null) return new EOFInBindingListError(castWord);
-                    if(Current.Text != ")" || Current.Type != WordType.Word) return new InvalidMultiCastError(castWord.Position);
+                    if(Current == null) ErrorSystem.AddError_i(new IncompleteMultiCastError(castWord.Position));
+                    if(Current.Text != ")" || Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidMultiCastError(castWord.Position));
                     NextWord();
-                } else return new IncompleteMultiCastOperation(castWord.Position);
+                } else {
+                    ErrorSystem.AddError_i(new IncompleteMultiCastError(castWord.Position));
+                    return;
+                }
 
                 operations.Add(new MultiCastOperation(dataTypes.ToArray(), castWord.Position));
-
-                return null;
+                return;
             } else if(Current.Text.StartsWith("cast(") && Current.Text.EndsWith(")")) {
                 string dataTypeStr = Current.Text.Substring(5, Current.Text.Length-6);
-                if(!DataType.TryParse(dataTypeStr, out DataType dataType)) return new InvalidDataTypeError(new Word(new Position(Current.Position.File, Current.Position.Line, Current.Position.Column+5), dataTypeStr));
-                operations.Add(new SingleCastOperation(dataType, Current.Position));
+                if(!DataType.TryParse(dataTypeStr, out DataType dataType)) ErrorSystem.AddError_i(new InvalidDataTypeError(new Word(new Position(Current.Position.File, Current.Position.Line, Current.Position.Column+5), dataTypeStr)));
+                else operations.Add(new SingleCastOperation(dataType, Current.Position));
             } else if(Current.Text == "assert") {
                 Position assertPosition = Current.Position;
 
                 NextWord();
-                if(Current == null) return new IncompleteAssertError(assertPosition);
-                ParseCodeBlockResult result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                if(result.Error != null) return result.Error;
-                CodeBlock condition = result.Block;
+                if(Current == null) ErrorSystem.AddError_i(new IncompleteAssertError(assertPosition));
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                CodeBlock condition = block;
 
-                if(Current == null) return new IncompleteAssertError(assertPosition);
-                result = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
-                if(result.Error != null) return result.Error;
-                CodeBlock response = result.Block;
+                if(Current == null) ErrorSystem.AddError_i(new IncompleteAssertError(assertPosition));
+                block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                CodeBlock response = block;
                 
                 string text = assertPosition.ToString() + ": Error: Static assertion failed: ";
                 operations.Add(new AssertOperation(condition, response, text.Length, _strings.Count, assertPosition));
                 _strings.Add(text);
 
-                return null;
+                return;
             } else if(Current.Text == "iota" || Current.Text == "reset") {
                 operations.Add(new Push_uint64_Operation(Iota(Current.Text == "reset"), Current.Position));
             } else if(Current.Text == "let" || Current.Text == "peek") {
                 Word bindWord = Current;
                 NextWord();
 
-                if(Current == null) return new IncompleteBindingError(bindWord);
-                if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidBindingError(Current);
+                if(Current == null) ErrorSystem.AddError_i(new IncompleteBindingError(bindWord));
+                if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidBindingError(Current));
                 List<Binding> bindings = new List<Binding>();
                 if(Current.Text == "(") {
                     NextWord();
                     while(Current.Text != ")" && Current.Type == WordType.Word && Current != null) {
-                        if(Current.Type == WordType.String || Current.Type == WordType.Char) return new InvalidBindingError(Current);
-
                         if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
-                        else if(!Utils.IsValidIdentifier(Current.Text)) return new InvalidBindingError(Current);
+                        else if(!Utils.IsValidIdentifier(Current)) ErrorSystem.AddError_s(new InvalidBindingError(Current));
                         else bindings.Add(new Binding(Current));
 
                         NextWord();
                     }
-                    if(Current == null) return new EOFInBindingListError(bindWord);
-                    if(Current.Text != ")" || Current.Type != WordType.Word) return new InvalidBindingListError(bindWord);
+                    if(Current == null) ErrorSystem.AddError_i(new EOFInBindingListError(bindWord));
+                    if(Current.Text != ")" || Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidBindingListError(bindWord));
                     NextWord();
                 } else {
                     if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
-                    else if(!Utils.IsValidIdentifier(Current.Text)) return new InvalidBindingError(Current);
+                    else if(!Utils.IsValidIdentifier(Current.Text)) ErrorSystem.AddError_s(new InvalidBindingError(Current));
                     else bindings.Add(new Binding(Current));
 
                     NextWord();
                 }
 
                 BindingScope bindingScope = new BindingScope(scope, currentProcedure, bindings);
-                ParseCodeBlockResult result = ParseCodeBlock(scope, bindingScope, breakableBlock, currentProcedure);
-                if(result.Error != null) return result.Error;
-                BindingBlock bindingBlock = new BindingBlock(bindingScope, result.Block, bindWord.Text == "let" ? BindingType.Let : BindingType.Peek, bindWord.Position);
+                CodeBlock block = ParseCodeBlock(scope, bindingScope, breakableBlock, currentProcedure);
+                BindingBlock bindingBlock = new BindingBlock(bindingScope, block, bindWord.Text == "let" ? BindingType.Let : BindingType.Peek, bindWord.Position);
 
                 operations.Add(bindingBlock);
-
-                return null;
+                return;
             } else if(Current.Text == "struct") {
                 Word structWord = Current;
                 NextWord();
 
-                if(Current == null) return new IncompleteStructDefinitionError(structWord);
-                if(Current.Type != WordType.Word) return new InvalidIdentifierError(Current);
+                if(Current == null) ErrorSystem.AddError_i(new IncompleteStructDefinitionError(structWord));
+                if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidIdentifierError(Current));
                 Word nameWord = Current;
                 NextWord();
 
                 Struct structt = new Struct(nameWord);
                 while(Current != null && Current.Type == WordType.Word && Current.Text != "end") { // TODO: implement braces as block-marker for struct-definitions aswell
-                    if(!DataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+                    if(!DataType.TryParse(Current.Text, out DataType dataType)) ErrorSystem.AddError_s(new InvalidDataTypeError(Current));
                     NextWord();
 
-                    if(Current == null) return new IncompleteStructDefinitionError(structWord);
-                    if(Current.Type != WordType.Word || Current.Text != ":") return new MissingColonInStructDefinitionError(Current.Position);
+                    if(Current == null) ErrorSystem.AddError_i(new IncompleteStructDefinitionError(structWord));
+                    if(Current.Type != WordType.Word || Current.Text != ":") ErrorSystem.AddError_i(new MissingColonInStructDefinitionError(Current.Position));
                     NextWord();
                     
-                    if(Current == null) return new IncompleteStructDefinitionError(structWord);
-                    if(Current.Type != WordType.Word || !Utils.IsValidIdentifier(Current.Text)) return new InvalidIdentifierError(Current);
-                    if(structt.HasField(Current.Text)) return new StructFieldRedefinitionError(Current, structt.GetField(Current.Text).Identifier.Position);
-                    structt.AddField(new StructField(Current, dataType, structt.GetByteSize()));
-
+                    if(Current == null) ErrorSystem.AddError_i(new IncompleteStructDefinitionError(structWord));
+                    if(!Utils.IsValidIdentifier(Current)) ErrorSystem.AddError_s(new InvalidIdentifierError(Current));
+                    else if(structt.HasField(Current.Text)) ErrorSystem.AddError_s(new StructFieldRedefinitionError(Current, structt.GetField(Current.Text).Identifier.Position));
+                    else structt.AddField(new StructField(Current, dataType, structt.GetByteSize()));
                     NextWord();
                 }
-                if(Current == null || Current.Type != WordType.Word || Current.Text != "end") return new IncompleteStructDefinitionError(structWord);
+                if(Current == null || Current.Type != WordType.Word || Current.Text != "end") ErrorSystem.AddError_i(new IncompleteStructDefinitionError(structWord));
 
                 _structs.Add(structt.Name.Text, structt);
-
-                // Could theoretically let this fall through
-                NextWord();
-                return null;
             } else if(Current.Text.StartsWith("sizeof(") && Current.Text.EndsWith(")")) {
                 string type = Current.Text.Substring(7, Current.Text.Length-8);
-                if(DataType.TryParse(type, out DataType dataType)) {
-                    operations.Add(new Push_uint64_Operation((ulong) dataType.GetByteSize(), Current.Position));
-                } else if(_structs.ContainsKey(type)) {
-                    operations.Add(new Push_uint64_Operation((ulong) _structs[type].GetByteSize(), Current.Position));
-                } else return new InvalidTypeError(Current);
+                if(DataType.TryParse(type, out DataType dataType)) operations.Add(new Push_uint64_Operation((ulong) dataType.GetByteSize(), Current.Position));
+                else if(_structs.ContainsKey(type)) operations.Add(new Push_uint64_Operation((ulong) _structs[type].GetByteSize(), Current.Position));
+                else ErrorSystem.AddError_s(new InvalidTypeError(Current));
             } else {
                 // TODO: add overflow protection for binary and hexadecimal numbers
                 if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2).Replace("_", ""), 2), Current.Position));
@@ -603,44 +555,45 @@ namespace IonS {
                                         : new StructFieldWriteOperation(structt.GetField(tokens[1]), Current.Position)
                                 );
                                 NextWord();
-                                return null;
+                                return;
                             }
                         }
-                        return new UnexpectedWordError(Current);
+                        ErrorSystem.AddError_s(new UnexpectedWordError(Current));
                     }
                 }
             }
             NextWord();
-            return null;
+            return;
         }
 
         public ParseResult Parse() {
-            var lexingResult = new Lexer(_text, _source).run();
-            if(lexingResult.Error != null) return new ParseResult(null, null, null, null, lexingResult.Error);
+            List<Word> words;
+            words = new Lexer(_text, _source).run();
+            if(ErrorSystem.ShouldTerminateAfterStep()) ErrorSystem.WriteAndExit();
             
-            var preprocessorResult = new Preprocessor(_source, lexingResult.Words, _assembler).run();
-            if(preprocessorResult.Error != null) return new ParseResult(null, null, null, null, preprocessorResult.Error);
-            _words = preprocessorResult.Words;
+            words = new Preprocessor(_source, words, _assembler).run();
+            if(ErrorSystem.ShouldTerminateAfterStep()) ErrorSystem.WriteAndExit();
+            _words = words;
 
             _procs = new Dictionary<string, Dictionary<string, Procedure>>();
             _structs = new Dictionary<string, Struct>();
             _vars = new List<Variable>();
             _strings = new List<string>();
 
-            ParseCodeBlockResult parseResult = ParseCodeBlock(null, new Scope(null, null), null, null);
-            if(parseResult.Error != null) return new ParseResult(null, null, null, null, parseResult.Error);
+            // Actual parsing
+            CodeBlock root = ParseCodeBlock(null, new Scope(null, null), null, null);
 
-            Error error = new TypeChecker(parseResult.Block, _procs).run();
-            if(error != null) return new ParseResult(null, null, null, null, error);
+            new TypeChecker(root, _procs).run();
+            if(ErrorSystem.ShouldTerminateAfterStep()) ErrorSystem.WriteAndExit();
 
             foreach(string name in _procs.Keys) {
                 Dictionary<string, Procedure> overloads = _procs[name];
                 foreach(string signature in overloads.Keys) if(overloads[signature].IsInlined) overloads.Remove(signature);
             }
             
-            new Optimizer(parseResult.Block, _procs).run();
+            new Optimizer(root, _procs).run();
 
-            return new ParseResult(parseResult.Block, _strings, _vars, _procs, null);
+            return new ParseResult(root, _strings, _vars, _procs);
         }
 
     }

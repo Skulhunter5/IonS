@@ -4,13 +4,6 @@ using System.Collections.Generic;
 
 namespace IonS {
 
-    class PreprocessorResult : Result {
-        public PreprocessorResult(Word[] words, Error error) : base(error) {
-            Words = words;
-        }
-        public Word[] Words { get; }
-    }
-
     class Macro {
         public Macro(Word key, List<Word> words) {
             Key = key;
@@ -19,12 +12,13 @@ namespace IonS {
 
         public Word Key { get; }
         public List<Word> Words { get; }
+        
     }
 
     class Preprocessor {
 
         private readonly string _source;
-        private readonly Word[] _words;
+        private readonly List<Word> _words;
 
         private readonly Assembler _assembler;
 
@@ -34,7 +28,7 @@ namespace IonS {
         private Dictionary<string, Position> _symbols;
         private Dictionary<string, Macro> _macros;
 
-        public Preprocessor(string source, Word[] words, Assembler assembler) {
+        public Preprocessor(string source, List<Word> words, Assembler assembler) {
             _source = source;
             _words = words;
             _assembler = assembler;
@@ -45,21 +39,20 @@ namespace IonS {
             return macro;
         }
 
-        private Error CollectMacro() {
+        private void CollectMacro() {
             int start = i;
 
             Word word = words[i];
 
-            if(i++ == words.Count-1) return new IncompleteMacroDefinitionError(word, null);
+            if(i++ == words.Count-1) ErrorSystem.AddError_i(new IncompleteMacroDefinitionError(word, null));
             Word key = words[i];
 
-            // TODO: allow actually valid identifiers only
-            if(!Utils.IsValidIdentifier(key.Text)) return new InvalidMacroKeyError(key);
+            if(!Utils.IsValidIdentifier(key)) ErrorSystem.AddError_i(new InvalidMacroKeyError(key));
 
-            if(i++ == words.Count-2) return new IncompleteMacroDefinitionError(word, key);
+            if(i++ == words.Count-2) ErrorSystem.AddError_i(new IncompleteMacroDefinitionError(word, key));
 
             Macro macro = GetMacro(key.Text);
-            if(macro != null) return new MacroRedefinitionError(macro.Key, key);
+            if(macro != null) ErrorSystem.AddError_i(new MacroRedefinitionError(macro.Key, key));
 
             List<Word> words1 = new List<Word>();
             int openBraces = 0;
@@ -67,7 +60,7 @@ namespace IonS {
             else {
                 while(true) {
                     i++;
-                    if(i >= words.Count) return new IncompleteMacroDefinitionError(word, key);
+                    if(i >= words.Count) ErrorSystem.AddError_i(new IncompleteMacroDefinitionError(word, key));
                     if(words[i].Text == "{") openBraces++;
                     if(words[i].Text == "}") {
                         if(openBraces > 0) openBraces--;
@@ -80,7 +73,6 @@ namespace IonS {
             i++;
             words.RemoveRange(start, i - start);
             i = start;
-            return null;
         }
 
         private void ExpandMacro(Macro macro, List<Word> words) {
@@ -106,23 +98,21 @@ namespace IonS {
             return temp;
         }
 
-        private Error Include() {
+        private void Include() {
             Word nameWord = words[i+1];
             words.RemoveRange(i, 2);
 
-            if(nameWord.GetType() != typeof(StringWord) || ((StringWord) nameWord).StringType != "") return new FilePathNotAStringLiteralError(nameWord);
+            if(nameWord.GetType() != typeof(StringWord) || ((StringWord) nameWord).StringType != "") ErrorSystem.AddError_i(new FilePathNotAStringLiteralError(nameWord));
             string filename = AlterPath(_source, nameWord.Text);
             
-            if(!File.Exists(filename)) return new FileNotFoundError(filename, Directory.GetCurrentDirectory(), nameWord.Position);
+            if(!File.Exists(filename)) ErrorSystem.AddError_i(new FileNotFoundError(filename, Directory.GetCurrentDirectory(), nameWord.Position));
             string path = Path.GetFullPath(filename);
             string text = File.ReadAllText(path).Replace("\r\n", "\n");
-            var lexingResult = new Lexer(text, path).run();
-            if(lexingResult.Error != null) return lexingResult.Error;
+            List<Word> rwords = new Lexer(text, path).run();
+            if(ErrorSystem.ShouldTerminateAfterStep()) ErrorSystem.WriteAndExit();
 
-            foreach(Word word in lexingResult.Words) if(word.IncludedFrom == null) word.IncludedFrom = new Position[] {word.Position, nameWord.Position}; // TODO: rework IncludedFrom
-            words.InsertRange(i, lexingResult.Words);
-
-            return null;
+            foreach(Word word in rwords) if(word.IncludedFrom == null) word.IncludedFrom = new Position[] {word.Position, nameWord.Position};
+            words.InsertRange(i, rwords);
         }
 
         private static readonly List<string> PredefinedSymbols = new List<string> {
@@ -139,7 +129,7 @@ namespace IonS {
 
         // RUN
 
-        public PreprocessorResult run() {
+        public List<Word> run() {
             words = new List<Word>();
             words.AddRange(_words);
 
@@ -165,7 +155,7 @@ namespace IonS {
 
                 if(words[i].Text.StartsWith("/*")) {
                     int start = i;
-                    while(!words[i++].Text.EndsWith("*/")) if(i >= words.Count) return new PreprocessorResult(null, new EOFInBlockCommentError(words[start].Position));
+                    while(!words[i++].Text.EndsWith("*/")) if(i >= words.Count) ErrorSystem.AddError_i(new EOFInBlockCommentError(words[start].Position));
                     words.RemoveRange(start, i - start);
                     i = start;
                     continue;
@@ -173,52 +163,50 @@ namespace IonS {
 
                 if(words[i].Text.StartsWith('#')) {
                     if(words[i].Text == "#macro") {
-                        Error error = CollectMacro();
-                        if(error != null) return new PreprocessorResult(null, error);
+                        CollectMacro();
                         continue;
                     } else if(words[i].Text == "#include") {
-                        Error error = Include();
-                        if(error != null) return new PreprocessorResult(null, error);
+                        Include();
                         continue;
                     } else if(words[i].Text == "#define") { // TODO: make sure the symbol is valid (character-wise)
-                        if(i+1 == words.Count) return new PreprocessorResult(null, new IncompletePreprocessorDirectiveError(words[i]));
+                        if(i+1 == words.Count) ErrorSystem.AddError_i(new IncompletePreprocessorDirectiveError(words[i]));
 
                         Word symbolWord = words[i+1];
-                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord, false));
-                        if(PredefinedSymbols.Contains(symbolWord.Text)) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord, true));
+                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) ErrorSystem.AddError_i(new InvalidSymbolError(symbolWord, false));
+                        if(PredefinedSymbols.Contains(symbolWord.Text)) ErrorSystem.AddError_i(new InvalidSymbolError(symbolWord, true));
                         
-                        if(_symbols.ContainsKey(symbolWord.Text)) return new PreprocessorResult(null, new PreprocessorSymbolRedefinitionError(symbolWord, _symbols.GetValueOrDefault(symbolWord.Text, null)));
+                        if(_symbols.ContainsKey(symbolWord.Text)) ErrorSystem.AddError_i(new PreprocessorSymbolRedefinitionError(symbolWord, _symbols.GetValueOrDefault(symbolWord.Text, null)));
 
                         _symbols.Add(symbolWord.Text, symbolWord.Position);
                         words.RemoveRange(i, 2);
 
                         continue;
                     } else if(words[i].Text == "#ifdef") { // TODO: make sure the symbol is valid (character-wise)
-                        if(i+1 == words.Count) return new PreprocessorResult(null, new IncompletePreprocessorDirectiveError(words[i]));
+                        if(i+1 == words.Count) ErrorSystem.AddError_i(new IncompletePreprocessorDirectiveError(words[i]));
 
                         Word symbolWord = words[i+1];
-                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord, false));
+                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) ErrorSystem.AddError_i(new InvalidSymbolError(symbolWord, false));
                         
                         if(_symbols.ContainsKey(symbolWord.Text)) {
                             openDirectives.Push(words[i]);
                             words.RemoveRange(i, 2);
                         } else {
                             int start = i++;
-                            while(words[i++].Text != "#endif") if(i >= words.Count) return new PreprocessorResult(null, new MissingPreprocessorDirectiveError("#endif", words[start]));
+                            while(words[i++].Text != "#endif") if(i >= words.Count) ErrorSystem.AddError_i(new MissingPreprocessorDirectiveError("#endif", words[start]));
                             words.RemoveRange(start, i - start);
                             i = start;
                         }
 
                         continue;
                     } else if(words[i].Text == "#ifndef") { // TODO: make sure the symbol is valid (character-wise)
-                        if(i+1 == words.Count) return new PreprocessorResult(null, new IncompletePreprocessorDirectiveError(words[i]));
+                        if(i+1 == words.Count) ErrorSystem.AddError_i(new IncompletePreprocessorDirectiveError(words[i]));
 
                         Word symbolWord = words[i+1];
-                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) return new PreprocessorResult(null, new InvalidSymbolError(symbolWord, false));
+                        if(!Utils.symbolRegex.Match(symbolWord.Text).Success) ErrorSystem.AddError_i(new InvalidSymbolError(symbolWord, false));
 
                         if(_symbols.ContainsKey(symbolWord.Text)) {
                             int start = i++;
-                            while(words[i++].Text != "#endif") if(i >= words.Count) return new PreprocessorResult(null, new MissingPreprocessorDirectiveError("#endif", words[start]));
+                            while(words[i++].Text != "#endif") if(i >= words.Count) ErrorSystem.AddError_i(new MissingPreprocessorDirectiveError("#endif", words[start]));
                             words.RemoveRange(start, i - start);
                             i = start;
                         } else {
@@ -228,13 +216,13 @@ namespace IonS {
 
                         continue;
                     } else if(words[i].Text == "#endif") {
-                        if(openDirectives.Count == 0) return new PreprocessorResult(null, new UnexpectedPreprocessorDirectiveError(_words[i]));
+                        if(openDirectives.Count == 0) ErrorSystem.AddError_i(new UnexpectedPreprocessorDirectiveError(_words[i]));
                         else {
                             openDirectives.Pop();
                             words.RemoveAt(i);
                             continue;
                         }
-                    } else return new PreprocessorResult(null, new UnknownPreprocessorDirectiveError(_words[i]));
+                    } else ErrorSystem.AddError_i(new UnknownPreprocessorDirectiveError(_words[i]));
                 }
 
                 Macro macro = GetMacro(words[i].Text);
@@ -242,9 +230,9 @@ namespace IonS {
                 else i++;
             }
 
-            if(openDirectives.Count > 0) return new PreprocessorResult(null, new UnclosedPreprocessorDirectivesError(openDirectives));
+            if(openDirectives.Count > 0) ErrorSystem.AddError_s(new UnclosedPreprocessorDirectivesError(openDirectives));
 
-            return new PreprocessorResult(words.ToArray(), null); // TODO: probably remove ToArray call and just pass on List 
+            return words;
         }
 
     }

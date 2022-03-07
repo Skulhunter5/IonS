@@ -17,13 +17,6 @@ namespace IonS {
         }
         public Error Error { get; }
     }
-    
-    class ConvertEscapeCharactersResult : Result {
-        public ConvertEscapeCharactersResult(string text, Error error) : base(error) {
-            Text = text;
-        }
-        public string Text { get; }
-    }
 
     class Utils {
         
@@ -65,6 +58,8 @@ namespace IonS {
 
         public static readonly Regex symbolRegex = new Regex("^[a-zA-Z_][0-9a-zA-Z_]*$", RegexOptions.Compiled);
 
+        public static readonly Regex charRegex = new Regex("^'([^\\\\]|\\\\.)'$", RegexOptions.Compiled);
+
         public static readonly Regex wildcardRegex = new Regex("^_+$", RegexOptions.Compiled);
         
         public static readonly Regex readBytesRegex = new Regex("^@[0-9]+$", RegexOptions.Compiled);
@@ -77,6 +72,11 @@ namespace IonS {
         public static readonly Regex decimalRegex = new Regex("^[0-9_]+$", RegexOptions.Compiled);
         public static readonly Regex hexadecimalRegex = new Regex("^0x[0-9a-fA-F_]+$", RegexOptions.Compiled);
 
+
+        public static bool IsValidIdentifier(Word word) {
+            if(word.Type != WordType.Word) return false;
+            return IsValidIdentifier(word.Text);
+        }
 
         public static bool IsValidIdentifier(string word) {
             if(word == ";") return false;
@@ -125,7 +125,7 @@ namespace IonS {
             return text.Substring(index+1, text.Length-index-1);
         }
 
-        public static ConvertEscapeCharactersResult ConvertEscapeCharacters(string _text, Position position) {
+        public static string ConvertEscapeCharacters(string _text, Position position) {
             string text = "";
             for(int i = 0; i < _text.Length; i++) {
                 char c = _text[i];
@@ -138,13 +138,22 @@ namespace IonS {
                     else if(c == '\\') text += '\\';
                     else if(c == '"') text += '"';
                     else if(c == '0') text += '\0';
-                    else if(c == '\n') return new ConvertEscapeCharactersResult(null, new InvalidEscapeCharacterError("\\n", GetNewPosition(_text, position, i)));
-                    else if(c == '\t') return new ConvertEscapeCharactersResult(null, new InvalidEscapeCharacterError("\\t", GetNewPosition(_text, position, i)));
-                    else if(c == '\r') return new ConvertEscapeCharactersResult(null, new InvalidEscapeCharacterError("\\r", GetNewPosition(_text, position, i)));
-                    else return new ConvertEscapeCharactersResult(null, new InvalidEscapeCharacterError(""+c, GetNewPosition(_text, position, i)));
+                    else if(c == '\n') {
+                        ErrorSystem.AddError_s(new InvalidEscapeCharacterError("\\n", GetNewPosition(_text, position, i)));
+                        return _text;
+                    } else if(c == '\t') {
+                        ErrorSystem.AddError_s(new InvalidEscapeCharacterError("\\t", GetNewPosition(_text, position, i)));
+                        return _text;
+                    } else if(c == '\r') {
+                        ErrorSystem.AddError_s(new InvalidEscapeCharacterError("\\r", GetNewPosition(_text, position, i)));
+                        return _text;
+                    } else {
+                        ErrorSystem.AddError_s(new InvalidEscapeCharacterError(""+c, GetNewPosition(_text, position, i)));
+                        return _text;
+                    }
                 }
             }
-            return new ConvertEscapeCharactersResult(text, null);
+            return text;
         }
 
         public static T[] Reverse<T>(T[] array) {

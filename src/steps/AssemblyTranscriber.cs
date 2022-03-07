@@ -28,10 +28,8 @@ namespace IonS {
                 if(assembler == Assembler.nasm_linux_x86_64) asm += "BITS 64\n";
                 else asm += "format ELF64 executable 3\n";
 
-                var parser = new Parser(_text, _source, assembler);
-                var result = parser.Parse();
-                if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
-                var root = result.Root;
+                ParseResult result = new Parser(_text, _source, assembler).Parse();
+                if(ErrorSystem.ShouldTerminateAfterStep()) ErrorSystem.WriteAndExit();
 
                 // Begin data segment
                 string rq = assembler == Assembler.nasm_linux_x86_64 ? "resq" : "rq";
@@ -76,7 +74,7 @@ namespace IonS {
                 asm += "    mov [ret_stack_rsp], rax\n";
 
                 // Actual code
-                asm += root.GenerateAssembly(assembler);
+                asm += result.Root.GenerateAssembly(assembler);
 
                 // Exit code
                 asm += "exit:\n";
@@ -88,13 +86,11 @@ namespace IonS {
             if(assembler == Assembler.iasm_linux_x86_64) {
                 string asm = "";
 
-                var parser = new Parser(_text, _source, assembler);
-                var result = parser.Parse();
-                if(result.Error != null) return new AssemblyTranscriptionResult(null, result.Error);
-                var root = result.Root;
+                ParseResult result = new Parser(_text, _source, assembler).Parse();
+                if(ErrorSystem.ShouldTerminateAfterStep()) ErrorSystem.WriteAndExit();
 
                 // Actual code
-                asm += root.GenerateAssembly(assembler);
+                asm += result.Root.GenerateAssembly(assembler);
 
                 // Exit code
                 asm += "exit:\n";

@@ -1603,7 +1603,7 @@ namespace IonS {
     sealed class ArrayReadOperation : Operation {
         public ArrayReadOperation(Position position) : base(OperationType.ArrayRead, position) {}
 
-        public int ByteSize { get; set; }
+        public uint ByteSize { get; set; }
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
@@ -1636,7 +1636,7 @@ namespace IonS {
     sealed class ArrayWriteOperation : Operation {
         public ArrayWriteOperation(Position position) : base(OperationType.ArrayWrite, position) {}
 
-        public int ByteSize { get; set; }
+        public uint ByteSize { get; set; }
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {

@@ -15,7 +15,7 @@ namespace IonS {
         public int Id { get; }
         public Word Identifier { get; }
 
-        public abstract int GetByteSize();
+        public abstract uint GetByteSize();
         public abstract DataType GetProvideDataType();
 
         public string GenerateAssembly(Assembler assembler) {
@@ -34,13 +34,13 @@ namespace IonS {
 
     class DirectVariable : Variable {
 
-        public DirectVariable(Word identifier, int byteSize) : base(identifier) {
+        public DirectVariable(Word identifier, uint byteSize) : base(identifier) {
             ByteSize = byteSize;
         }
 
-        public int ByteSize { get; }
+        public uint ByteSize { get; }
 
-        public override int GetByteSize() {
+        public override uint GetByteSize() {
             return ByteSize;
         }
 
@@ -58,7 +58,7 @@ namespace IonS {
 
         public DataType DataTypeT { get; }
 
-        public override int GetByteSize() {
+        public override uint GetByteSize() {
             return DataTypeT.GetByteSize();
         }
 
@@ -76,7 +76,7 @@ namespace IonS {
 
         public Struct Structt { get; }
 
-        public override int GetByteSize() {
+        public override uint GetByteSize() {
             return Structt.GetByteSize();
         }
 
@@ -93,7 +93,7 @@ namespace IonS {
         public DataType DataType { get; set; }
         public int Offset { get; set; }
 
-        public override int GetByteSize() { return 0; }
+        public override uint GetByteSize() { return 0; }
         public override DataType GetProvideDataType() { return null; }
 
     }

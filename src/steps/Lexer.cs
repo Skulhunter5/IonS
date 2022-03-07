@@ -2,21 +2,8 @@ using System.Collections.Generic;
 
 namespace IonS {
 
-    class LexingResult : Result {
-        public LexingResult(Word[] words, Error error) : base(error) {
-            Words = words;
-        }
-        public Word[] Words { get; }
-    }
-
-    class SingleWordResult : Result {
-        public SingleWordResult(Word word, Error error) : base(error) {
-            Word = word;
-        }
-        public Word Word { get; }
-    }
-
     class Lexer {
+        
         private readonly string _source;
         private readonly string _text;
         private int _position;
@@ -83,7 +70,7 @@ namespace IonS {
             return c != '\0' ? _position : -1;
         }
 
-        public SingleWordResult NextWord() {
+        public Word NextWord() {
             SkipWhiteSpace();
             if(_position >= _text.Length) return null;
 
@@ -99,45 +86,37 @@ namespace IonS {
             if(c == '"') {
                 Next();
                 index = FindDoubleQuote(raw);
-                if(index == -1) return new SingleWordResult(null, new EOFInStringLiteralError(position));
+                if(index == -1) ErrorSystem.AddError_i(new EOFInStringLiteralError(position));
             }
 
             index = FindWhiteSpace();
-            if(index == -1) return new SingleWordResult(new Word(position, _text.Substring(start, _text.Length - start)), null);
+            if(index == -1) return new Word(position, _text.Substring(start, _text.Length - start));
 
             string text = _text.Substring(start, index - start);
             if(text.StartsWith('\'')) {
-                if(text.Length == 3 && text[2] != '\'') return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, text.Length))));
-                if(text.Length == 4 && (text[1] != '\\' || text[3] != '\'')) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, text.Length))));
-                if(text.Length != 3 && text.Length != 4) return new SingleWordResult(null, new InvalidCharError(new Word(position, _text.Substring(start, text.Length))));
+                if(!Utils.charRegex.IsMatch(text)) ErrorSystem.AddError_s(new InvalidCharError(new Word(position, text)));
 
-                var result = Utils.ConvertEscapeCharacters(text.Substring(1,text.Length-2), position);
-                if(result.Error != null) return new SingleWordResult(null, result.Error);
-                return new SingleWordResult(new CharWord(position, result.Text), null);
+                text = Utils.ConvertEscapeCharacters(text.Substring(1,text.Length-2), position);
+                return new CharWord(position, text);
             }
             if(text.StartsWith('"')) {
                 string type = Utils.GetStringType(text);
-                if(type != "c" && type != "") return new SingleWordResult(null, new InvalidStringTypeError(type, Utils.GetNewPosition(text, position, text.Length - type.Length)));
-                if(!raw) {
-                    var result = Utils.ConvertEscapeCharacters(text.Substring(1, text.Length - 2 - type.Length), position);
-                    if(result.Error != null) return new SingleWordResult(null, result.Error);
-                    text = result.Text;
-                }
-                return new SingleWordResult(new StringWord(position, text, type), null);
+                if(type != "c" && type != "") ErrorSystem.AddError_s(new InvalidStringTypeError(type, Utils.GetNewPosition(text, position, text.Length - type.Length)));
+                if(!raw) text = Utils.ConvertEscapeCharacters(text.Substring(1, text.Length - 2 - type.Length), position);
+                return new StringWord(position, text, type);
             }
 
-            return new SingleWordResult(new Word(position, text), null);
+            return new Word(position, text);
         }
 
-        public LexingResult run() {
-            var words = new List<Word>();
-            SingleWordResult result = NextWord();
-            while(result != null) {
-                if(result.Error != null) return new LexingResult(null, result.Error);
-                words.Add(result.Word);
-                result = NextWord();
+        public List<Word> run() {
+            List<Word> words = new List<Word>();
+            Word word = NextWord();
+            while(word != null) {
+                words.Add(word);
+                word = NextWord();
             }
-            return new LexingResult(words.ToArray(), null);
+            return words;
         }
 
     }
