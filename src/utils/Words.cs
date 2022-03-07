@@ -31,8 +31,7 @@ namespace IonS {
         public Word ExpandedFrom { get; set; }
         public Position[] IncludedFrom { get; set; }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             if(ExpandedFrom != null) return "'" + Text + "' (expanded from " + ExpandedFrom + ")";
             if(IncludedFrom != null) return "'" + Text + "' (Included from " + IncludedFrom[0] + " at " + IncludedFrom[1] + ")";
             return "'" + Text + "' at " + Position;
@@ -47,8 +46,7 @@ namespace IonS {
 
         public string StringType { get; }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             if(ExpandedFrom != null) return "'\"" + Text + "\"' (expanded from " + ExpandedFrom + ")";
             if(IncludedFrom != null) return "'\"" + Text + "\"' (Included from " + IncludedFrom[0] + " at " + IncludedFrom[1] + ")";
             return "'\"" + Text + "\"' at " + Position;
@@ -59,8 +57,7 @@ namespace IonS {
     class CharWord : Word {
         public CharWord(Position position, string text) : base(WordType.Char, position, text) {}
 
-        public override string ToString()
-        {
+        public override string ToString() {
             if(ExpandedFrom != null) return "char:'" + Text + "' (expanded from " + ExpandedFrom + ")";
             if(IncludedFrom != null) return "char:'" + Text + "' (Included from " + IncludedFrom[0] + " at " + IncludedFrom[1] + ")";
             return "char:'" + Text + "' at " + Position;

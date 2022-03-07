@@ -474,14 +474,6 @@ namespace IonS {
         }
     }
 
-    sealed class MissingCodeBlockError : ParserError {
-        public MissingCodeBlockError() {}
-
-        public override string ToString() {
-            return base.ToString() + "Missing CodeBlock at the end of the file";
-        }
-    }
-
     sealed class EOFInCodeBlockError : ParserError {
         public EOFInCodeBlockError(Position position) {
             Position = position;
@@ -985,6 +977,34 @@ namespace IonS {
 
         public override string ToString() {
             return base.ToString() + "Expected " + Msg + " for " + Operation;
+        }
+    }
+
+    // Expected DataType error
+
+    sealed class ExpectedError : TypeCheckerError {
+        public ExpectedError(string msg, Position position) {
+            Msg = msg;
+            Position = position;
+        }
+
+        public string Msg { get; }
+        public Position Position { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Expected " + Msg + " at " + Position;
+        }
+    }
+
+    sealed class ExpectedCodeBlockError : TypeCheckerError {
+        public ExpectedCodeBlockError(Position position) {
+            Position = position;
+        }
+
+        public Position Position { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Expected CodeBlock at " + Position;
         }
     }
 

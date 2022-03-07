@@ -171,13 +171,18 @@ namespace IonS {
             Line = line;
             Column = column;
         }
-        public override string ToString()
-        {
-            return File + ":" + Line + ":" + Column;
-        }
+
         public string File { get; }
         public int Line { get; }
         public int Column { get; }
+
+        public Position Derive(int dLine, int dColumn) {
+            return new Position(File, Line + dLine, Column + dColumn);
+        }
+
+        public override string ToString() {
+            return File + ":" + Line + ":" + Column;
+        }
     }
     
 }

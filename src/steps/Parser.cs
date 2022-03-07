@@ -124,7 +124,7 @@ namespace IonS {
             CodeBlock block = new CodeBlock(newScope, Current != null ? Current.Position : null); // TODO: check if last null can be replaced with 'new Position(_source, 1, 1)'
             if(Current == null) {
                 if(root) return block;
-                ErrorSystem.AddError_i(new MissingCodeBlockError());
+                ErrorSystem.AddError_i(new ExpectedCodeBlockError(_words[_words.Count-1].Position.Derive(0, _words[_words.Count-1].Text.Length+1)));
             }
 
             if(Current.Type == WordType.Word && Current.Text == ";") {
