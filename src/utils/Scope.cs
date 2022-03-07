@@ -19,11 +19,14 @@ namespace IonS {
         public Procedure Procedure { get; }
         public Dictionary<string, Variable> Variables { get; }
 
-        public virtual Error RegisterVariable(Variable var) {
+        public virtual bool RegisterVariable(Variable var) {
             Variables.TryGetValue(var.Identifier.Text, out Variable ownVar);
-            if(ownVar != null) return new VariableRedeclarationError(ownVar.Identifier, var.Identifier);
+            if(ownVar != null) {
+                ErrorSystem.AddError_s(new VariableRedeclarationError(ownVar.Identifier, var.Identifier));
+                return false;
+            }
             Variables.Add(var.Identifier.Text, var);
-            return null;
+            return true;
         }
 
         public virtual Variable GetVariable(string identifier) {
@@ -55,13 +58,19 @@ namespace IonS {
         public Dictionary<string, Binding> Bindings { get; }
         public List<Binding> BindingsList { get; }
 
-        public override Error RegisterVariable(Variable var) {
+        public override bool RegisterVariable(Variable var) {
             Variables.TryGetValue(var.Identifier.Text, out Variable ownVar);
-            if(ownVar != null) return new VariableRedeclarationError(ownVar.Identifier, var.Identifier);
-            Bindings.TryGetValue(var.Identifier.Text, out Binding offset);
-            if(offset != null) return new VariableRedeclarationError(ownVar.Identifier, var.Identifier);
+            if(ownVar != null) {
+                ErrorSystem.AddError_s(new VariableRedeclarationError(ownVar.Identifier, var.Identifier));
+                return false;
+            }
+            Bindings.TryGetValue(var.Identifier.Text, out Binding binding);
+            if(binding != null) {
+                ErrorSystem.AddError_s(new VariableRedeclarationError(ownVar.Identifier, var.Identifier));
+                return false;
+            }
             Variables.Add(var.Identifier.Text, var);
-            return null;
+            return true;
         }
 
         public override Variable GetVariable(string identifier) {

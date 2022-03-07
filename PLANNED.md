@@ -17,12 +17,9 @@
 
 # TODO
 - Make int64 instead of uint64 the standard type and add possibility to input uint64 (maybe with uint64:(...) and make this a general concept like allowing this for pointers too)
-- Add expect function to the parser
 - Add error prorities to make sure errors causing other errors are put further up in the list
 - Rework which errors are instantly terminal and which aren't (see Invalid...Error)
 - Generalize incomplete block detection (create new function with block-start as parameter, check if the next word == null; if so, throw error, otherwise just return the text of that word/that word)
-- Combine invalid/incomplete errors for at least MultiCast and Binding
-- check that variable names aren't strings/chars
 - check that variable names are actually valid (correct and normalize invalid identifier errors)
 - check for duplicate identifier usage (also cross-reference between e.g. variables and procedures (maybe store all used identifiers in one List/Dictionary/HashSet/...))
 - normalize Incomplete/EOF errors

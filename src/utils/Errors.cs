@@ -334,20 +334,6 @@ namespace IonS {
     }
 
     // Parser errors
-    // - Internal parser error
-
-    sealed class InternalParserError : ParserError {
-        public InternalParserError(string message) {
-            Message = message;
-        }
-        
-        public string Message { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Internal error: " + Message;
-        }
-    }
-
     // - Unexpected word error
 
     sealed class UnexpectedWordError : ParserError {
@@ -362,145 +348,7 @@ namespace IonS {
         }
     }
 
-    // - Incomplete assert error
-
-    sealed class IncompleteAssertError : ParserError {
-        public IncompleteAssertError(Position position) {
-            Position = position;
-        }
-        
-        public Position Position { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Incomplete assert: at " + Position;
-        }
-    }
-
-    // - Missing opening brace error
-
-    sealed class MissingOpeningBraceError : ParserError {
-        public MissingOpeningBraceError(Operation operation, Position position) {
-            Operation = operation;
-            Position = position;
-        }
-        
-        public Operation Operation { get; }
-        public Position Position { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Missing opening brace: at " + Position + " for " + Operation;
-        }
-    }
-
-    // - Missing closing brace error
-
-    sealed class MissingClosingBraceError : ParserError {
-        public MissingClosingBraceError(Operation operation, Position position) {
-            Operation = operation;
-            Position = position;
-        }
-        
-        public Operation Operation { get; }
-        public Position Position { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Missing closing brace: at " + Position + " for " + Operation;
-        }
-    }
-
-    // - MultiCast errors
-
-    sealed class IncompleteMultiCastError : ParserError {
-        public IncompleteMultiCastError(Position position) {
-            Position = position;
-        }
-        
-        public Position Position { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Incomplete multicast: at " + Position;
-        }
-    }
-
-    // - Incomplete multicast error
-
-    sealed class InvalidMultiCastError : ParserError {
-        public InvalidMultiCastError(Position position) {
-            Position = position;
-        }
-        
-        public Position Position { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Invalid multicast: at " + Position;
-        }
-    }
-
-    // - Block errors
-
-    sealed class MissingIfError : ParserError {
-        public MissingIfError(Position position) {
-            Position = position;
-        }
-        
-        public Position Position { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Missing if: at " + Position;
-        }
-    }
-
-    sealed class MissingDoError : ParserError {
-        public MissingDoError(Position position) {
-            Position = position;
-        }
-        
-        public Position Position { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Missing do marker: at " + Position;
-        }
-    }
-
-    sealed class MissingWhileError : ParserError {
-        public MissingWhileError(Position position) {
-            Position = position;
-        }
-        
-        public Position Position { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Missing while marker: at " + Position;
-        }
-    }
-
-    sealed class EOFInCodeBlockError : ParserError {
-        public EOFInCodeBlockError(Position position) {
-            Position = position;
-        }
-
-        public Position Position { get; }
-
-        public override string ToString() {
-            return base.ToString() + "EOF inside of a CodeBlock: starting at " + Position;
-        }
-    }
-
     // - Variable errors
-
-    sealed class IncompleteVariableDeclarationError : ParserError {
-        public IncompleteVariableDeclarationError(Word varWord, Word identifier) {
-            VarWord = varWord;
-            Identifier = identifier;
-        }
-        
-        public Word VarWord { get; }
-        public Word Identifier { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Incomplete variable: " + (Identifier != null ? Identifier : "at " + VarWord.Position);
-        }
-    }
 
     sealed class VariableRedeclarationError : ParserError {
         public VariableRedeclarationError(Word o, Word n) {
@@ -513,18 +361,6 @@ namespace IonS {
         
         public override string ToString() {
             return base.ToString() + "Trying to redeclare variable: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
-        }
-    }
-
-    sealed class InvalidVariableIdentifierError : ParserError {
-        public InvalidVariableIdentifierError(Word identifier) {
-            Identifier = identifier;
-        }
-        
-        public Word Identifier { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Invalid identifier for variable: " + Identifier;
         }
     }
 
@@ -554,18 +390,6 @@ namespace IonS {
         }
     }
 
-    sealed class InvalidProcedureNameError : ParserError {
-        public InvalidProcedureNameError(Word name) {
-            Name = name;
-        }
-        
-        public Word Name { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Invalid name for procedure: " + Name;
-        }
-    }
-
     sealed class ProcedureRedefinitionError : ParserError {
         public ProcedureRedefinitionError(Word o, Word n) {
             Old = o;
@@ -580,58 +404,15 @@ namespace IonS {
         }
     }
 
-    sealed class IncompleteProcedureError : ParserError {
-        public IncompleteProcedureError(Word procWord, Word name) {
-            ProcWord = procWord;
-            Name = name;
-        }
-        
-        public Word ProcWord { get; }
-        public Word Name { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Incomplete Procedure: " + (Name != null ? Name : "at " + ProcWord.Position);
-        }
-    }
-
-    sealed class InvalidProcedureParametersError : ParserError {
-        public InvalidProcedureParametersError(Word name) {
-            Name = name;
-        }
-        public InvalidProcedureParametersError(Word name, Word wrong) {
-            Name = name;
-            Wrong = wrong;
-        }
-        
-        public Word Name { get; }
-        public Word Wrong { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Invalid parameters for procedure: " + (Wrong != null ? Wrong + " for " + Name : Name);
-        }
-    }
-
-    sealed class EOFInProcedureParametersError : ParserError {
-        public EOFInProcedureParametersError(Word nameWord) {
-            NameWord = nameWord;
-        }
-        
-        public Word NameWord { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "EOF while parsing parameters for procedure: " + NameWord;
-        }
-    }
-
-    sealed class MissingProcAfterInlineError : ParserError {
-        public MissingProcAfterInlineError(Word procWord) {
+    sealed class ExpectedProcAfterInlineError : ParserError {
+        public ExpectedProcAfterInlineError(Word procWord) {
             ProcWord = procWord;
         }
         
         public Word ProcWord { get; }
         
         public override string ToString() {
-            return base.ToString() + "Expecting 'proc' after 'inline': got " + ProcWord;
+            return base.ToString() + "Expected 'proc' after 'inline': got " + ProcWord;
         }
     }
 
@@ -646,62 +427,6 @@ namespace IonS {
         
         public override string ToString() {
             return base.ToString() + "Return ouside of a procedure: at " + Position;
-        }
-    }
-
-    // - Incomplete binding error
-
-    sealed class IncompleteBindingError : ParserError {
-        public IncompleteBindingError(Word bindWord) {
-            BindWord = bindWord;
-        }
-        
-        public Word BindWord { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Incomplete binding: " + BindWord;
-        }
-    }
-
-    // - Incomplete binding error
-
-    sealed class InvalidBindingError : ParserError {
-        public InvalidBindingError(Word bind) {
-            Bind = bind;
-        }
-        
-        public Word Bind { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Invalid binding: " + Bind;
-        }
-    }
-
-    // - Invalid binding list error
-
-    sealed class InvalidBindingListError : ParserError {
-        public InvalidBindingListError(Word bindWord) {
-            BindWord = bindWord;
-        }
-        
-        public Word BindWord { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "Invalid binding list for binding: " + BindWord;
-        }
-    }
-
-    // - EOF in binding list error
-
-    sealed class EOFInBindingListError : ParserError {
-        public EOFInBindingListError(Word bindWord) {
-            BindWord = bindWord;
-        }
-        
-        public Word BindWord { get; }
-        
-        public override string ToString() {
-            return base.ToString() + "EOF while parsing bindings list: " + BindWord;
         }
     }
 
@@ -774,34 +499,6 @@ namespace IonS {
 
         public override string ToString() {
             return base.ToString() + "Invalid ctt index: " + Index;
-        }
-    }
-
-    // - Incomplete struct definition error
-
-    sealed class IncompleteStructDefinitionError : ParserError {
-        public IncompleteStructDefinitionError(Word structWord) {
-            StructWord = structWord;
-        }
-
-        public Word StructWord { get; }
-
-        public override string ToString() {
-            return base.ToString() + "Incomplete struct definition error: " + StructWord;
-        }
-    }
-
-    // - Missing colon in struct definition error
-
-    sealed class MissingColonInStructDefinitionError : ParserError {
-        public MissingColonInStructDefinitionError(Position position) {
-            Position = position;
-        }
-
-        public Position Position { get; }
-
-        public override string ToString() {
-            return base.ToString() + "Missing colon in struct definition: " + Position;
         }
     }
 
@@ -964,7 +661,21 @@ namespace IonS {
         }
     }
 
-    // Expected DataType error
+    // Expected errors
+
+    sealed class ExpectedError : TypeCheckerError {
+        public ExpectedError(string expected, Position position) {
+            Expected = expected;
+            Position = position;
+        }
+
+        public string Expected { get; }
+        public Position Position { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Expected " + Expected + " at " + Position;
+        }
+    }
 
     sealed class ExpectedDataTypeError : TypeCheckerError {
         public ExpectedDataTypeError(string msg, Operation operation) {
@@ -977,22 +688,6 @@ namespace IonS {
 
         public override string ToString() {
             return base.ToString() + "Expected " + Msg + " for " + Operation;
-        }
-    }
-
-    // Expected DataType error
-
-    sealed class ExpectedError : TypeCheckerError {
-        public ExpectedError(string msg, Position position) {
-            Msg = msg;
-            Position = position;
-        }
-
-        public string Msg { get; }
-        public Position Position { get; }
-
-        public override string ToString() {
-            return base.ToString() + "Expected " + Msg + " at " + Position;
         }
     }
 

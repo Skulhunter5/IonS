@@ -64,21 +64,35 @@ namespace IonS {
             return Current;
         }
 
-        private Error RegisterVariable(Scope scope, Variable var) {
-            var error = scope.RegisterVariable(var);
-            if(error != null) return error;
-            if(scope.Procedure == null) _vars.Add(var);
-            else scope.Procedure.Variables.Add(var);
-            return null;
+        private Position GetLastPosition() {
+            return _words[_words.Count-1].Position.Derive(0, _words[_words.Count-1].Text.Length+1);
         }
 
-        private Error RegisterProcedure(Procedure procedure) {
+        private void NonNull(string expected) {
+            if(Current == null) ErrorSystem.AddError_i(new ExpectedError(expected, GetLastPosition()));
+        }
+
+        private void Expect(string text) {
+            NonNull("'"+text+"'");
+            if(Current.Type != WordType.Word || Current.Text != text) ErrorSystem.AddError_i(new ExpectedError("'"+text+"'", Current.Position));
+            NextWord();
+        }
+
+        private void RegisterVariable(Scope scope, Variable var) {
+            if(!scope.RegisterVariable(var)) return;
+            if(scope.Procedure == null) _vars.Add(var);
+            else scope.Procedure.Variables.Add(var);
+        }
+
+        private void RegisterProcedure(Procedure procedure) {
             string signature = procedure.GetArgsSignature();
             if(_procs.ContainsKey(procedure.Name.Text)) {
-                if(_procs[procedure.Name.Text].ContainsKey(signature)) return new ProcedureRedefinitionError(_procs[procedure.Name.Text][signature].Name, procedure.Name);
+                if(_procs[procedure.Name.Text].ContainsKey(signature)) {
+                    ErrorSystem.AddError_s(new ProcedureRedefinitionError(_procs[procedure.Name.Text][signature].Name, procedure.Name));
+                    return;
+                }
             } else _procs.Add(procedure.Name.Text, new Dictionary<string, Procedure>());
             _procs[procedure.Name.Text].Add(signature, procedure);
-            return null;
         }
 
         private bool ProcedureExists(string name) {
@@ -122,10 +136,9 @@ namespace IonS {
         private CodeBlock ParseCodeBlock(Scope parentScope, Scope newScope, BreakableBlock breakableBlock, Procedure currentProcedure) {
             bool root = parentScope == null;
             CodeBlock block = new CodeBlock(newScope, Current != null ? Current.Position : null); // TODO: check if last null can be replaced with 'new Position(_source, 1, 1)'
-            if(Current == null) {
-                if(root) return block;
-                ErrorSystem.AddError_i(new ExpectedCodeBlockError(_words[_words.Count-1].Position.Derive(0, _words[_words.Count-1].Text.Length+1)));
-            }
+            
+            if(root && Current == null) return block;
+            NonNull("CodeBlock");
 
             if(Current.Type == WordType.Word && Current.Text == ";") {
                 NextWord();
@@ -141,10 +154,8 @@ namespace IonS {
                     ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
                 }
                 if(!root) {
-                    if(Current == null) ErrorSystem.AddError_i(new EOFInCodeBlockError(openBracePosition));
-                    if(!IsBraceClose()) ErrorSystem.AddError_i(new EOFInCodeBlockError(openBracePosition));
                     block.End = Current.Position;
-                    NextWord();
+                    Expect("}");
                 }
             } else {
                 block.End = Current.Position;
@@ -153,49 +164,43 @@ namespace IonS {
             return block;
         }
 
-        private Error ParseProcedure(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure, bool isInlined) {
-            if(currentProcedure != null || scope.Parent != null) return new ProcedureNotInGlobalScopeError(Current.Position);
+        private void ParseProcedure(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure, bool isInlined) {
+            if(currentProcedure != null || scope.Parent != null) ErrorSystem.AddError_i(new ProcedureNotInGlobalScopeError(Current.Position));
             Word procWord = Current;
             NextWord();
 
-            if(Current == null) return new IncompleteProcedureError(procWord, null);
+            NonNull("procedure identifier");
             Word name = Current;
-            if(!Utils.IsValidIdentifier(name)) return new InvalidProcedureNameError(name);
+            if(!Utils.IsValidIdentifier(name)) ErrorSystem.AddError_i(new InvalidIdentifierError(name));
             NextWord();
 
-            if(Current == null) return new IncompleteProcedureError(procWord, name);
-            if(Current.Type != WordType.Word) return new InvalidProcedureParametersError(name, Current);
+            NonNull("procedure parameters");
+            if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new ExpectedError("procedure parameters", Current.Position));
+
             bool dir = false;
             List<DataType> Args = new List<DataType>();
             List<DataType> Rets = new List<DataType>();
+
             if(Current.Text == "()") NextWord();
-            else if(Current.Text == "(") {
-                NextWord();
-                while(Current.Text != ")" && Current.Type == WordType.Word && Current != null) {
-                    if(Current.Text == "--") {
-                        if(dir) return new InvalidProcedureParametersError(name, Current);
-                        else dir = true;
-                    } else {
-                        if(Current.Type != WordType.Word || !DataType.TryParse(Current.Text, out DataType dataType)) return new InvalidDataTypeError(Current);
+            else {
+                Expect("(");
+                while(Current != null && Current.Type == WordType.Word && Current.Text != ")") {
+                    if(Current.Text == "--") dir = !dir;
+                    else {
+                        bool validDataType = DataType.TryParse(Current.Text, out DataType dataType);
+                        if(Current.Type != WordType.Word || !validDataType) ErrorSystem.AddError_s(new InvalidDataTypeError(Current));
                         if(dir) Rets.Add(dataType);
                         else Args.Add(dataType);
                     }
                     NextWord();
                 }
-                if(Current == null) return new EOFInProcedureParametersError(name);
-                if(Current.Text != ")" || Current.Type != WordType.Word) return new InvalidProcedureParametersError(name, Current);
-                NextWord();
-            } else return new InvalidProcedureParametersError(name, Current);
+                Expect(")");
+            }
+
 
             Procedure proc = new Procedure(name, Args.ToArray(), Rets.ToArray(), null, isInlined);
-            Error error = RegisterProcedure(proc);
-            if(error != null) return error;
-
-            if(Current == null) return new IncompleteProcedureError(procWord, name);
-
             proc.Body = ParseCodeBlock(scope, new Scope(scope, proc), null, proc);
-
-            return null;
+            RegisterProcedure(proc);
         }
 
         private void ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
@@ -253,6 +258,7 @@ namespace IonS {
             else if(Current.Text == "!") operations.Add(new MemWriteOperation(0, Current.Position));
             else if(Current.Text == "@[]") operations.Add(new ArrayReadOperation(Current.Position));
             else if(Current.Text == "![]") operations.Add(new ArrayWriteOperation(Current.Position));
+            else if(Current.Text == "iota" || Current.Text == "reset") operations.Add(new Push_uint64_Operation(Iota(Current.Text == "reset"), Current.Position));
             else if(Utils.cttRegex.IsMatch(Current.Text)) {
                 if(!int.TryParse(Current.Text.Substring(3, Current.Text.Length - 3), out int n) || n < 1) ErrorSystem.AddError_s(new InvalidCTTIndexError(Current));
                 else operations.Add(new CTTOperation(n, Current.Position));
@@ -269,8 +275,7 @@ namespace IonS {
                     block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                     ifBlock.Conditions.Add(block);
 
-                    if(Current.Text != "if") ErrorSystem.AddError_i(new MissingIfError(Current.Position));
-                    NextWord();
+                    Expect("if");
 
                     block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                     ifBlock.Conditionals.Add(block);
@@ -294,8 +299,7 @@ namespace IonS {
                 CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 whileBlock.Condition = block;
 
-                if(Current.Type == WordType.Word && Current.Text != "do") ErrorSystem.AddError_i(new MissingDoError(Current.Position));
-                NextWord();
+                Expect("do");
 
                 block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), whileBlock, currentProcedure);
                 whileBlock.Block = block;
@@ -311,8 +315,7 @@ namespace IonS {
                 CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), doWhileBlock, currentProcedure);
                 doWhileBlock.Block = block;
 
-                if(Current.Type == WordType.Word && Current.Text != "while") ErrorSystem.AddError_i(new MissingWhileError(Current.Position));
-                NextWord();
+                Expect("while");
 
                 block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 doWhileBlock.Condition = block;
@@ -325,10 +328,9 @@ namespace IonS {
 
                 SwitchBlock switchBlock = new SwitchBlock(position);
 
-                if(Current.Type != WordType.Word || Current.Text != "{") ErrorSystem.AddError_i(new MissingOpeningBraceError(switchBlock, Current.Position));
-                NextWord();
+                Expect("{");
 
-                while(Current.Type == WordType.Word && Current.Text == "case") {
+                while(Current != null && Current.Type == WordType.Word && Current.Text == "case") {
                     NextWord();
 
                     CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
@@ -338,13 +340,12 @@ namespace IonS {
                     switchBlock.Blocks.Add(block);
                 }
 
-                if(Current.Type == WordType.Word && Current.Text == "default") {
+                if(Current != null && Current.Type == WordType.Word && Current.Text == "default") {
                     NextWord();
                     switchBlock.DefaultBlock = ParseCodeBlock(scope, new Scope(scope, currentProcedure), switchBlock, currentProcedure);
                 }
 
-                if(Current.Type != WordType.Word || Current.Text != "}") ErrorSystem.AddError_i(new MissingClosingBraceError(switchBlock, Current.Position));
-                NextWord();
+                Expect("}");
 
                 operations.Add(switchBlock);
                 return;
@@ -357,13 +358,13 @@ namespace IonS {
             } else if(Current.Text == "var") {
                 Word varWord = Current;
                 NextWord();
-                if(Current == null) ErrorSystem.AddError_i(new IncompleteVariableDeclarationError(varWord, null));
 
+                NonNull("variable identifier");
+                if(!Utils.IsValidIdentifier(Current)) ErrorSystem.AddError_i(new InvalidIdentifierError(Current));
                 Word identifier = Current;
-                if(!Utils.IsValidIdentifier(identifier)) ErrorSystem.AddError_i(new InvalidVariableIdentifierError(identifier));
-                
                 NextWord();
-                if(Current.Text == null) ErrorSystem.AddError_i(new IncompleteVariableDeclarationError(varWord, identifier));
+                
+                NonNull("variable size");
 
                 // TODO: add support for endings like K or KB or something similar
                 if(Utils.binaryRegex.IsMatch(Current.Text))                         RegisterVariable(scope, new DirectVariable(identifier, Convert.ToUInt32(Current.Text.Replace("_", ""), 2)));
@@ -405,7 +406,7 @@ namespace IonS {
                 return;
             } else if(Current.Text == "inline") {
                 NextWord();
-                if(Current.Text != "proc") ErrorSystem.AddError_i(new MissingProcAfterInlineError(Current));
+                if(Current.Text != "proc") ErrorSystem.AddError_i(new ExpectedProcAfterInlineError(Current));
                 ParseProcedure(operations, scope, breakableBlock, currentProcedure, true);
                 return;
             } else if(Current.Text == "return") {
@@ -415,27 +416,18 @@ namespace IonS {
                 Word castWord = Current;
                 NextWord();
 
-                if(Current == null) ErrorSystem.AddError_i(new IncompleteMultiCastError(castWord.Position));
-                if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidMultiCastError(castWord.Position));
+                Expect("(");
                 List<DataType> dataTypes = new List<DataType>();
-                if(Current.Text == "(") {
-                    NextWord();
-                    while(Current.Text != ")" && Current.Type == WordType.Word && Current != null) {
-                        if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidMultiCastError(castWord.Position));
+                while(Current != null && Current.Type == WordType.Word && Current.Text != ")") {
+                    if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new ExpectedError("DataType or Wildcard", Current.Position));
 
-                        if(Utils.wildcardRegex.IsMatch(Current.Text)) dataTypes.Add(DataType.I_NONE);
-                        else if(!DataType.TryParse(Current.Text, out DataType dataType)) ErrorSystem.AddError_s(new InvalidDataTypeError(Current));
-                        else dataTypes.Add(dataType);
+                    if(Utils.wildcardRegex.IsMatch(Current.Text)) dataTypes.Add(DataType.I_NONE);
+                    else if(!DataType.TryParse(Current.Text, out DataType dataType)) ErrorSystem.AddError_s(new InvalidDataTypeError(Current));
+                    else dataTypes.Add(dataType);
 
-                        NextWord();
-                    }
-                    if(Current == null) ErrorSystem.AddError_i(new IncompleteMultiCastError(castWord.Position));
-                    if(Current.Text != ")" || Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidMultiCastError(castWord.Position));
                     NextWord();
-                } else {
-                    ErrorSystem.AddError_i(new IncompleteMultiCastError(castWord.Position));
-                    return;
                 }
+                Expect(")");
 
                 operations.Add(new MultiCastOperation(dataTypes.ToArray(), castWord.Position));
                 return;
@@ -445,45 +437,39 @@ namespace IonS {
                 else operations.Add(new SingleCastOperation(dataType, Current.Position));
             } else if(Current.Text == "assert") {
                 Position assertPosition = Current.Position;
-
                 NextWord();
-                if(Current == null) ErrorSystem.AddError_i(new IncompleteAssertError(assertPosition));
+
                 CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 CodeBlock condition = block;
 
-                if(Current == null) ErrorSystem.AddError_i(new IncompleteAssertError(assertPosition));
                 block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
                 CodeBlock response = block;
                 
-                string text = assertPosition.ToString() + ": Error: Static assertion failed: ";
+                string text = assertPosition.ToString() + ": ERROR: Static assertion failed: ";
                 operations.Add(new AssertOperation(condition, response, text.Length, _strings.Count, assertPosition));
                 _strings.Add(text);
 
                 return;
-            } else if(Current.Text == "iota" || Current.Text == "reset") {
-                operations.Add(new Push_uint64_Operation(Iota(Current.Text == "reset"), Current.Position));
             } else if(Current.Text == "let" || Current.Text == "peek") {
                 Word bindWord = Current;
                 NextWord();
 
-                if(Current == null) ErrorSystem.AddError_i(new IncompleteBindingError(bindWord));
-                if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidBindingError(Current));
+                NonNull("binding");
+                if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new ExpectedError("binding", bindWord.Position));
                 List<Binding> bindings = new List<Binding>();
                 if(Current.Text == "(") {
                     NextWord();
-                    while(Current.Text != ")" && Current.Type == WordType.Word && Current != null) {
+                    while(Current != null && Current.Type == WordType.Word && Current.Text != ")") {
                         if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
-                        else if(!Utils.IsValidIdentifier(Current)) ErrorSystem.AddError_s(new InvalidBindingError(Current));
+                        else if(!Utils.IsValidIdentifier(Current)) ErrorSystem.AddError_s(new InvalidIdentifierError(Current));
                         else bindings.Add(new Binding(Current));
 
                         NextWord();
                     }
-                    if(Current == null) ErrorSystem.AddError_i(new EOFInBindingListError(bindWord));
-                    if(Current.Text != ")" || Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidBindingListError(bindWord));
-                    NextWord();
+                    Expect(")");
                 } else {
                     if(Utils.wildcardRegex.IsMatch(Current.Text)) bindings.Add(null);
-                    else if(!Utils.IsValidIdentifier(Current.Text)) ErrorSystem.AddError_s(new InvalidBindingError(Current));
+                    else if(!Utils.IsValidIdentifier(Current.Text)) ErrorSystem.AddError_s(new InvalidIdentifierError(Current));
                     else bindings.Add(new Binding(Current));
 
                     NextWord();
@@ -496,32 +482,29 @@ namespace IonS {
                 operations.Add(bindingBlock);
                 return;
             } else if(Current.Text == "struct") {
-                Word structWord = Current;
                 NextWord();
 
-                if(Current == null) ErrorSystem.AddError_i(new IncompleteStructDefinitionError(structWord));
-                if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new InvalidIdentifierError(Current));
-                Word nameWord = Current;
+                if(!Utils.IsValidIdentifier(Current)) ErrorSystem.AddError_i(new InvalidIdentifierError(Current));
+                Struct structt = new Struct(Current);
                 NextWord();
 
-                Struct structt = new Struct(nameWord);
-                while(Current != null && Current.Type == WordType.Word && Current.Text != "end") { // TODO: implement braces as block-marker for struct-definitions aswell
+                Expect("(");
+                while(Current != null && Current.Type == WordType.Word && Current.Text != ")") {
                     if(!DataType.TryParse(Current.Text, out DataType dataType)) ErrorSystem.AddError_s(new InvalidDataTypeError(Current));
                     NextWord();
 
-                    if(Current == null) ErrorSystem.AddError_i(new IncompleteStructDefinitionError(structWord));
-                    if(Current.Type != WordType.Word || Current.Text != ":") ErrorSystem.AddError_i(new MissingColonInStructDefinitionError(Current.Position));
-                    NextWord();
+                    Expect(":");
                     
-                    if(Current == null) ErrorSystem.AddError_i(new IncompleteStructDefinitionError(structWord));
+                    NonNull("struct-field identifier");
                     if(!Utils.IsValidIdentifier(Current)) ErrorSystem.AddError_s(new InvalidIdentifierError(Current));
                     else if(structt.HasField(Current.Text)) ErrorSystem.AddError_s(new StructFieldRedefinitionError(Current, structt.GetField(Current.Text).Identifier.Position));
                     else structt.AddField(new StructField(Current, dataType, structt.GetByteSize()));
                     NextWord();
                 }
-                if(Current == null || Current.Type != WordType.Word || Current.Text != "end") ErrorSystem.AddError_i(new IncompleteStructDefinitionError(structWord));
+                Expect(")");
 
                 _structs.Add(structt.Name.Text, structt);
+                return;
             } else if(Current.Text.StartsWith("sizeof(") && Current.Text.EndsWith(")")) {
                 string type = Current.Text.Substring(7, Current.Text.Length-8);
                 if(DataType.TryParse(type, out DataType dataType)) operations.Add(new Push_uint64_Operation((ulong) dataType.GetByteSize(), Current.Position));
