@@ -160,8 +160,7 @@ namespace IonS {
 
             if(Current == null) return new IncompleteProcedureError(procWord, null);
             Word name = Current;
-            // TODO: Check that the name is valid for nasm aswell
-            if(!Utils.IsValidIdentifier(name.Text)) return new InvalidProcedureNameError(name);
+            if(!Utils.IsValidIdentifier(name)) return new InvalidProcedureNameError(name);
             NextWord();
 
             if(Current == null) return new IncompleteProcedureError(procWord, name);
