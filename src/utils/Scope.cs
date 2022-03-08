@@ -4,17 +4,12 @@ namespace IonS {
 
     class Scope {
 
-        private static int nextScopeId = 0; // FIXME: remove
-        private static int ScopeId() { return nextScopeId++; }
-
         public Scope(Scope parent, Procedure procedure) {
-            Id = ScopeId();
             Parent = parent;
             Procedure = procedure;
             Variables = new Dictionary<string, Variable>();
         }
         
-        public int Id { get; }
         public Scope Parent { get; }
         public Procedure Procedure { get; }
         public Dictionary<string, Variable> Variables { get; }
