@@ -756,11 +756,11 @@ namespace IonS {
 
             DataType dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
 
             dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
 
             return contract.Provide(dataType);
         }
@@ -783,11 +783,11 @@ namespace IonS {
             
             DataType dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
 
             dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
 
             return contract.Provide(dataType);
         }
@@ -810,11 +810,11 @@ namespace IonS {
 
             DataType dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
 
             dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
 
             return contract.Provide(dataType);
         }
@@ -837,11 +837,11 @@ namespace IonS {
             
             DataType dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
             
             dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
 
             return contract.Provide(dataType);
         }
@@ -871,11 +871,11 @@ namespace IonS {
             
             DataType dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
 
             dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
             
             return contract.Provide(dataType);
         }
@@ -897,7 +897,7 @@ namespace IonS {
 
             DataType dataType = contract.Pop();
             if(!DataType.IsImplicitlyCastable(dataType, DataType.I_UINT64)) return new UnexpectedDataTypeError(dataType, DataType.I_UINT64, this);
-            if(!dataType.Equals(DataType.I_UINT64)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + DataType.I_UINT64 + " during " + this); // Error-Warning-System
+            if(!dataType.Equals(DataType.I_UINT64)) ErrorSystem.AddImplicitCastWarning(dataType, DataType.I_UINT64, this);
             
             return contract.Provide(DataType.I_UINT64);
         }
@@ -1389,7 +1389,7 @@ namespace IonS {
             if(contract.GetElementsLeft() != Proc.Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
 
             for(int i = 0; i < Proc.Rets.Length; i++) if(!DataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) {
-                if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + contract.Peek(Proc.Rets.Length-1-i) + " to " + Proc.Rets[i] + " while returning from " + Proc + " at " + this); // Error-Warning-System
+                if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) ErrorSystem.AddImplicitCastWarning(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i], this);
                 return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
             }
             contract.RemoveElements(Proc.Rets.Length, this); // Should be unnecessary

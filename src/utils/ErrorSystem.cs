@@ -22,6 +22,16 @@ namespace IonS {
             terminateAfterStep = true;
         }
 
+        // Add warning
+        public static void AddWarning(Warning warning) {
+            warnings.Add(warning);
+        }
+
+        // Add ImplicitCastWarning
+        public static void AddImplicitCastWarning(DataType from, DataType to, Operation operation) {
+            warnings.Add(new ImplicitCastWarning(from, to, operation));
+        }
+
         // Returns whether the terminateAfterStep flag has been set
         public static bool ShouldTerminateAfterStep() {
             return terminateAfterStep;
