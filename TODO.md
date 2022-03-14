@@ -1,0 +1,3 @@
+- TypeChecking Push_function_Operation has to do something similar to DirectFunctionCall for used functions
+- Implement FunctionCallOperation, so ```()``` to call the topmost element
+- Check if RetSig in DataType.FUNCTION is necessary

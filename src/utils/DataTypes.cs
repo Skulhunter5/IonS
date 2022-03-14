@@ -12,20 +12,26 @@ namespace IonS {
             Value = value;
             Kind = kind;
         }
-        public DataType(uint value, Signature signature) {
+        public DataType(uint value, Signature argSig, Signature retSig) {
             Value = value;
-            Signature = signature;
+            ArgSig = argSig;
+            RetSig = retSig;
         }
 
         public uint Value { get; }
         public DataType Kind { get; }
-        public Signature Signature { get; }
+        public Signature ArgSig { get; }
+        public Signature RetSig { get; }
 
         public override string ToString() {
             if(stringDict.ContainsKey(Value)) return stringDict[Value];
             if(Value == POINTER) {
                 if(Kind == null) return "ptr";
                 return "ptr<" + Kind + ">";
+            }
+            if(Value == FUNCTION) {
+                if(ArgSig.Size == 0 && RetSig.Size == 0) return "func";
+                return "func<" + String.Join(",", (object[]) ArgSig.Types) + "--" + String.Join(",", (object[]) RetSig.Types) + ">";
             }
             throw new NotImplementedException();
         }
@@ -36,8 +42,10 @@ namespace IonS {
             if((Kind == null && other.Kind != null) || (Kind != null && other.Kind == null)) return false;
             if(Kind != null) if(!Kind.Equals(other.Kind)) return false;
             
-            if((Signature == null && other.Signature != null) || (Signature != null && other.Signature == null)) return false;
-            if(Signature != null) if(!Signature.Equals(other.Signature)) return false;
+            if((ArgSig == null && other.ArgSig != null) || (ArgSig != null && other.ArgSig == null)) return false;
+            if(ArgSig != null) if(!ArgSig.Equals(other.ArgSig)) return false;
+            if((RetSig == null && other.RetSig != null) || (RetSig != null && other.RetSig == null)) return false;
+            if(RetSig != null) if(!RetSig.Equals(other.RetSig)) return false;
 
             return true;
         }
@@ -70,8 +78,8 @@ namespace IonS {
         public static readonly DataType I_NONE      = new DataType(DataType.NONE);
         public static readonly DataType I_BOOLEAN   = new DataType(DataType.BOOLEAN);
         public static readonly DataType I_UINT64    = new DataType(DataType.UINT64);
-        public static readonly DataType I_POINTER   = new DataType(DataType.POINTER);
-        public static readonly DataType I_FUNCTION   = new DataType(DataType.FUNCTION);
+        public static readonly DataType I_POINTER   = new DataType(DataType.POINTER, (DataType) null);
+        public static readonly DataType I_FUNCTION   = new DataType(DataType.FUNCTION, Signature.I_NONE, Signature.I_NONE);
 
         public static readonly Dictionary<string, DataType> parseDict = new Dictionary<string, DataType>() {
             {"bool",    I_BOOLEAN},
@@ -93,7 +101,7 @@ namespace IonS {
         };
 
         public static bool IsImplicitlyCastable(DataType from, DataType to) {
-            if((from.Value == FUNCTION && to.Value != FUNCTION) || (from.Value != FUNCTION && to.Value == FUNCTION)) return false;
+            if(from.Value != FUNCTION && to.Value == FUNCTION) return false;
             return true;
         }
 
@@ -109,7 +117,27 @@ namespace IonS {
                 dataType = new DataType(DataType.POINTER, kind);
                 return true;
             } else if(str.StartsWith("func<") && str.EndsWith('>')) {
-                // CWD
+                string text = str.Substring(5, str.Length-6);
+                string[] lr = text.Split("--");
+                List<DataType> args = new List<DataType>();
+                if(lr.Length > 0) foreach(string s in lr[0].Split(",")) {
+                    if(!DataType.TryParse(s, out DataType dt)) {
+                        dataType = I_NONE;
+                        return false;
+                    }
+                    args.Add(dt);
+                }
+                List<DataType> rets = new List<DataType>();
+                if(lr.Length > 1) foreach(string s in lr[1].Split(",")) {
+                    if(!DataType.TryParse(s, out DataType dt)) {
+                        dataType = I_NONE;
+                        return false;
+                    }
+                    rets.Add(dt);
+                }
+                dataType = new DataType(DataType.FUNCTION, new Signature(args), new Signature(rets));
+                Console.WriteLine(dataType);
+                return true;
             }
             dataType = I_NONE;
             return false;

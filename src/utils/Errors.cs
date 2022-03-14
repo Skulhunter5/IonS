@@ -661,6 +661,22 @@ namespace IonS {
         }
     }
 
+    // Cannot push inlined function address error
+
+    sealed class CannotPushInlinedFunctionAddressError : TypeCheckerError {
+        public CannotPushInlinedFunctionAddressError(Word name, Position position) {
+            Name = name;
+            Position = position;
+        }
+
+        public Word Name { get; }
+        public Position Position { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Can't push the address of an inlined function: " + Name.Text + " at " + Position;
+        }
+    }
+
     // Expected errors
 
     sealed class ExpectedError : TypeCheckerError {

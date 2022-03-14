@@ -4,6 +4,10 @@ using System;
 namespace IonS {
 
     class Signature {
+        private Signature() {
+            Types = new DataType[0];
+            Size = 0;
+        }
         public Signature(DataType[] types) {
             Types = types;
             Size = Types.Length;
@@ -29,6 +33,10 @@ namespace IonS {
             for(int i = 0; i < Size; i++) if(!Types[i].Equals(other.Types[i])) return false;
             return true;
         }
+
+        // STATIC
+
+        public static readonly Signature I_NONE = new Signature();
 
     }
 

@@ -85,7 +85,7 @@ namespace IonS {
         }
 
         private void RegisterFunction(Function Function) {
-            string signature = Function.ArgSig.ToString();
+            string signature = Function.ArgSig.GetTypeString();
             if(_functions.ContainsKey(Function.Name.Text)) {
                 if(_functions[Function.Name.Text].ContainsKey(signature)) {
                     ErrorSystem.AddError_s(new FunctionRedefinitionError(_functions[Function.Name.Text][signature].Name, Function.Name));
@@ -521,7 +521,7 @@ namespace IonS {
                     if(var != null) {
                         if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, scope.GetBindingOffset((Binding) var), Current.Position));
                         else operations.Add(new VariableAccessOperation(var, Current.Position));
-                    } else if(FunctionExists(Current.Text)) operations.Add(new FunctionCallOperation(Current, currentFunction, Current.Position));
+                    } else if(FunctionExists(Current.Text)) operations.Add(new DirectFunctionCallOperation(Current, currentFunction, Current.Position));
                     else {
                         if(Current.Text.StartsWith("@") || Current.Text.StartsWith("!")) { // CWDTODO: complete this step and add safeguards
                             string[] tokens = Current.Text.Substring(1).Split(".");

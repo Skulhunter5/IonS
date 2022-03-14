@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace IonS {
 
     enum OperationType {
-        Push_bool, Push_uint64, Push_ptr,
+        Push_bool, Push_uint64, Push_ptr, Push_function,
         Increment, Decrement,
         Add, Subtract, Multiply, Divide, Modulo, DivMod,
         Min, Max,
@@ -151,6 +151,63 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             return contract.Provide(DataType.I_POINTER);
+        }
+    }
+
+    sealed class Push_function_Operation : Operation { // -- n
+        public Push_function_Operation(Word name, Signature argSig, Function parentFunction, Position position) : base(OperationType.Push_ptr, position) {
+            Name = name;
+            ArgSig = argSig;
+            ParentFunction = parentFunction;
+        }
+
+        public Word Name { get; }
+        public Signature ArgSig { get; }
+        public Function Function { get; set; }
+        public Function ParentFunction { get; }
+        
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                if(Function.IsInlined) return Function.GenerateAssembly(assembler);
+                else {
+                    //    mov rax, rsp
+                    //    mov rsp, [ret_stack_rsp]
+                    //    call function_{Id}
+                    //    mov [ret_stack_rsp], rsp
+                    //    mov rsp, rax
+                    string asm = "";
+                    asm += "    mov rax, rsp\n";
+                    asm += "    mov rsp, [ret_stack_rsp]\n";
+                    asm += "    call function_" + Function.Id + "\n";
+                    asm += "    mov [ret_stack_rsp], rsp\n";
+                    asm += "    mov rsp, rax\n";
+                    return asm;
+                }
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
+            Dictionary<string, Function> overloads = context.Functions[Name.Text];
+            string signature = ArgSig.GetTypeString();
+            if(!overloads.ContainsKey(signature)) {
+                ErrorSystem.AddError_s(new UnknownFunctionOverloadError(Name));
+                return null;
+            }
+
+            Function = overloads[signature];
+
+            if(Function.IsInlined) {
+                ErrorSystem.AddError_s(new CannotPushInlinedFunctionAddressError(Name, Position));
+                return null;
+            }
+
+            if(ParentFunction == null) {
+                // Probably can't call Function.Use() directly because of future support for recursive functions
+                if(!context.UsedFunctions.Contains(Function)) context.UsedFunctions.Add(Function);
+            } else if(!ParentFunction.UsedFunctions.Contains(Function)) ParentFunction.UsedFunctions.Add(Function);
+            
+            return contract.RequireAndProvide(Function.ArgSig.Types, Function.RetSig.Types, this);
         }
     }
 
@@ -1301,8 +1358,8 @@ namespace IonS {
 
     // Function call operation
 
-    sealed class FunctionCallOperation : Operation { // args[] -- ret[]
-        public FunctionCallOperation(Word name, Function parentFunction, Position position) : base(OperationType.FunctionCall, position) {
+    sealed class DirectFunctionCallOperation : Operation { // args[] -- rets[]
+        public DirectFunctionCallOperation(Word name, Function parentFunction, Position position) : base(OperationType.FunctionCall, position) {
             Name = name;
             ParentFunction = parentFunction;
         }
@@ -1360,6 +1417,48 @@ namespace IonS {
             if(Function == null) return new UnknownFunctionOverloadError(Name);
 
             return contract.RequireAndProvide(Function.ArgSig.Types, Function.RetSig.Types, this);
+        }
+    }
+
+    sealed class FunctionCallOperation : Operation { // args[] func -- rets[]
+        public FunctionCallOperation(Position position) : base(OperationType.FunctionCall, position) {}
+
+        public Signature ArgSig { get; set; }
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    mov rax, rsp
+                //    mov rsp, [ret_stack_rsp]
+                //    pop rbx
+                //    call rbx
+                //    mov [ret_stack_rsp], rsp
+                //    mov rsp, rax
+                string asm = "";
+                asm += "    mov rax, rsp\n";
+                asm += "    mov rsp, [ret_stack_rsp]\n";
+                asm += "    pop rbx\n";
+                asm += "    call rbx\n";
+                asm += "    mov [ret_stack_rsp], rsp\n";
+                asm += "    mov rsp, rax\n";
+                return asm;
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
+
+            DataType dataType = contract.Pop();
+            if(dataType.Value != DataType.FUNCTION) return new UnexpectedDataTypeError(dataType, DataType.I_FUNCTION, this);
+
+            ArgSig = dataType.ArgSig;
+
+            if(ArgSig.Size > 0) {
+                Error error = contract.Require(ArgSig.Types, this);
+                if(error != null) return error;
+            }
+
+            return null;
         }
     }
 
