@@ -16,6 +16,7 @@
 - REWORK THE IMPLICIT CAST SYSTEM (e.g. everything can be cast to boolean without a warning (at least for an if, while, ...))
 
 # TODO
+- Use the ErrorSystem everywhere
 - Create a signature class and create a call operation like ```(n)``` \
 create Signatures, DataType.FUNCTION and call ```ptr<func<Signature>>``` | create DataType.Address and make them callable \
 maybe add capability of unknown number of arguments at compiletime with ```(...)```
