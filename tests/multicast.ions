@@ -1,7 +1,7 @@
 12345
 
-inline proc bool. ( bool ) { cast(uint64) . }
-inline proc ptr. ( ptr ) { cast(uint64) . }
+inline function bool. ( bool ) { cast(uint64) . }
+inline function ptr. ( ptr ) { cast(uint64) . }
 
 1 cast(uint64)
 1 cast(uint64)

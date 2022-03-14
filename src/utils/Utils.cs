@@ -42,7 +42,7 @@ namespace IonS {
             "#include",
             "here", "chere",
             "{", "}",
-            "proc", "return", "inline",
+            "function", "return", "inline",
             "assert",
             "iota", "reset",
             "argc", "argv",

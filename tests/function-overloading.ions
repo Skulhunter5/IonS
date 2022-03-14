@@ -1,10 +1,10 @@
 #include "./../std/std.ions"
 
-proc a ( uint64 -- bool ) {
+function a ( uint64 -- bool ) {
     drop true
 }
 
-proc a ( ptr -- bool ) {
+function a ( ptr -- bool ) {
     drop false
 }
 

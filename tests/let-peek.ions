@@ -2,7 +2,7 @@
 
 12345
 
-proc test ( uint64 uint64 uint64 ) {
+function test ( uint64 uint64 uint64 ) {
     69 69
     rrot5 rrot5
     let ( c d e ) {

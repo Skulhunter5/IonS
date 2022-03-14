@@ -5,13 +5,13 @@ namespace IonS {
 
     class TypeCheckContext {
 
-        public TypeCheckContext(Dictionary<string, Dictionary<string, Procedure>> procedures) {
-            Procedures = procedures;
-            UsedProcedures = new List<Procedure>();
+        public TypeCheckContext(Dictionary<string, Dictionary<string, Function>> functions) {
+            Functions = functions;
+            UsedFunctions = new List<Function>();
         }
 
-        public Dictionary<string, Dictionary<string, Procedure>> Procedures { get; }
-        public List<Procedure> UsedProcedures { get; }
+        public Dictionary<string, Dictionary<string, Function>> Functions { get; }
+        public List<Function> UsedFunctions { get; }
 
     }
 

@@ -29,80 +29,80 @@
 #macro PROT_WRITE 0x2
 #macro PROT_EXEC 0x4
 
-inline proc fputs ( uint64 ptr uint64 -- uint64 ) {
+inline function fputs ( uint64 ptr uint64 -- uint64 ) {
     SYS_write syscall3
 }
 
-inline proc fstat ( ptr uint64 -- uint64 ) {
+inline function fstat ( ptr uint64 -- uint64 ) {
     SYS_fstat syscall2
 }
 
-inline proc brk ( ptr -- ptr ) {
+inline function brk ( ptr -- ptr ) {
     SYS_brk syscall1
 }
 
-inline proc openat ( uint64 ptr uint64 uint64 -- uint64 ) {
+inline function openat ( uint64 ptr uint64 uint64 -- uint64 ) {
     SYS_openat syscall4
 }
 
-inline proc puts ( uint64 ptr ) {
+inline function puts ( uint64 ptr ) {
     STDOUT fputs drop
 }
 
-inline proc eputs ( uint64 ptr ) {
+inline function eputs ( uint64 ptr ) {
     STDERR fputs drop
 }
 
-inline proc putc ( ptr ) {
+inline function putc ( ptr ) {
     1 swap puts
 }
 
-proc putb ( bool ) {
+function putb ( bool ) {
     if "true"
     else "false"
     puts
 }
 
-inline proc ptr. ( ptr ) {
+inline function ptr. ( ptr ) {
     cast(uint64) .
 }
-inline proc bool. ( bool ) {
+inline function bool. ( bool ) {
     cast(uint64) .
 }
 
-inline proc ptr== ( ptr ptr -- bool ) {
+inline function ptr== ( ptr ptr -- bool ) {
     cast ( uint64 uint64 ) ==
 }
 
-inline proc !ptr ( ptr ptr ) {
+inline function !ptr ( ptr ptr ) {
     cast ( uint64 ptr ) !64
 }
-inline proc @ptr ( ptr -- ptr ) {
+inline function @ptr ( ptr -- ptr ) {
     @64 cast(ptr)
 }
 
-inline proc ptr+ ( ptr uint64 -- ptr ) {
+inline function ptr+ ( ptr uint64 -- ptr ) {
     cast ( uint64 uint64 ) + cast(ptr)
 }
-inline proc ptr+ ( ptr ptr -- ptr ) {
+inline function ptr+ ( ptr ptr -- ptr ) {
     cast ( uint64 uint64 ) + cast(ptr)
 }
-inline proc ptr+ ( uint64 ptr -- ptr ) {
+inline function ptr+ ( uint64 ptr -- ptr ) {
     cast ( uint64 uint64 ) + cast(ptr)
 }
 
-proc !Str ( uint64 ptr ptr ) {
+function !Str ( uint64 ptr ptr ) {
     rot over !64
     cast(uint64) 8 + cast(ptr)
     swap cast(uint64) swap !64
 }
-proc @Str ( ptr -- uint64 ptr ) {
+function @Str ( ptr -- uint64 ptr ) {
     dup @64
     swap
     cast(uint64) 8 + cast(ptr) @64
 }
 
-proc cstrlen ( ptr -- uint64 ) {
+function cstrlen ( ptr -- uint64 ) {
     cast(uint64)
 	dup
 	while { dup cast(ptr) @8 cast(bool) } do {
@@ -111,44 +111,44 @@ proc cstrlen ( ptr -- uint64 ) {
 	swap -
 }
 
-inline proc cstr-to-str ( ptr -- uint64 ptr ) {
+inline function cstr-to-str ( ptr -- uint64 ptr ) {
     dup cstrlen swap
 }
 
-inline proc cputs ( ptr ) {
+inline function cputs ( ptr ) {
 	dup cstrlen swap puts
 }
 
-inline proc clamp ( uint64 uint64 uint64 -- uint64 ) {
+inline function clamp ( uint64 uint64 uint64 -- uint64 ) {
     rot min max
 }
 
-inline proc inc8 ( ptr ) {
+inline function inc8 ( ptr ) {
 	dup @8 ++ swap !8
 }
-inline proc dec8 ( ptr ) {
+inline function dec8 ( ptr ) {
 	dup @8 -- swap !8
 }
-inline proc inc16 ( ptr ) {
+inline function inc16 ( ptr ) {
 	dup @16 ++ swap !16
 }
-inline proc dec16 ( ptr ) {
+inline function dec16 ( ptr ) {
 	dup @16 -- swap !16
 }
-inline proc inc32 ( ptr ) {
+inline function inc32 ( ptr ) {
 	dup @32 ++ swap !32
 }
-inline proc dec32 ( ptr ) {
+inline function dec32 ( ptr ) {
 	dup @32 -- swap !32
 }
-inline proc inc64 ( ptr ) {
+inline function inc64 ( ptr ) {
 	dup @64 ++ swap !64
 }
-inline proc dec64 ( ptr ) {
+inline function dec64 ( ptr ) {
 	dup @64 -- swap !64
 }
 
-proc streq ( uint64 ptr uint64 ptr -- bool ) {
+function streq ( uint64 ptr uint64 ptr -- bool ) {
     let ( n s1 m s2 ) {
         n m != if { false return }
 
@@ -166,11 +166,11 @@ proc streq ( uint64 ptr uint64 ptr -- bool ) {
     true
 }
 
-proc cstreq ( ptr ptr -- bool ) {
+function cstreq ( ptr ptr -- bool ) {
 	dup cstrlen swap rot dup cstrlen swap streq
 }
 
-proc isAlpha ( uint64 -- bool ) {
+function isAlpha ( uint64 -- bool ) {
     dup 65 < swap
     dup 122 > rot || swap
     dup 90 > swap
@@ -178,19 +178,19 @@ proc isAlpha ( uint64 -- bool ) {
     && || not
 }
 
-proc isDigit ( uint64 -- bool ) {
+function isDigit ( uint64 -- bool ) {
     dup 48 < swap
     57 >
     || not
 }
 
-proc isAlnum ( uint64 -- bool ) {
+function isAlnum ( uint64 -- bool ) {
     dup isAlpha swap
     isDigit
     ||
 }
 
-proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
+function str-startswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap rrot
     2dup > if {
         2drop 2drop
@@ -200,7 +200,7 @@ proc str-startswith ( uint64 ptr uint64 ptr -- bool ) {
     streq
 }
 
-proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
+function str-endswith ( uint64 ptr uint64 ptr -- bool ) {
     swap 2swap rrot
     2dup > if {
         2drop 2drop
@@ -212,7 +212,7 @@ proc str-endswith ( uint64 ptr uint64 ptr -- bool ) {
     streq
 }
 
-proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it going over the maximum uint64 value
+function try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it going over the maximum uint64 value
     rrot swap
     dup 20 > if {
         2drop drop
@@ -236,7 +236,7 @@ proc try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it going over th
     true return
 }
 
-proc memcpy8 ( ptr ptr uint64 ) {
+function memcpy8 ( ptr ptr uint64 ) {
     rrot swap rot
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
@@ -248,7 +248,7 @@ proc memcpy8 ( ptr ptr uint64 ) {
     2drop 2drop
 }
 
-proc memcpy16 ( ptr ptr uint64 ) {
+function memcpy16 ( ptr ptr uint64 ) {
     rrot swap rot
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
@@ -260,7 +260,7 @@ proc memcpy16 ( ptr ptr uint64 ) {
     2drop 2drop
 }
 
-proc memcpy32 ( ptr ptr uint64 ) {
+function memcpy32 ( ptr ptr uint64 ) {
     rrot swap rot
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
@@ -272,7 +272,7 @@ proc memcpy32 ( ptr ptr uint64 ) {
     2drop 2drop
 }
 
-proc memcpy64 ( ptr ptr uint64 ) {
+function memcpy64 ( ptr ptr uint64 ) {
     rrot swap rot
     0 while { 2dup > } do {
         rot 2dup cast(uint64) +
@@ -284,7 +284,7 @@ proc memcpy64 ( ptr ptr uint64 ) {
     2drop 2drop
 }
 
-proc memcpy ( ptr ptr uint64 ) {
+function memcpy ( ptr ptr uint64 ) {
     cast ( uint64 uint64 _ )
     8 /% swap 8 *
     swap over
@@ -296,7 +296,7 @@ proc memcpy ( ptr ptr uint64 ) {
     memcpy64
 }
 
-proc strcat ( uint64 ptr uint64 ptr ptr -- uint64 ptr ) {
+function strcat ( uint64 ptr uint64 ptr ptr -- uint64 ptr ) {
     ctt4 over ctt7 memcpy
     2dup cast(uint64) ctt7 + cast(ptr) ctt5 memcpy
     rrot5 drop swap drop + swap

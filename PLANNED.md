@@ -24,7 +24,7 @@ maybe add capability of unknown number of arguments at compiletime with ```(...)
 - Rework which errors are instantly terminal and which aren't (see Invalid...Error)
 - Generalize incomplete block detection (create new function with block-start as parameter, check if the next word == null; if so, throw error, otherwise just return the text of that word/that word)
 - check that variable names are actually valid (correct and normalize invalid identifier errors)
-- check for duplicate identifier usage (also cross-reference between e.g. variables and procedures (maybe store all used identifiers in one List/Dictionary/HashSet/...))
+- check for duplicate identifier usage (also cross-reference between e.g. variables and functions (maybe store all used identifiers in one List/Dictionary/HashSet/...))
 - normalize Incomplete/EOF errors
 - make signature errors more readable
 - normalize some parsing-steps (like generalizing: *keyword* *identifier*)

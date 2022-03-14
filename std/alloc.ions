@@ -1,6 +1,6 @@
 #include "./../std/std.ions"
 
-inline proc isNegative ( uint64 -- bool ) { // TODO: implement signed numbers and signed comparisons
+inline function isNegative ( uint64 -- bool ) { // TODO: implement signed numbers and signed comparisons
     0b1000000000000000000000000000000000000000000000000000000000000000 & 0 >
 }
 
@@ -10,31 +10,31 @@ struct alloc_info
     uint64 : size
 end
 
-/* inline proc alloc_info.flags ( -- uint64 ) {
+/* inline function alloc_info.flags ( -- uint64 ) {
     0
 }
-inline proc !alloc_info.flags ( uint64 ptr ) {
+inline function !alloc_info.flags ( uint64 ptr ) {
     !64
 }
-inline proc @alloc_info.flags ( ptr -- uint64 ) {
+inline function @alloc_info.flags ( ptr -- uint64 ) {
     @64
 }
-inline proc alloc_info.base ( -- uint64 ) {
+inline function alloc_info.base ( -- uint64 ) {
     8
 }
-inline proc !alloc_info.base ( ptr ptr ) {
+inline function !alloc_info.base ( ptr ptr ) {
     8 ptr+ !ptr
 }
-inline proc @alloc_info.base ( ptr -- ptr ) {
+inline function @alloc_info.base ( ptr -- ptr ) {
     8 ptr+ @ptr
 }
-inline proc alloc_info.size ( -- uint64 ) {
+inline function alloc_info.size ( -- uint64 ) {
     16
 }
-inline proc !alloc_info.size ( uint64 ptr ) {
+inline function !alloc_info.size ( uint64 ptr ) {
     16 ptr+ !64
 }
-inline proc @alloc_info.size ( ptr -- uint64 ) {
+inline function @alloc_info.size ( ptr -- uint64 ) {
     16 ptr+ @64
 } */
 
@@ -47,7 +47,7 @@ var next_base 8
 var tbl_entries 8
 var space_left 8
 
-proc alloc ( uint64 -- ptr ) {
+function alloc ( uint64 -- ptr ) {
     let ( size ) {
         space_left @64 size - dup isNegative swap 0 == || if {
             null return
@@ -78,7 +78,7 @@ proc alloc ( uint64 -- ptr ) {
     }
 }
 
-proc find_entry ( ptr -- ptr ) {
+function find_entry ( ptr -- ptr ) {
     let ( base ) {
         0 while { dup tbl_entries @64 < } do {
             alloc_tbl @ptr over 24 * ptr+
@@ -91,7 +91,7 @@ proc find_entry ( ptr -- ptr ) {
     }
 }
 
-proc realloc ( ptr uint64 -- ptr ) {
+function realloc ( ptr uint64 -- ptr ) {
     let ( base size ) {
         base find_entry
 
@@ -117,11 +117,11 @@ proc realloc ( ptr uint64 -- ptr ) {
     }
 }
 
-proc free ( ptr ) {
+function free ( ptr ) {
     find_entry ENTRY_BEEN_USED swap !alloc_info.flags
 }
 
-proc init_alloc ( ptr uint64 uint64 -- bool ) { // TODO: implement safeguard if n is too large for the given size
+function init_alloc ( ptr uint64 uint64 -- bool ) { // TODO: implement safeguard if n is too large for the given size
     let ( base size n ) {
         n 24 * size > if { false return }
         

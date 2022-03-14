@@ -4,14 +4,14 @@ namespace IonS {
 
     class Scope {
 
-        public Scope(Scope parent, Procedure procedure) {
+        public Scope(Scope parent, Function function) {
             Parent = parent;
-            Procedure = procedure;
+            Function = function;
             Variables = new Dictionary<string, Variable>();
         }
         
         public Scope Parent { get; }
-        public Procedure Procedure { get; }
+        public Function Function { get; }
         public Dictionary<string, Variable> Variables { get; }
 
         public virtual bool RegisterVariable(Variable var) {
@@ -44,7 +44,7 @@ namespace IonS {
 
     class BindingScope : Scope {
 
-        public BindingScope(Scope parent, Procedure procedure, List<Binding> bindingsList) : base(parent, procedure) {
+        public BindingScope(Scope parent, Function Function, List<Binding> bindingsList) : base(parent, Function) {
             Bindings = new Dictionary<string, Binding>();
             BindingsList = bindingsList;
             for(int i = 0; i < bindingsList.Count; i++) if(bindingsList[i] != null) Bindings.Add(bindingsList[i].Identifier.Text, bindingsList[i]);

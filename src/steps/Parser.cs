@@ -5,17 +5,17 @@ using System.Collections.Generic;
 namespace IonS {
 
     class ParseResult {
-        public ParseResult(CodeBlock root, List<string> strings, List<Variable> variables, Dictionary<string, Dictionary<string, Procedure>> procedures) {
+        public ParseResult(CodeBlock root, List<string> strings, List<Variable> variables, Dictionary<string, Dictionary<string, Function>> functions) {
             Root = root;
             Strings = strings;
             Variables = variables;
-            Procedures = procedures;
+            Functions = functions;
         }
 
         public CodeBlock Root { get; }
         public List<string> Strings { get; }
         public List<Variable> Variables { get; }
-        public Dictionary<string, Dictionary<string, Procedure>> Procedures { get; }
+        public Dictionary<string, Dictionary<string, Function>> Functions { get; }
 
     }
 
@@ -25,7 +25,7 @@ namespace IonS {
         private List<Word> _words;
         private int _position;
 
-        private Dictionary<string, Dictionary<string, Procedure>> _procs;
+        private Dictionary<string, Dictionary<string, Function>> _functions;
         private Dictionary<string, Struct> _structs;
         private List<Variable> _vars;
         private List<string> _strings;
@@ -80,36 +80,36 @@ namespace IonS {
 
         private void RegisterVariable(Scope scope, Variable var) {
             if(!scope.RegisterVariable(var)) return;
-            if(scope.Procedure == null) _vars.Add(var);
-            else scope.Procedure.Variables.Add(var);
+            if(scope.Function == null) _vars.Add(var);
+            else scope.Function.Variables.Add(var);
         }
 
-        private void RegisterProcedure(Procedure procedure) {
-            string signature = procedure.GetArgsSignature();
-            if(_procs.ContainsKey(procedure.Name.Text)) {
-                if(_procs[procedure.Name.Text].ContainsKey(signature)) {
-                    ErrorSystem.AddError_s(new ProcedureRedefinitionError(_procs[procedure.Name.Text][signature].Name, procedure.Name));
+        private void RegisterFunction(Function Function) {
+            string signature = Function.ArgSig.ToString();
+            if(_functions.ContainsKey(Function.Name.Text)) {
+                if(_functions[Function.Name.Text].ContainsKey(signature)) {
+                    ErrorSystem.AddError_s(new FunctionRedefinitionError(_functions[Function.Name.Text][signature].Name, Function.Name));
                     return;
                 }
-            } else _procs.Add(procedure.Name.Text, new Dictionary<string, Procedure>());
-            _procs[procedure.Name.Text].Add(signature, procedure);
+            } else _functions.Add(Function.Name.Text, new Dictionary<string, Function>());
+            _functions[Function.Name.Text].Add(signature, Function);
         }
 
-        private bool ProcedureExists(string name) {
-            if(!_procs.ContainsKey(name)) return false;
+        private bool FunctionExists(string name) {
+            if(!_functions.ContainsKey(name)) return false;
             return true;
         }
-        private bool ProcedureExists(string name, string signature) { // CHECKIFNECESSARY
-            if(!_procs.ContainsKey(name)) return false;
-            if(!_procs[name].ContainsKey(signature)) return false;
+        private bool FunctionExists(string name, string signature) { // CHECKIFNECESSARY
+            if(!_functions.ContainsKey(name)) return false;
+            if(!_functions[name].ContainsKey(signature)) return false;
             return true;
         }
 
-        private void UseProcedure(Procedure currentProcedure, Procedure procedure) {
-            if(currentProcedure == null) {
-                procedure.IsUsed = true;
-                foreach(Procedure proc in procedure.UsedProcedures) proc.IsUsed = true;
-            } else if(!currentProcedure.UsedProcedures.Contains(procedure)) currentProcedure.UsedProcedures.Add(procedure);
+        private void UseFunction(Function currentFunction, Function Function) {
+            if(currentFunction == null) {
+                Function.IsUsed = true;
+                foreach(Function function in Function.UsedFunctions) function.IsUsed = true;
+            } else if(!currentFunction.UsedFunctions.Contains(Function)) currentFunction.UsedFunctions.Add(Function);
         }
 
         private Operation RegisterString(string text) {
@@ -133,7 +133,7 @@ namespace IonS {
             return Current.Text == "}" && Current.Type == WordType.Word;
         }
 
-        private CodeBlock ParseCodeBlock(Scope parentScope, Scope newScope, BreakableBlock breakableBlock, Procedure currentProcedure) {
+        private CodeBlock ParseCodeBlock(Scope parentScope, Scope newScope, BreakableBlock breakableBlock, Function currentFunction) {
             bool root = parentScope == null;
             CodeBlock block = new CodeBlock(newScope, Current != null ? Current.Position : null); // TODO: check if last null can be replaced with 'new Position(_source, 1, 1)'
             
@@ -151,7 +151,7 @@ namespace IonS {
                 if(IsBraceOpen() && !root) NextWord();
                 while(Current != null && (!IsBraceClose() || root)) {
                     if(IsBraceClose()) break;
-                    ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
+                    ParseOperation(block.Operations, block.Scope, breakableBlock, currentFunction);
                 }
                 if(!root) {
                     block.End = Current.Position;
@@ -159,23 +159,23 @@ namespace IonS {
                 }
             } else {
                 block.End = Current.Position;
-                ParseOperation(block.Operations, block.Scope, breakableBlock, currentProcedure);
+                ParseOperation(block.Operations, block.Scope, breakableBlock, currentFunction);
             }
             return block;
         }
 
-        private void ParseProcedure(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure, bool isInlined) {
-            if(currentProcedure != null || scope.Parent != null) ErrorSystem.AddError_i(new ProcedureNotInGlobalScopeError(Current.Position));
-            Word procWord = Current;
+        private void ParseFunction(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Function currentFunction, bool isInlined) {
+            if(currentFunction != null || scope.Parent != null) ErrorSystem.AddError_i(new FunctionNotInGlobalScopeError(Current.Position));
+            Word functionWord = Current;
             NextWord();
 
-            NonNull("procedure identifier");
+            NonNull("Function identifier");
             Word name = Current;
             if(!Utils.IsValidIdentifier(name)) ErrorSystem.AddError_i(new InvalidIdentifierError(name));
             NextWord();
 
-            NonNull("procedure parameters");
-            if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new ExpectedError("procedure parameters", Current.Position));
+            NonNull("Function parameters");
+            if(Current.Type != WordType.Word) ErrorSystem.AddError_i(new ExpectedError("Function parameters", Current.Position));
 
             bool dir = false;
             List<DataType> Args = new List<DataType>();
@@ -198,12 +198,12 @@ namespace IonS {
             }
 
 
-            Procedure proc = new Procedure(name, Args.ToArray(), Rets.ToArray(), null, isInlined);
-            proc.Body = ParseCodeBlock(scope, new Scope(scope, proc), null, proc);
-            RegisterProcedure(proc);
+            Function function = new Function(name, Args.ToArray(), Rets.ToArray(), null, isInlined);
+            function.Body = ParseCodeBlock(scope, new Scope(scope, function), null, function);
+            RegisterFunction(function);
         }
 
-        private void ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Procedure currentProcedure) {
+        private void ParseOperation(List<Operation> operations, Scope scope, BreakableBlock breakableBlock, Function currentFunction) {
             if(Current.Type == WordType.String) {
                 StringWord stringWord = (StringWord) Current;
                 if(stringWord.StringType == "") operations.Add(RegisterString(Current.Text));
@@ -266,25 +266,25 @@ namespace IonS {
                 Position position = Current.Position;
                 NextWord();
 
-                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                 IfBlock ifBlock = new IfBlock(block, null, position);
 
                 while(Current != null && Current.Type == WordType.Word && Current.Text == "else*") {
                     NextWord();
 
-                    block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                    block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                     ifBlock.Conditions.Add(block);
 
                     Expect("if");
 
-                    block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                    block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                     ifBlock.Conditionals.Add(block);
                 }
 
                 if(Current != null && Current.Type == WordType.Word && Current.Text == "else") {
                     NextWord();
 
-                    block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                    block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                     ifBlock.BlockElse = block;
                 }
 
@@ -296,12 +296,12 @@ namespace IonS {
 
                 WhileBlock whileBlock = new WhileBlock(null, null, position);
 
-                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                 whileBlock.Condition = block;
 
                 Expect("do");
 
-                block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), whileBlock, currentProcedure);
+                block = ParseCodeBlock(scope, new Scope(scope, currentFunction), whileBlock, currentFunction);
                 whileBlock.Block = block;
 
                 operations.Add(whileBlock);
@@ -312,12 +312,12 @@ namespace IonS {
 
                 DoWhileBlock doWhileBlock = new DoWhileBlock(null, null, position);
 
-                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), doWhileBlock, currentProcedure);
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentFunction), doWhileBlock, currentFunction);
                 doWhileBlock.Block = block;
 
                 Expect("while");
 
-                block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                 doWhileBlock.Condition = block;
 
                 operations.Add(doWhileBlock);
@@ -333,16 +333,16 @@ namespace IonS {
                 while(Current != null && Current.Type == WordType.Word && Current.Text == "case") {
                     NextWord();
 
-                    CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                    CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                     switchBlock.Cases.Add(block);
 
-                    block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), switchBlock, currentProcedure);
+                    block = ParseCodeBlock(scope, new Scope(scope, currentFunction), switchBlock, currentFunction);
                     switchBlock.Blocks.Add(block);
                 }
 
                 if(Current != null && Current.Type == WordType.Word && Current.Text == "default") {
                     NextWord();
-                    switchBlock.DefaultBlock = ParseCodeBlock(scope, new Scope(scope, currentProcedure), switchBlock, currentProcedure);
+                    switchBlock.DefaultBlock = ParseCodeBlock(scope, new Scope(scope, currentFunction), switchBlock, currentFunction);
                 }
 
                 Expect("}");
@@ -398,20 +398,20 @@ namespace IonS {
                 if(!int.TryParse(argcStr, out int argc) || argc > 6 || argc < 0) ErrorSystem.AddError_s(new InvalidSyscallArgcError(argcStr, new Position(Current.Position.File, Current.Position.Line, Current.Position.Column + 7)));
                 operations.Add(new SyscallOperation(argc, Current.Position));
             } else if(IsBraceOpen()) {
-                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                 operations.Add(block);
                 return;
-            } else if(Current.Text == "proc") {
-                ParseProcedure(operations, scope, breakableBlock, currentProcedure, false);
+            } else if(Current.Text == "function") {
+                ParseFunction(operations, scope, breakableBlock, currentFunction, false);
                 return;
             } else if(Current.Text == "inline") {
                 NextWord();
-                if(Current.Text != "proc") ErrorSystem.AddError_i(new ExpectedProcAfterInlineError(Current));
-                ParseProcedure(operations, scope, breakableBlock, currentProcedure, true);
+                if(Current.Text != "function") ErrorSystem.AddError_i(new ExpectedFunctionAfterInlineError(Current));
+                ParseFunction(operations, scope, breakableBlock, currentFunction, true);
                 return;
             } else if(Current.Text == "return") {
-                if(currentProcedure == null) ErrorSystem.AddError_s(new ReturnOutsideProcedureError(Current.Position));
-                operations.Add(new ReturnOperation(currentProcedure, scope, Current.Position));
+                if(currentFunction == null) ErrorSystem.AddError_s(new ReturnOutsideFunctionError(Current.Position));
+                operations.Add(new ReturnOperation(currentFunction, scope, Current.Position));
             } else if(Current.Text == "cast") {
                 Word castWord = Current;
                 NextWord();
@@ -439,10 +439,10 @@ namespace IonS {
                 Position assertPosition = Current.Position;
                 NextWord();
 
-                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                CodeBlock block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                 CodeBlock condition = block;
 
-                block = ParseCodeBlock(scope, new Scope(scope, currentProcedure), breakableBlock, currentProcedure);
+                block = ParseCodeBlock(scope, new Scope(scope, currentFunction), breakableBlock, currentFunction);
                 CodeBlock response = block;
                 
                 string text = assertPosition.ToString() + ": ERROR: Static assertion failed: ";
@@ -475,8 +475,8 @@ namespace IonS {
                     NextWord();
                 }
 
-                BindingScope bindingScope = new BindingScope(scope, currentProcedure, bindings);
-                CodeBlock block = ParseCodeBlock(scope, bindingScope, breakableBlock, currentProcedure);
+                BindingScope bindingScope = new BindingScope(scope, currentFunction, bindings);
+                CodeBlock block = ParseCodeBlock(scope, bindingScope, breakableBlock, currentFunction);
                 BindingBlock bindingBlock = new BindingBlock(bindingScope, block, bindWord.Text == "let" ? BindingType.Let : BindingType.Peek, bindWord.Position);
 
                 operations.Add(bindingBlock);
@@ -521,7 +521,7 @@ namespace IonS {
                     if(var != null) {
                         if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, scope.GetBindingOffset((Binding) var), Current.Position));
                         else operations.Add(new VariableAccessOperation(var, Current.Position));
-                    } else if(ProcedureExists(Current.Text)) operations.Add(new ProcedureCallOperation(Current, currentProcedure, Current.Position));
+                    } else if(FunctionExists(Current.Text)) operations.Add(new FunctionCallOperation(Current, currentFunction, Current.Position));
                     else {
                         if(Current.Text.StartsWith("@") || Current.Text.StartsWith("!")) { // CWDTODO: complete this step and add safeguards
                             string[] tokens = Current.Text.Substring(1).Split(".");
@@ -557,7 +557,7 @@ namespace IonS {
             if(ErrorSystem.ShouldTerminateAfterStep()) ErrorSystem.WriteAndExit();
             _words = words;
 
-            _procs = new Dictionary<string, Dictionary<string, Procedure>>();
+            _functions = new Dictionary<string, Dictionary<string, Function>>();
             _structs = new Dictionary<string, Struct>();
             _vars = new List<Variable>();
             _strings = new List<string>();
@@ -565,17 +565,17 @@ namespace IonS {
             // Actual parsing
             CodeBlock root = ParseCodeBlock(null, new Scope(null, null), null, null);
 
-            new TypeChecker(root, _procs).run();
+            new TypeChecker(root, _functions).run();
             if(ErrorSystem.ShouldTerminateAfterStep()) ErrorSystem.WriteAndExit();
 
-            foreach(string name in _procs.Keys) {
-                Dictionary<string, Procedure> overloads = _procs[name];
+            foreach(string name in _functions.Keys) {
+                Dictionary<string, Function> overloads = _functions[name];
                 foreach(string signature in overloads.Keys) if(overloads[signature].IsInlined) overloads.Remove(signature);
             }
             
-            new Optimizer(root, _procs).run();
+            new Optimizer(root, _functions).run();
 
-            return new ParseResult(root, _strings, _vars, _procs);
+            return new ParseResult(root, _strings, _vars, _functions);
         }
 
     }

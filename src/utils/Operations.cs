@@ -26,7 +26,7 @@ namespace IonS {
         Block,
         Break, Continue,
 
-        ProcedureCall, Return,
+        FunctionCall, Return,
 
         Assert,
 
@@ -1299,31 +1299,31 @@ namespace IonS {
         }
     }
 
-    // Procedure call operation
+    // Function call operation
 
-    sealed class ProcedureCallOperation : Operation { // args[] -- ret[]
-        public ProcedureCallOperation(Word name, Procedure parentProcedure, Position position) : base(OperationType.ProcedureCall, position) {
+    sealed class FunctionCallOperation : Operation { // args[] -- ret[]
+        public FunctionCallOperation(Word name, Function parentFunction, Position position) : base(OperationType.FunctionCall, position) {
             Name = name;
-            ParentProcedure = parentProcedure;
+            ParentFunction = parentFunction;
         }
 
         public Word Name { get; }
-        public Procedure ParentProcedure { get; }
-        public Procedure Proc { get; set; }
+        public Function ParentFunction { get; }
+        public Function Function { get; set; }
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                if(Proc.IsInlined) return Proc.GenerateAssembly(assembler);
+                if(Function.IsInlined) return Function.GenerateAssembly(assembler);
                 else {
                     //    mov rax, rsp
                     //    mov rsp, [ret_stack_rsp]
-                    //    call proc_{Id}
+                    //    call function_{Id}
                     //    mov [ret_stack_rsp], rsp
                     //    mov rsp, rax
                     string asm = "";
                     asm += "    mov rax, rsp\n";
                     asm += "    mov rsp, [ret_stack_rsp]\n";
-                    asm += "    call proc_" + Proc.Id + "\n";
+                    asm += "    call function_" + Function.Id + "\n";
                     asm += "    mov [ret_stack_rsp], rsp\n";
                     asm += "    mov rsp, rax\n";
                     return asm;
@@ -1333,66 +1333,66 @@ namespace IonS {
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            Dictionary<string, Procedure> overloads = context.Procedures[Name.Text];
+            Dictionary<string, Function> overloads = context.Functions[Name.Text];
             foreach(string name in overloads.Keys) {
-                Procedure proc = overloads[name];
+                Function function = overloads[name];
 
-                if(contract.GetElementsLeft() < proc.Args.Length) continue;
+                if(contract.GetElementsLeft() < function.ArgSig.Size) continue;
 
                 bool compatible = true;
-                for(int i = 0; i < proc.Args.Length; i++) {
-                    if(contract.Peek(i) != proc.Args[proc.Args.Length-1-i]) {
+                for(int i = 0; i < function.ArgSig.Size; i++) {
+                    if(contract.Peek(i) != function.ArgSig.Types[function.ArgSig.Size-1-i]) {
                         compatible = false;
                         break;
                     }
                 }
                 if(!compatible) continue;
 
-                Proc = proc;
-                if(ParentProcedure == null) {
-                    // Probably can't call Proc.Use() directly because of future support for recursive functions
-                    if(!context.UsedProcedures.Contains(Proc)) context.UsedProcedures.Add(Proc);
-                } else if(!ParentProcedure.UsedProcedures.Contains(Proc)) ParentProcedure.UsedProcedures.Add(Proc);
+                Function = function;
+                if(ParentFunction == null) {
+                    // Probably can't call Function.Use() directly because of future support for recursive functions
+                    if(!context.UsedFunctions.Contains(Function)) context.UsedFunctions.Add(Function);
+                } else if(!ParentFunction.UsedFunctions.Contains(Function)) ParentFunction.UsedFunctions.Add(Function);
 
                 break;
             }
 
-            if(Proc == null) return new UnknownProcedureOverloadError(Name);
+            if(Function == null) return new UnknownFunctionOverloadError(Name);
 
-            return contract.RequireAndProvide(Proc.Args, Proc.Rets, this);
+            return contract.RequireAndProvide(Function.ArgSig.Types, Function.RetSig.Types, this);
         }
     }
 
     // Return operation
 
     sealed class ReturnOperation : Operation {
-        public ReturnOperation(Procedure procedure, Scope scope, Position position) : base(OperationType.Return, position) {
-            Proc = procedure;
+        public ReturnOperation(Function function, Scope scope, Position position) : base(OperationType.Return, position) {
+            Function = function;
             Scope = scope;
         }
 
-        public Procedure Proc { get; }
+        public Function Function { get; }
         public Scope Scope { get; }
 
         public override string GenerateAssembly(Assembler assembler) {
             if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
-                //    jmp proc_{Id}_end_{Occurrence}
-                if(Proc.IsInlined) throw new NotImplementedException();
+                //    jmp Function_{Id}_end_{Occurrence}
+                if(Function.IsInlined) throw new NotImplementedException();
                 //    add QWORD [ret_stack_rsp], {RetStackOffset}
-                //    jmp proc_{Id}_end
-                return "    add QWORD [ret_stack_rsp], " + Scope.GetRetStackOffset() + "\n    jmp proc_" + Proc.Id + "_end\n";
+                //    jmp Function_{Id}_end
+                return "    add QWORD [ret_stack_rsp], " + Scope.GetRetStackOffset() + "\n    jmp function_" + Function.Id + "_end\n";
             }
             throw new NotImplementedException();
         }
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
-            if(contract.GetElementsLeft() != Proc.Rets.Length) return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
+            if(contract.GetElementsLeft() != Function.RetSig.Size) return new InvalidReturnDataError(contract.Stack.ToArray(), Function, this);
 
-            for(int i = 0; i < Proc.Rets.Length; i++) if(!DataType.IsImplicitlyCastable(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i])) {
-                if(contract.Peek(Proc.Rets.Length-1-i) != Proc.Rets[i]) ErrorSystem.AddImplicitCastWarning(contract.Peek(Proc.Rets.Length-1-i), Proc.Rets[i], this);
-                return new InvalidReturnDataError(contract.Stack.ToArray(), Proc, this);
+            for(int i = 0; i < Function.RetSig.Size; i++) if(!DataType.IsImplicitlyCastable(contract.Peek(Function.RetSig.Size-1-i), Function.RetSig.Types[i])) {
+                if(contract.Peek(Function.RetSig.Size-1-i) != Function.RetSig.Types[i]) ErrorSystem.AddImplicitCastWarning(contract.Peek(Function.RetSig.Size-1-i), Function.RetSig.Types[i], this);
+                return new InvalidReturnDataError(contract.Stack.ToArray(), Function, this);
             }
-            contract.RemoveElements(Proc.Rets.Length, this); // Should be unnecessary
+            contract.RemoveElements(Function.RetSig.Size, this); // Should be unnecessary
 
             contract.HasReturned = true;
 

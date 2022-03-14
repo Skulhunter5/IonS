@@ -27,18 +27,18 @@ namespace IonS {
     }
 
     sealed class ImplicitCastWhenReturningWarning : TypeCheckerWarning {
-        public ImplicitCastWhenReturningWarning(DataType from, DataType to, Procedure procedure) {
+        public ImplicitCastWhenReturningWarning(DataType from, DataType to, Function function) {
             From = from;
             To = to;
-            Procedure = procedure;
+            Function = function;
         }
 
         public DataType From { get; }
         public DataType To { get; }
-        public Procedure Procedure { get; }
+        public Function Function { get; }
 
         public override string ToString() {
-            return base.ToString() + "Implicit cast from " + From + " to " + To + " when returning from " + Procedure;
+            return base.ToString() + "Implicit cast from " + From + " to " + To + " when returning from " + Function;
         }
     }
 

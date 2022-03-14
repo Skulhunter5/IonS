@@ -376,22 +376,22 @@ namespace IonS {
         }
     }
 
-    // - Procedure errors
+    // - Function errors
 
-    sealed class ProcedureNotInGlobalScopeError : ParserError {
-        public ProcedureNotInGlobalScopeError(Position position) {
+    sealed class FunctionNotInGlobalScopeError : ParserError {
+        public FunctionNotInGlobalScopeError(Position position) {
             Position = position;
         }
         
         public Position Position { get; }
         
         public override string ToString() {
-            return base.ToString() + "Procedure inside a local scope: at " + Position;
+            return base.ToString() + "Function inside a local scope: at " + Position;
         }
     }
 
-    sealed class ProcedureRedefinitionError : ParserError {
-        public ProcedureRedefinitionError(Word o, Word n) {
+    sealed class FunctionRedefinitionError : ParserError {
+        public FunctionRedefinitionError(Word o, Word n) {
             Old = o;
             New = n;
         }
@@ -400,33 +400,33 @@ namespace IonS {
         public Word New { get; }
         
         public override string ToString() {
-            return base.ToString() + "Trying to redefine procedure: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
+            return base.ToString() + "Trying to redefine Function: '" + Old.Text + "' (" + Old.Position + ") at " + New.Position;
         }
     }
 
-    sealed class ExpectedProcAfterInlineError : ParserError {
-        public ExpectedProcAfterInlineError(Word procWord) {
-            ProcWord = procWord;
+    sealed class ExpectedFunctionAfterInlineError : ParserError {
+        public ExpectedFunctionAfterInlineError(Word word) {
+            Word = word;
         }
         
-        public Word ProcWord { get; }
+        public Word Word { get; }
         
         public override string ToString() {
-            return base.ToString() + "Expected 'proc' after 'inline': got " + ProcWord;
+            return base.ToString() + "Expected 'function' after 'inline': got " + Word;
         }
     }
 
-    // - Return outside procedure error
+    // - Return outside Function error
 
-    sealed class ReturnOutsideProcedureError : ParserError {
-        public ReturnOutsideProcedureError(Position position) {
+    sealed class ReturnOutsideFunctionError : ParserError {
+        public ReturnOutsideFunctionError(Position position) {
             Position = position;
         }
         
         public Position Position { get; }
         
         public override string ToString() {
-            return base.ToString() + "Return ouside of a procedure: at " + Position;
+            return base.ToString() + "Return ouside of a Function: at " + Position;
         }
     }
 
@@ -570,26 +570,26 @@ namespace IonS {
     }
 
     sealed class InvalidReturnDataError : TypeCheckerError {
-        public InvalidReturnDataError(DataType[] gotTypes, Procedure procedure) {
+        public InvalidReturnDataError(DataType[] gotTypes, Function function) {
             GotTypes = gotTypes;
-            Procedure = procedure;
+            Function = function;
         }
-        public InvalidReturnDataError(DataType[] gotTypes, Procedure procedure, ReturnOperation operation) {
+        public InvalidReturnDataError(DataType[] gotTypes, Function function, ReturnOperation operation) {
             GotTypes = gotTypes;
-            Procedure = procedure;
+            Function = function;
             Operation = operation;
         }
 
         public DataType[] GotTypes { get; }
-        public Procedure Procedure { get; }
+        public Function Function { get; }
         public ReturnOperation Operation { get; }
 
         public override string ToString() {
             string msg = "";
-            for(int i = 0; i < Procedure.Rets.Length; i++) msg += Procedure.Rets[i] + (i < Procedure.Rets.Length - 1 ? ", " : "");
+            for(int i = 0; i < Function.RetSig.Size; i++) msg += Function.RetSig.Types[i] + (i < Function.RetSig.Size - 1 ? ", " : "");
             msg += "] but got [";
             for(int i = 0; i < GotTypes.Length; i++) msg += GotTypes[i] + (i < GotTypes.Length - 1 ? ", " : "");
-            return base.ToString() + "Invalid return arguments: expected [" + msg + "] "  + (Operation != null ? "for return at " + Operation.Position + " in " : "at the end of ") + Procedure;
+            return base.ToString() + "Invalid return arguments: expected [" + msg + "] "  + (Operation != null ? "for return at " + Operation.Position + " in " : "at the end of ") + Function;
         }
     }
 
@@ -647,17 +647,17 @@ namespace IonS {
         }
     }
 
-    // Unknown procedure overload error
+    // Unknown Function overload error
 
-    sealed class UnknownProcedureOverloadError : TypeCheckerError { // TODO: add stack view or to make debugging easier
-        public UnknownProcedureOverloadError(Word name) {
+    sealed class UnknownFunctionOverloadError : TypeCheckerError { // TODO: add stack view or to make debugging easier
+        public UnknownFunctionOverloadError(Word name) {
             Name = name;
         }
 
         public Word Name { get; }
 
         public override string ToString() {
-            return base.ToString() + "Unknown procedure overload for: " + Name;
+            return base.ToString() + "Unknown Function overload for: " + Name;
         }
     }
 
