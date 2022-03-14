@@ -17,7 +17,7 @@
 
 # TODO
 - Create a signature class and create a call operation like ```(n)``` \
-create Signatures, DataType.Function and call ```ptr<function<Signature>>``` | create DataType.Address and make them callable \
+create Signatures, DataType.FUNCTION and call ```ptr<func<Signature>>``` | create DataType.Address and make them callable \
 maybe add capability of unknown number of arguments at compiletime with ```(...)```
 - Make int64 instead of uint64 the standard type and add possibility to input uint64 (maybe with uint64:(...) and make this a general concept like allowing this for pointers too)
 - Add error prorities to make sure errors causing other errors are put further up in the list
