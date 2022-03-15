@@ -4,7 +4,6 @@
 - See if linear comparison of every object in a list is faster or slower than checking if a key exists inside a Dictionary (useful for Keyword.isKeyword()) or check if a HashSet would help
 
 # Implement for IonS
-- look into capturing all words and strings through regex or maybe do list-parsing through regex
 - Rework words/tokens
 - Implement function prototypes
 - Make switch statements viable (just assume a fallthrough at every point and then check if all endings have the same signature) \
