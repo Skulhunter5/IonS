@@ -46,21 +46,21 @@ inline function openat ( uint64 ptr uint64 uint64 -- uint64 ) {
 }
 
 inline function puts ( uint64 ptr ) {
-    STDOUT fputs drop
+    STDOUT fputs(3) drop
 }
 
 inline function eputs ( uint64 ptr ) {
-    STDERR fputs drop
+    STDERR fputs(3) drop
 }
 
 inline function putc ( ptr ) {
-    1 swap puts
+    1 swap puts(2)
 }
 
 function putb ( bool ) {
     if "true"
     else "false"
-    puts
+    puts(2)
 }
 
 inline function ptr. ( ptr ) {
@@ -112,11 +112,11 @@ function cstrlen ( ptr -- uint64 ) {
 }
 
 inline function cstr-to-str ( ptr -- uint64 ptr ) {
-    dup cstrlen swap
+    dup cstrlen(1) swap
 }
 
 inline function cputs ( ptr ) {
-	dup cstrlen swap puts
+	dup cstrlen(1) swap puts(2)
 }
 
 inline function clamp ( uint64 uint64 uint64 -- uint64 ) {
@@ -167,7 +167,7 @@ function streq ( uint64 ptr uint64 ptr -- bool ) {
 }
 
 function cstreq ( ptr ptr -- bool ) {
-	dup cstrlen swap rot dup cstrlen swap streq
+	dup cstrlen(1) swap rot dup cstrlen(1) swap streq(4)
 }
 
 function isAlpha ( uint64 -- bool ) {
@@ -185,8 +185,8 @@ function isDigit ( uint64 -- bool ) {
 }
 
 function isAlnum ( uint64 -- bool ) {
-    dup isAlpha swap
-    isDigit
+    dup isAlpha(1) swap
+    isDigit(1)
     ||
 }
 
@@ -197,7 +197,7 @@ function str-startswith ( uint64 ptr uint64 ptr -- bool ) {
         false return
     }
     drop dup rot 2swap swap
-    streq
+    streq(4)
 }
 
 function str-endswith ( uint64 ptr uint64 ptr -- bool ) {
@@ -209,7 +209,7 @@ function str-endswith ( uint64 ptr uint64 ptr -- bool ) {
     over - rot cast(uint64) +
     over swap 2swap swap
     cast ( _ ptr _ ptr )
-    streq
+    streq(4)
 }
 
 function try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it going over the maximum uint64 value
@@ -224,7 +224,7 @@ function try-parse-uint64 ( uint64 ptr ptr -- bool ) { // TODO: fix it going ove
         2swap swap dup @64 10 * over !64
         swap 2swap
         rot 2dup cast ( uint64 uint64 ) + cast(ptr) @8
-        dup isDigit not if {
+        dup isDigit(1) not if {
             2drop 2drop drop
             false return
         }
@@ -292,13 +292,13 @@ function memcpy ( ptr ptr uint64 ) {
     rrot over +
     rrot +
     cast ( ptr ptr _ _ ptr ptr )
-    rot memcpy8
-    memcpy64
+    rot memcpy8(3)
+    memcpy64(3)
 }
 
 function strcat ( uint64 ptr uint64 ptr ptr -- uint64 ptr ) {
-    ctt4 over ctt7 memcpy
-    2dup cast(uint64) ctt7 + cast(ptr) ctt5 memcpy
+    ctt4 over ctt7 memcpy(3)
+    2dup cast(uint64) ctt7 + cast(ptr) ctt5 memcpy(3)
     rrot5 drop swap drop + swap
 }
 
