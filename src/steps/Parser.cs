@@ -99,11 +99,6 @@ namespace IonS {
             if(!_functions.ContainsKey(name)) return false;
             return true;
         }
-        private bool FunctionExists(string name, string signature) { // CHECKIFNECESSARY
-            if(!_functions.ContainsKey(name)) return false;
-            if(!_functions[name].ContainsKey(signature)) return false;
-            return true;
-        }
 
         private void UseFunction(Function currentFunction, Function Function) {
             if(currentFunction == null) {
