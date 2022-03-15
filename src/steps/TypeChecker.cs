@@ -30,7 +30,6 @@ namespace IonS {
             error = _root.TypeCheck(_ctx, contract);
             if(error != null) ErrorSystem.AddError_s(error);
 
-            // TODO: fix probably too many lines
             foreach(Function function in _ctx.UsedFunctions) function.Use();
 
             if(!contract.IsEmpty()) ErrorSystem.AddWarning(new ExcessDataOnStackAfterExitWarning(contract.Stack.ToArray()));
