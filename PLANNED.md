@@ -1,7 +1,6 @@
 # Internal changes
 - Redo stuff like ShLOperation.TypeCheck
 - Move argument-, binding-, ... parsing into "parselist" function
-- See if linear comparison of every object in a list is faster or slower than checking if a key exists inside a Dictionary (useful for Keyword.isKeyword()) or check if a HashSet would help
 
 # Implement for IonS
 - Rework words/tokens
