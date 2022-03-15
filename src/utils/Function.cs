@@ -95,7 +95,7 @@ namespace IonS {
 
             for(int i = 0; i < RetSig.Size; i++) if(!DataType.IsImplicitlyCastable(contract.Peek(RetSig.Types.Length-1-i), RetSig.Types[i])) { // TODO: check what I want to do here, this looks odd
                 Console.WriteLine(contract.Peek(RetSig.Size-1-i) + " " + RetSig.Types[i]);
-                if(contract.Peek(RetSig.Size-1-i) != RetSig.Types[i]) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + contract.Peek(RetSig.Types.Length-1-i) + " to " + RetSig.Types[i] + " while returning from " + this); // Error-Warning-System
+                if(contract.Peek(RetSig.Size-1-i) != RetSig.Types[i]) ErrorSystem.AddWarning(new ImplicitCastWhenReturningWarning(contract.Peek(RetSig.Types.Length-1-i), RetSig.Types[i], this));
                 return new InvalidReturnDataError(contract.Stack.ToArray(), this);
             }
 

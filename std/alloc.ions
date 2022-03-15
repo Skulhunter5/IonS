@@ -4,39 +4,11 @@ inline function isNegative ( uint64 -- bool ) { // TODO: implement signed number
     0b1000000000000000000000000000000000000000000000000000000000000000 & 0 >
 }
 
-struct alloc_info
+struct alloc_info (
     uint64 : flags
     ptr : base
     uint64 : size
-end
-
-/* inline function alloc_info.flags ( -- uint64 ) {
-    0
-}
-inline function !alloc_info.flags ( uint64 ptr ) {
-    !64
-}
-inline function @alloc_info.flags ( ptr -- uint64 ) {
-    @64
-}
-inline function alloc_info.base ( -- uint64 ) {
-    8
-}
-inline function !alloc_info.base ( ptr ptr ) {
-    8 ptr+ !ptr
-}
-inline function @alloc_info.base ( ptr -- ptr ) {
-    8 ptr+ @ptr
-}
-inline function alloc_info.size ( -- uint64 ) {
-    16
-}
-inline function !alloc_info.size ( uint64 ptr ) {
-    16 ptr+ !64
-}
-inline function @alloc_info.size ( ptr -- uint64 ) {
-    16 ptr+ @64
-} */
+)
 
 #macro ENTRY_FREE 0
 #macro ENTRY_BEEN_USED 1
@@ -49,7 +21,7 @@ var space_left 8
 
 function alloc ( uint64 -- ptr ) {
     let ( size ) {
-        space_left @64 size - dup isNegative swap 0 == || if {
+        space_left @64 size - dup isNegative(1) swap 0 == || if {
             null return
         }
         0 while { dup tbl_entries @64 < } do {

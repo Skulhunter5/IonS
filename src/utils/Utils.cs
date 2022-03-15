@@ -50,6 +50,7 @@ namespace IonS {
             "struct",
             "@", "!",
             "@[]", "![]",
+            "()",
         };
 
 
@@ -66,6 +67,8 @@ namespace IonS {
         public static readonly Regex writeBytesRegex = new Regex("^![0-9]+$", RegexOptions.Compiled);
         public static readonly Regex cttRegex = new Regex("^ctt[0-9]+$", RegexOptions.Compiled);
         public static readonly Regex syscallRegex = new Regex("^syscall[0-9]+$", RegexOptions.Compiled);
+        public static readonly Regex pushFunctionRegex = new Regex("^.+<.*>$", RegexOptions.Compiled);
+        public static readonly Regex directFunctionCallRegex = new Regex("^.+\\([0-9]*\\)$", RegexOptions.Compiled);
 
         public static readonly Regex binaryRegex = new Regex("^0b[01_]+$", RegexOptions.Compiled);
         public static readonly Regex octalRegex = new Regex("^0[0-7_]+$", RegexOptions.Compiled);
@@ -88,6 +91,7 @@ namespace IonS {
             if(Utils.readBytesRegex.IsMatch(word) || Utils.writeBytesRegex.IsMatch(word)) return false;
             if(Utils.cttRegex.IsMatch(word)) return false;
             if(Utils.syscallRegex.IsMatch(word)) return false;
+            if(Utils.directFunctionCallRegex.IsMatch(word)) return false;
 
             if(word.StartsWith("cast(") && word.EndsWith(")")) return false;
 
@@ -123,6 +127,27 @@ namespace IonS {
                 break;
             }
             return text.Substring(index+1, text.Length-index-1);
+        }
+
+        public static string[] SplitDataTypeList(string text) {
+            List<string> types = new List<string>();
+            string current = "";
+
+            int i = 0;
+            int nested = 0;
+            while(i < text.Length) {
+                if(nested == 0 && text[i] == ',') {
+                    types.Add(current);
+                } else {
+                    if(text[i] == '<') nested++;
+                    else if(text[i] == '>') nested--;
+                    current += text[i];
+                }
+                i++;
+            }
+            if(current.Length > 0) types.Add(current);
+
+            return types.ToArray();
         }
 
         public static string ConvertEscapeCharacters(string _text, Position position) {

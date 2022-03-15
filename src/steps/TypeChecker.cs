@@ -16,26 +16,24 @@ namespace IonS {
             _ctx = new TypeCheckContext(functions);
         }
 
-        public Error run() {
+        public void run() {
             Error error;
 
             foreach(var overloads in _functions.Values) {
                 foreach(Function functions in overloads.Values) {
                     error = functions.TypeCheck(_ctx);
-                    if(error != null) return error;
+                    if(error != null) ErrorSystem.AddError_s(error);
                 }
             }
 
             TypeCheckContract contract = new TypeCheckContract();
             error = _root.TypeCheck(_ctx, contract);
-            if(error != null) return error;
+            if(error != null) ErrorSystem.AddError_s(error);
 
             // TODO: fix probably too many lines
             foreach(Function function in _ctx.UsedFunctions) function.Use();
 
-            if(!contract.IsEmpty()) Console.WriteLine("[TypeChecker] Warning: excess data on the stack after exit: [" + String.Join(", ", contract.Stack) + "]"); // Error-Warning-System
-            
-            return null;
+            if(!contract.IsEmpty()) ErrorSystem.AddWarning(new ExcessDataOnStackAfterExitWarning(contract.Stack.ToArray()));
         }
 
     }

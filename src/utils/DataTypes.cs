@@ -31,7 +31,7 @@ namespace IonS {
             }
             if(Value == FUNCTION) {
                 if(ArgSig.Size == 0 && RetSig.Size == 0) return "func";
-                return "func<" + String.Join(",", (object[]) ArgSig.Types) + "--" + String.Join(",", (object[]) RetSig.Types) + ">";
+                return "func<" + String.Join(",", (object[]) ArgSig.Types) + (RetSig.Size > 0 ? "--" + String.Join(",", (object[]) RetSig.Types) : "")  + ">";
             }
             throw new NotImplementedException();
         }
@@ -105,6 +105,10 @@ namespace IonS {
             return true;
         }
 
+        public static DataType Create(Function function) {
+            return new DataType(FUNCTION, function.ArgSig, function.RetSig);
+        }
+
         public static bool TryParse(string str, out DataType dataType) {
             if(parseDict.ContainsKey(str)) {
                 dataType = parseDict[str];
@@ -120,20 +124,26 @@ namespace IonS {
                 string text = str.Substring(5, str.Length-6);
                 string[] lr = text.Split("--");
                 List<DataType> args = new List<DataType>();
-                if(lr.Length > 0) foreach(string s in lr[0].Split(",")) {
-                    if(!DataType.TryParse(s, out DataType dt)) {
-                        dataType = I_NONE;
-                        return false;
+                if(lr.Length > 0) {
+                    string[] types = Utils.SplitDataTypeList(lr[0]);
+                    foreach(string s in types) {
+                        if(!DataType.TryParse(s, out DataType dt)) {
+                            dataType = I_NONE;
+                            return false;
+                        }
+                        args.Add(dt);
                     }
-                    args.Add(dt);
                 }
                 List<DataType> rets = new List<DataType>();
-                if(lr.Length > 1) foreach(string s in lr[1].Split(",")) {
-                    if(!DataType.TryParse(s, out DataType dt)) {
-                        dataType = I_NONE;
-                        return false;
+                if(lr.Length > 1) {
+                    string[] types = Utils.SplitDataTypeList(lr[1]);
+                    foreach(string s in types) {
+                        if(!DataType.TryParse(s, out DataType dt)) {
+                            dataType = I_NONE;
+                            return false;
+                        }
+                        rets.Add(dt);
                     }
-                    rets.Add(dt);
                 }
                 dataType = new DataType(DataType.FUNCTION, new Signature(args), new Signature(rets));
                 Console.WriteLine(dataType);
