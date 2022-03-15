@@ -42,11 +42,15 @@ namespace IonS {
         public InvalidDataTypeError(Word dataType) {
             DataType = dataType;
         }
+        public InvalidDataTypeError(Position position) {
+            Position = position;
+        }
 
         public Word DataType { get; }
+        public Position Position { get; }
 
         public override string ToString() {
-            return base.ToString() + "Invalid DataType: " + DataType;
+            return base.ToString() + "Invalid DataType: " + (DataType != null ? DataType : " at " + Position);
         }
     }
 
@@ -462,6 +466,20 @@ namespace IonS {
         }
     }
 
+    // - Invalid syscall argc error
+
+    sealed class InvalidArgumentCountError : ParserError {
+        public InvalidArgumentCountError(Word word) {
+            Word = word;
+        }
+        
+        public Word Word { get; }
+        
+        public override string ToString() {
+            return base.ToString() + "Invalid argument count: " + Word;
+        }
+    }
+
     // - Invalid break/continue error
 
     sealed class InvalidContinueError : ParserError {
@@ -647,7 +665,21 @@ namespace IonS {
         }
     }
 
-    // Unknown Function overload error
+    // Unknown function error
+
+    sealed class UnknownFunctionError : TypeCheckerError { // TODO: add stack view or to make debugging easier
+        public UnknownFunctionError(string name, Position position) {
+            Name = new Word(position, name);
+        }
+
+        public Word Name { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Unknown Function: " + Name;
+        }
+    }
+
+    // Unknown function overload error
 
     sealed class UnknownFunctionOverloadError : TypeCheckerError { // TODO: add stack view or to make debugging easier
         public UnknownFunctionOverloadError(Word name) {
@@ -658,6 +690,22 @@ namespace IonS {
 
         public override string ToString() {
             return base.ToString() + "Unknown Function overload for: " + Name;
+        }
+    }
+
+    // Cannot push inlined function address error
+
+    sealed class CannotPushInlinedFunctionAddressError : TypeCheckerError {
+        public CannotPushInlinedFunctionAddressError(Word name, Position position) {
+            Name = name;
+            Position = position;
+        }
+
+        public Word Name { get; }
+        public Position Position { get; }
+
+        public override string ToString() {
+            return base.ToString() + "Can't push the address of an inlined function: " + Name.Text + " at " + Position;
         }
     }
 

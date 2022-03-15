@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace IonS {
 
     abstract class Warning {}
@@ -39,6 +42,18 @@ namespace IonS {
 
         public override string ToString() {
             return base.ToString() + "Implicit cast from " + From + " to " + To + " when returning from " + Function;
+        }
+    }
+
+    sealed class ExcessDataOnStackAfterExitWarning : TypeCheckerWarning {
+        public ExcessDataOnStackAfterExitWarning(DataType[] stack) {
+            Stack = stack;
+        }
+
+        public DataType[] Stack { get; }
+
+        public override string ToString() {
+            return base.ToString() + "[TypeChecker] Warning: excess data on the stack after exit: [" + String.Join(", ", (object[]) Stack) + "]";
         }
     }
 

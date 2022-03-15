@@ -61,7 +61,7 @@ namespace IonS {
 
             for(int i = required.Length-1; i >= 0; i--) {
                 if(!DataType.IsImplicitlyCastable(Peek(), required[i])) return new UnexpectedDataTypeError(Peek(), required[i], operation);
-                if(!Peek().Equals(required[i])) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + Peek() + " to " + required[i] + " during " + operation); // Error-Warning-System
+                if(!Peek().Equals(required[i])) ErrorSystem.AddWarning(new ImplicitCastWarning(Peek(), required[i], operation));
             }
             return null;
         }
@@ -70,7 +70,7 @@ namespace IonS {
             if(Stack.Count < 1) return new StackUnderflowError(operation);
 
             if(!DataType.IsImplicitlyCastable(Peek(), required)) return new UnexpectedDataTypeError(Peek(), required, operation);
-            if(!Peek().Equals(required)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + Peek() + " to " + required + " during " + operation); // Error-Warning-System
+            if(!Peek().Equals(required)) ErrorSystem.AddWarning(new ImplicitCastWarning(Peek(), required, operation));
 
             return null;
         }
@@ -81,7 +81,7 @@ namespace IonS {
             for(int i = required.Length-1; i >= 0; i--) {
                 DataType dataType = Pop();
                 if(!DataType.IsImplicitlyCastable(dataType, required[i])) return new UnexpectedDataTypeError(dataType, required[i], operation);
-                if(!dataType.Equals(required[i])) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + required[i] + " during " + operation); // Error-Warning-System
+                if(!dataType.Equals(required[i])) ErrorSystem.AddWarning(new ImplicitCastWarning(dataType, required[i], operation));
             }
             return null;
         }
@@ -91,7 +91,7 @@ namespace IonS {
 
             DataType dataType = Pop();
             if(!DataType.IsImplicitlyCastable(dataType, required)) return new UnexpectedDataTypeError(dataType, required, operation);
-            if(!dataType.Equals(required)) Console.WriteLine("[TypeChecker] Warning: Implicit cast from " + dataType + " to " + required + " during " + operation); // Error-Warning-System
+            if(!dataType.Equals(required)) ErrorSystem.AddWarning(new ImplicitCastWarning(dataType, required, operation));
 
             return null;
         }

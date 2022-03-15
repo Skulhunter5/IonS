@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace IonS {
 
     enum OperationType {
-        Push_bool, Push_uint64, Push_ptr,
+        Push_bool, Push_uint64, Push_ptr, Push_function,
         Increment, Decrement,
         Add, Subtract, Multiply, Divide, Modulo, DivMod,
         Min, Max,
@@ -151,6 +151,50 @@ namespace IonS {
 
         public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
             return contract.Provide(DataType.I_POINTER);
+        }
+    }
+
+    sealed class Push_function_Operation : Operation { // -- n
+        public Push_function_Operation(Word name, Signature argSig, Function parentFunction, Position position) : base(OperationType.Push_ptr, position) {
+            Name = name;
+            ArgSig = argSig;
+            ParentFunction = parentFunction;
+        }
+
+        public Word Name { get; }
+        public Signature ArgSig { get; }
+        public Function Function { get; set; }
+        public Function ParentFunction { get; }
+        
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    push function_{Id}
+                return "    push function_" + Function.Id + "\n";
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
+            Dictionary<string, Function> overloads = context.Functions[Name.Text];
+            string signature = ArgSig.GetTypeString();
+            if(!overloads.ContainsKey(signature)) {
+                ErrorSystem.AddError_s(new UnknownFunctionOverloadError(Name));
+                return null;
+            }
+
+            Function = overloads[signature];
+
+            if(Function.IsInlined) {
+                ErrorSystem.AddError_s(new CannotPushInlinedFunctionAddressError(Name, Position));
+                return null;
+            }
+
+            if(ParentFunction == null) {
+                // Probably can't call Function.Use() directly because of future support for recursive functions
+                if(!context.UsedFunctions.Contains(Function)) context.UsedFunctions.Add(Function);
+            } else if(!ParentFunction.UsedFunctions.Contains(Function)) ParentFunction.UsedFunctions.Add(Function);
+            
+            return contract.Provide(DataType.Create(Function));
         }
     }
 
@@ -1118,7 +1162,7 @@ namespace IonS {
             Error error = contract.Require(DataType.I_UINT64, this);
             if(error != null) return error;
 
-            if(!contract.IsEmpty()) Console.WriteLine("[TypeChecker] Warning: excess data on the stack after exit: [" + String.Join(", ", contract.Stack) + "]");  // Error-Warning-System
+            if(!contract.IsEmpty()) ErrorSystem.AddWarning(new ExcessDataOnStackAfterExitWarning(contract.Stack.ToArray()));
             
             return null;
         }
@@ -1301,13 +1345,15 @@ namespace IonS {
 
     // Function call operation
 
-    sealed class FunctionCallOperation : Operation { // args[] -- ret[]
-        public FunctionCallOperation(Word name, Function parentFunction, Position position) : base(OperationType.FunctionCall, position) {
+    sealed class DirectFunctionCallOperation : Operation { // args[] -- rets[]
+        public DirectFunctionCallOperation(Word name, int argsCount, Function parentFunction, Position position) : base(OperationType.FunctionCall, position) {
             Name = name;
+            ArgsCount = argsCount;
             ParentFunction = parentFunction;
         }
 
         public Word Name { get; }
+        public int ArgsCount { get; }
         public Function ParentFunction { get; }
         public Function Function { get; set; }
 
@@ -1336,6 +1382,7 @@ namespace IonS {
             Dictionary<string, Function> overloads = context.Functions[Name.Text];
             foreach(string name in overloads.Keys) {
                 Function function = overloads[name];
+                if(ArgsCount >= 0 && function.ArgSig.Size != ArgsCount) continue;
 
                 if(contract.GetElementsLeft() < function.ArgSig.Size) continue;
 
@@ -1360,6 +1407,39 @@ namespace IonS {
             if(Function == null) return new UnknownFunctionOverloadError(Name);
 
             return contract.RequireAndProvide(Function.ArgSig.Types, Function.RetSig.Types, this);
+        }
+    }
+
+    sealed class FunctionCallOperation : Operation { // args[] func -- rets[]
+        public FunctionCallOperation(Position position) : base(OperationType.FunctionCall, position) {}
+
+        public override string GenerateAssembly(Assembler assembler) {
+            if(assembler == Assembler.nasm_linux_x86_64 || assembler == Assembler.fasm_linux_x86_64) {
+                //    mov rax, rsp
+                //    mov rsp, [ret_stack_rsp]
+                //    pop rbx
+                //    call rbx
+                //    mov [ret_stack_rsp], rsp
+                //    mov rsp, rax
+                string asm = "";
+                asm += "    pop rbx\n";
+                asm += "    mov rax, rsp\n";
+                asm += "    mov rsp, [ret_stack_rsp]\n";
+                asm += "    call rbx\n";
+                asm += "    mov [ret_stack_rsp], rsp\n";
+                asm += "    mov rsp, rax\n";
+                return asm;
+            }
+            throw new NotImplementedException();
+        }
+
+        public override Error TypeCheck(TypeCheckContext context, TypeCheckContract contract) {
+            if(contract.GetElementsLeft() < 1) return new StackUnderflowError(this);
+
+            DataType dataType = contract.Pop();
+            if(dataType.Value != DataType.FUNCTION) return new UnexpectedDataTypeError(dataType, DataType.I_FUNCTION, this);
+
+            return contract.RequireAndProvide(dataType.ArgSig.Types, dataType.RetSig.Types, this);
         }
     }
 

@@ -85,7 +85,7 @@ namespace IonS {
         }
 
         private void RegisterFunction(Function Function) {
-            string signature = Function.ArgSig.ToString();
+            string signature = Function.ArgSig.GetTypeString();
             if(_functions.ContainsKey(Function.Name.Text)) {
                 if(_functions[Function.Name.Text].ContainsKey(signature)) {
                     ErrorSystem.AddError_s(new FunctionRedefinitionError(_functions[Function.Name.Text][signature].Name, Function.Name));
@@ -258,6 +258,7 @@ namespace IonS {
             else if(Current.Text == "!") operations.Add(new MemWriteOperation(0, Current.Position));
             else if(Current.Text == "@[]") operations.Add(new ArrayReadOperation(Current.Position));
             else if(Current.Text == "![]") operations.Add(new ArrayWriteOperation(Current.Position));
+            else if(Current.Text == "()") operations.Add(new FunctionCallOperation(Current.Position));
             else if(Current.Text == "iota" || Current.Text == "reset") operations.Add(new Push_uint64_Operation(Iota(Current.Text == "reset"), Current.Position));
             else if(Utils.cttRegex.IsMatch(Current.Text)) {
                 if(!int.TryParse(Current.Text.Substring(3, Current.Text.Length - 3), out int n) || n < 1) ErrorSystem.AddError_s(new InvalidCTTIndexError(Current));
@@ -510,6 +511,43 @@ namespace IonS {
                 if(DataType.TryParse(type, out DataType dataType)) operations.Add(new Push_uint64_Operation((ulong) dataType.GetByteSize(), Current.Position));
                 else if(_structs.ContainsKey(type)) operations.Add(new Push_uint64_Operation((ulong) _structs[type].GetByteSize(), Current.Position));
                 else ErrorSystem.AddError_s(new InvalidTypeError(Current));
+            } else if(Utils.directFunctionCallRegex.IsMatch(Current.Text)) {
+                int r = Current.Text.IndexOf('(');
+                string name = Current.Text.Substring(0, r);
+
+                string nStr = Current.Text.Substring(r+1, Current.Text.Length-r-2);
+                int argsCount = 0;
+                if(nStr.Length > 0) if(!int.TryParse(nStr, out argsCount) || argsCount < 0) {
+                    ErrorSystem.AddError_s(new InvalidArgumentCountError(new Word(Current.Position.Derive(0, r+1), nStr)));
+                    NextWord();
+                    return;
+                }
+                
+                if(!FunctionExists(name)) ErrorSystem.AddError_s(new UnknownFunctionError(name, Current.Position));
+                else operations.Add(new DirectFunctionCallOperation(new Word(Current.Position, name), argsCount, currentFunction, Current.Position));
+            } else if(Utils.pushFunctionRegex.IsMatch(Current.Text)) {
+                int r = Current.Text.IndexOf('<');
+                string name = Current.Text.Substring(0, r);
+
+                if(!FunctionExists(name)) ErrorSystem.AddError_s(new UnknownFunctionError(name, Current.Position));
+                else {
+                    string rest = Current.Text.Substring(r+1, Current.Text.Length-r-2);
+                    string[] tokens = Utils.SplitDataTypeList(rest);
+
+                    List<DataType> types = new List<DataType>();
+                    for(int i = 0; i < tokens.Length; i++) {
+                        if(!DataType.TryParse(tokens[i], out DataType dataType)) {
+                            int n = r + 1 + i;
+                            for(int j = 0; j < i; j++) n += tokens[j].Length;
+                            ErrorSystem.AddError_s(new InvalidDataTypeError(new Word(Current.Position.Derive(0, n), tokens[i])));
+                            NextWord();
+                            return;
+                        }
+                        types.Add(dataType);
+                    }
+
+                    operations.Add(new Push_function_Operation(new Word(Current.Position, name), new Signature(types), currentFunction, Current.Position));
+                }
             } else {
                 // TODO: add overflow protection for binary and hexadecimal numbers
                 if(Utils.binaryRegex.IsMatch(Current.Text)) operations.Add(new Push_uint64_Operation(Convert.ToUInt64(Current.Text.Substring(2, Current.Text.Length-2).Replace("_", ""), 2), Current.Position));
@@ -521,7 +559,7 @@ namespace IonS {
                     if(var != null) {
                         if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, scope.GetBindingOffset((Binding) var), Current.Position));
                         else operations.Add(new VariableAccessOperation(var, Current.Position));
-                    } else if(FunctionExists(Current.Text)) operations.Add(new FunctionCallOperation(Current, currentFunction, Current.Position));
+                    } else if(FunctionExists(Current.Text)) operations.Add(new DirectFunctionCallOperation(Current, -1, currentFunction, Current.Position));
                     else {
                         if(Current.Text.StartsWith("@") || Current.Text.StartsWith("!")) { // CWDTODO: complete this step and add safeguards
                             string[] tokens = Current.Text.Substring(1).Split(".");

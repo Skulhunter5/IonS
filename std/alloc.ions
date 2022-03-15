@@ -4,64 +4,36 @@ inline function isNegative ( uint64 -- bool ) { // TODO: implement signed number
     0b1000000000000000000000000000000000000000000000000000000000000000 & 0 >
 }
 
-struct alloc_info
+struct alloc_info (
     uint64 : flags
     ptr : base
     uint64 : size
-end
-
-/* inline function alloc_info.flags ( -- uint64 ) {
-    0
-}
-inline function !alloc_info.flags ( uint64 ptr ) {
-    !64
-}
-inline function @alloc_info.flags ( ptr -- uint64 ) {
-    @64
-}
-inline function alloc_info.base ( -- uint64 ) {
-    8
-}
-inline function !alloc_info.base ( ptr ptr ) {
-    8 ptr+ !ptr
-}
-inline function @alloc_info.base ( ptr -- ptr ) {
-    8 ptr+ @ptr
-}
-inline function alloc_info.size ( -- uint64 ) {
-    16
-}
-inline function !alloc_info.size ( uint64 ptr ) {
-    16 ptr+ !64
-}
-inline function @alloc_info.size ( ptr -- uint64 ) {
-    16 ptr+ @64
-} */
+)
 
 #macro ENTRY_FREE 0
 #macro ENTRY_BEEN_USED 1
 #macro ENTRY_IN_USE 2
 
-var alloc_tbl 8
-var next_base 8
-var tbl_entries 8
-var space_left 8
+var alloc_tbl ptr
+var next_base ptr
+var tbl_entries uint64
+var space_left uint64
 
 function alloc ( uint64 -- ptr ) {
     let ( size ) {
-        space_left @64 size - dup isNegative swap 0 == || if {
+        space_left @ size - dup isNegative(1) swap 0 == || if {
             null return
         }
-        0 while { dup tbl_entries @64 < } do {
-            alloc_tbl @ptr over 24 * ptr+
+        0 while { dup tbl_entries @ < } do {
+            alloc_tbl @ over 24 * ptr+
             dup @alloc_info.flags ENTRY_FREE == if {
                 let ( _ alloc_info ) {
                     ENTRY_IN_USE   alloc_info !alloc_info.flags
-                    next_base @ptr alloc_info !alloc_info.base
+                    next_base @ alloc_info !alloc_info.base
                     size           alloc_info !alloc_info.size
 
-                    next_base @ptr   size ptr+  next_base !ptr
-                    space_left @64   size -     space_left !64
+                    next_base @   size ptr+  next_base !
+                    space_left @   size -     space_left !
                     
                     alloc_info @alloc_info.base return
                 }
@@ -80,8 +52,8 @@ function alloc ( uint64 -- ptr ) {
 
 function find_entry ( ptr -- ptr ) {
     let ( base ) {
-        0 while { dup tbl_entries @64 < } do {
-            alloc_tbl @ptr over 24 * ptr+
+        0 while { dup tbl_entries @ < } do {
+            alloc_tbl @ over 24 * ptr+
             dup @alloc_info.base base ptr== if {
                 swap drop return
             } else drop
@@ -93,13 +65,13 @@ function find_entry ( ptr -- ptr ) {
 
 function realloc ( ptr uint64 -- ptr ) {
     let ( base size ) {
-        base find_entry
+        base find_entry(1)
 
         dup @alloc_info.size size >= if {
             drop base return
         }
 
-        size alloc
+        size alloc(1)
         dup null ptr== if {
             2drop null return
         }
@@ -109,26 +81,25 @@ function realloc ( ptr uint64 -- ptr ) {
                 new_base
                 alloc_info @alloc_info.base
                 alloc_info @alloc_info.size
-            memcpy
+            memcpy(3)
             ENTRY_BEEN_USED alloc_info !alloc_info.flags
             new_base return
         }
-        //dup rot dup @alloc_info.base swap @alloc_info.size memcpy
     }
 }
 
 function free ( ptr ) {
-    find_entry ENTRY_BEEN_USED swap !alloc_info.flags
+    find_entry(1) ENTRY_BEEN_USED swap !alloc_info.flags
 }
 
 function init_alloc ( ptr uint64 uint64 -- bool ) { // TODO: implement safeguard if n is too large for the given size
     let ( base size n ) {
         n 24 * size > if { false return }
         
-        base alloc_tbl !ptr
-        n tbl_entries !64
-        size n 24 * - space_left !64
-        base n 24 * ptr+ next_base !ptr
+        base alloc_tbl !
+        n tbl_entries !
+        size n 24 * - space_left !
+        base n 24 * ptr+ next_base !
     }
     true
 }
