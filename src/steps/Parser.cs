@@ -559,7 +559,7 @@ namespace IonS {
                     if(var != null) {
                         if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, scope.GetBindingOffset((Binding) var), Current.Position));
                         else operations.Add(new VariableAccessOperation(var, Current.Position));
-                    } else if(FunctionExists(Current.Text)) operations.Add(new Push_function_Operation(Current, Signature.I_NONE, currentFunction, Current.Position));
+                    } else if(FunctionExists(Current.Text)) operations.Add(new DirectFunctionCallOperation(Current, -1, currentFunction, Current.Position));
                     else {
                         if(Current.Text.StartsWith("@") || Current.Text.StartsWith("!")) { // CWDTODO: complete this step and add safeguards
                             string[] tokens = Current.Text.Substring(1).Split(".");

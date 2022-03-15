@@ -1382,7 +1382,7 @@ namespace IonS {
             Dictionary<string, Function> overloads = context.Functions[Name.Text];
             foreach(string name in overloads.Keys) {
                 Function function = overloads[name];
-                if(function.ArgSig.Size != ArgsCount) continue;
+                if(ArgsCount >= 0 && function.ArgSig.Size != ArgsCount) continue;
 
                 if(contract.GetElementsLeft() < function.ArgSig.Size) continue;
 
