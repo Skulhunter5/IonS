@@ -21,10 +21,10 @@ var space_left uint64
 
 function alloc ( uint64 -- ptr ) {
     let ( size ) {
-        space_left @64 size - dup isNegative(1) swap 0 == || if {
+        space_left @ size - dup isNegative(1) swap 0 == || if {
             null return
         }
-        0 while { dup tbl_entries @64 < } do {
+        0 while { dup tbl_entries @ < } do {
             alloc_tbl @ over 24 * ptr+
             dup @alloc_info.flags ENTRY_FREE == if {
                 let ( _ alloc_info ) {
@@ -33,7 +33,7 @@ function alloc ( uint64 -- ptr ) {
                     size           alloc_info !alloc_info.size
 
                     next_base @   size ptr+  next_base !
-                    space_left @64   size -     space_left !64
+                    space_left @   size -     space_left !
                     
                     alloc_info @alloc_info.base return
                 }
@@ -52,7 +52,7 @@ function alloc ( uint64 -- ptr ) {
 
 function find_entry ( ptr -- ptr ) {
     let ( base ) {
-        0 while { dup tbl_entries @64 < } do {
+        0 while { dup tbl_entries @ < } do {
             alloc_tbl @ over 24 * ptr+
             dup @alloc_info.base base ptr== if {
                 swap drop return
@@ -97,8 +97,8 @@ function init_alloc ( ptr uint64 uint64 -- bool ) { // TODO: implement safeguard
         n 24 * size > if { false return }
         
         base alloc_tbl !
-        n tbl_entries !64
-        size n 24 * - space_left !64
+        n tbl_entries !
+        size n 24 * - space_left !
         base n 24 * ptr+ next_base !
     }
     true
