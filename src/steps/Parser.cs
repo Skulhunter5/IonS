@@ -95,11 +95,6 @@ namespace IonS {
             _functions[Function.Name.Text].Add(signature, Function);
         }
 
-        private bool FunctionExists(string name) {
-            if(!_functions.ContainsKey(name)) return false;
-            return true;
-        }
-
         private void UseFunction(Function currentFunction, Function Function) {
             if(currentFunction == null) {
                 Function.IsUsed = true;
@@ -518,13 +513,13 @@ namespace IonS {
                     return;
                 }
                 
-                if(!FunctionExists(name)) ErrorSystem.AddError_s(new UnknownFunctionError(name, Current.Position));
+                if(!_functions.ContainsKey(name)) ErrorSystem.AddError_s(new UnknownFunctionError(name, Current.Position));
                 else operations.Add(new DirectFunctionCallOperation(new Word(Current.Position, name), argsCount, currentFunction, Current.Position));
             } else if(Utils.pushFunctionRegex.IsMatch(Current.Text)) {
                 int r = Current.Text.IndexOf('<');
                 string name = Current.Text.Substring(0, r);
 
-                if(!FunctionExists(name)) ErrorSystem.AddError_s(new UnknownFunctionError(name, Current.Position));
+                if(!_functions.ContainsKey(name)) ErrorSystem.AddError_s(new UnknownFunctionError(name, Current.Position));
                 else {
                     string rest = Current.Text.Substring(r+1, Current.Text.Length-r-2);
                     string[] tokens = Utils.SplitDataTypeList(rest);
@@ -554,7 +549,7 @@ namespace IonS {
                     if(var != null) {
                         if(var.GetType() == typeof(Binding)) operations.Add(new PushBindingOperation((Binding) var, scope.GetBindingOffset((Binding) var), Current.Position));
                         else operations.Add(new VariableAccessOperation(var, Current.Position));
-                    } else if(FunctionExists(Current.Text)) operations.Add(new DirectFunctionCallOperation(Current, -1, currentFunction, Current.Position));
+                    } else if(_functions.ContainsKey(Current.Text)) operations.Add(new DirectFunctionCallOperation(Current, -1, currentFunction, Current.Position));
                     else {
                         if(Current.Text.StartsWith("@") || Current.Text.StartsWith("!")) { // CWDTODO: complete this step and add safeguards
                             string[] tokens = Current.Text.Substring(1).Split(".");
