@@ -15,7 +15,6 @@
 
 # TODO
 - Use the ErrorSystem everywhere
-- add capability of unknown number of arguments at compiletime with ```(...)```
 - Make int64 instead of uint64 the standard type and add possibility to input uint64 (maybe with uint64:(...) and make this a general concept like allowing this for pointers too)
 - Add error prorities to make sure errors causing other errors are put further up in the list
 - Rework which errors are instantly terminal and which aren't (see Invalid...Error)
