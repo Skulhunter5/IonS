@@ -26,7 +26,7 @@ namespace IonS {
         Block,
         Break, Continue,
 
-        FunctionCall, Return,
+        FunctionCall, DirectFunctionCall, Return,
 
         Assert,
 
@@ -1346,7 +1346,7 @@ namespace IonS {
     // Function call operation
 
     sealed class DirectFunctionCallOperation : Operation { // args[] -- rets[]
-        public DirectFunctionCallOperation(Word name, int argsCount, Function parentFunction, Position position) : base(OperationType.FunctionCall, position) {
+        public DirectFunctionCallOperation(Word name, int argsCount, Function parentFunction, Position position) : base(OperationType.DirectFunctionCall, position) {
             Name = name;
             ArgsCount = argsCount;
             ParentFunction = parentFunction;
